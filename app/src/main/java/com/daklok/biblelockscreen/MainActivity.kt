@@ -9,17 +9,20 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.border
+import androidx.compose.foundation.gestures.detectTransformGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Fingerprint
 import androidx.compose.material.icons.outlined.FormatBold
 import androidx.compose.material.icons.outlined.RestartAlt
@@ -33,9 +36,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -50,6 +55,7 @@ import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
+import kotlin.math.roundToInt
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -82,6 +88,7 @@ fun MainScreen() {
 
     // --- STATES ---
     var imageUri by remember { mutableStateOf<Uri?>(null) }
+    var versePair by remember { mutableStateOf<Pair<String, String>?>(null) }
 
     // Nastavenia
     var textSizeMult by remember { mutableFloatStateOf(1.0f) }
@@ -90,6 +97,9 @@ fun MainScreen() {
     var textAlpha by remember { mutableFloatStateOf(1.0f) }
     var isBold by remember { mutableStateOf(true) }
     var useShadow by remember { mutableStateOf(true) }
+
+    // Edit Mode
+    var isEditing by remember { mutableStateOf(false) }
 
     // Stav Workera
     var isDailyActive by remember { mutableStateOf(false) }
@@ -110,6 +120,11 @@ fun MainScreen() {
         val workInfos = WorkManager.getInstance(context).getWorkInfosForUniqueWorkLiveData("DailyBibleWallpaper")
         workInfos.observeForever { infos ->
             isDailyActive = infos?.any { it.state == WorkInfo.State.ENQUEUED || it.state == WorkInfo.State.RUNNING } ?: false
+        }
+        
+        // Fetch verse
+        launch {
+             versePair = YouVersionFetcher.getVerseOfTheDay()
         }
     }
 
@@ -151,188 +166,224 @@ fun MainScreen() {
         }
     }
 
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(scrollState),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
+    BackHandler(enabled = isEditing) {
+        saveSettings()
+        isEditing = false
+    }
 
-            // 1. DYNAMICKÝ PREVIEW CARD (Parallax efekt)
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp)
-                    .graphicsLayer {
-                        val scrollOffset = scrollState.value.toFloat()
-                        val scale = (1f - (scrollOffset / 1500f)).coerceIn(0.6f, 1f)
-                        val alphaVal = (1f - (scrollOffset / 900f)).coerceIn(0.5f, 1f)
-
-                        scaleX = scale
-                        scaleY = scale
-                        alpha = alphaVal
-                        translationY = scrollOffset * 0.5f
-                    }
-            ) {
-                Pixel6LockScreenPreview(
-                    uri = imageUri,
-                    textSizeMult = textSizeMult,
-                    verticalOffset = verticalOffset,
-                    textColor = textColor,
-                    textAlpha = textAlpha,
-                    isBold = isBold,
-                    useShadow = useShadow,
-                    onClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        launcher.launch("image/*")
-                    }
-                )
+    if (isEditing) {
+        FullScreenEditor(
+            uri = imageUri,
+            verseText = versePair?.first ?: "Načítavam verš...",
+            verseReference = versePair?.second ?: "",
+            textSizeMult = textSizeMult,
+            verticalOffset = verticalOffset,
+            textColor = textColor,
+            textAlpha = textAlpha,
+            isBold = isBold,
+            useShadow = useShadow,
+            onParamsChange = { size, offset ->
+                textSizeMult = size.coerceIn(0.5f, 3.0f)
+                verticalOffset = offset.coerceIn(-1.0f, 1.0f)
+            },
+            onDismiss = {
+                saveSettings()
+                isEditing = false
             }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // 2. OBLASŤ NASTAVENÍ
+        )
+    } else {
+        Scaffold(
+            snackbarHost = { SnackbarHost(snackbarHostState) },
+            containerColor = MaterialTheme.colorScheme.background
+        ) { padding ->
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
-                    .background(MaterialTheme.colorScheme.surface)
-                    .padding(24.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
+                    .fillMaxSize()
+                    .padding(padding)
+                    .verticalScroll(scrollState),
+                horizontalAlignment = Alignment.CenterHorizontally
             ) {
 
-                // HLAVNÝ PREPÍNAČ (SWITCH)
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                // 1. DYNAMICKÝ PREVIEW CARD (Parallax efekt)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                        .graphicsLayer {
+                            val scrollOffset = scrollState.value.toFloat()
+                            val scale = (1f - (scrollOffset / 1500f)).coerceIn(0.6f, 1f)
+                            val alphaVal = (1f - (scrollOffset / 900f)).coerceIn(0.5f, 1f)
+
+                            scaleX = scale
+                            scaleY = scale
+                            alpha = alphaVal
+                            translationY = scrollOffset * 0.5f
+                        }
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = "Denná zmena tapety",
-                            style = MaterialTheme.typography.titleLarge,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            text = if (isDailyActive) "Aktívne (každé ráno 6:00)" else "Vypnuté",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = if (isDailyActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-                        )
-                    }
-                    Switch(
-                        checked = isDailyActive,
-                        onCheckedChange = { toggleDailyWorker(it) }
+                    Pixel6LockScreenPreview(
+                        uri = imageUri,
+                        verseText = versePair?.first ?: "Načítavam verš...",
+                        verseReference = versePair?.second ?: "",
+                        textSizeMult = textSizeMult,
+                        verticalOffset = verticalOffset,
+                        textColor = textColor,
+                        textAlpha = textAlpha,
+                        isBold = isBold,
+                        useShadow = useShadow,
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            launcher.launch("image/*")
+                        },
+                        onEditClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            isEditing = true
+                        }
                     )
                 }
 
-                HorizontalDivider()
+                Spacer(modifier = Modifier.height(16.dp))
 
-                // NASTAVENIA
-                if (imageUri != null) {
-                    Text("Prispôsobenie textu", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                // 2. OBLASŤ NASTAVENÍ
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
+                        .background(MaterialTheme.colorScheme.surface)
+                        .padding(24.dp),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                ) {
 
-                    // Farba textu
-                    ColorPickerRow(selectedColor = textColor) {
-                        textColor = it; haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove); saveSettings()
-                    }
-
-                    // Štýly
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        FilterChip(
-                            selected = isBold,
-                            onClick = { isBold = !isBold; haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove); saveSettings() },
-                            label = { Text("Tučné") },
-                            leadingIcon = { Icon(Icons.Outlined.FormatBold, null) },
-                            modifier = Modifier.weight(1f)
-                        )
-                        FilterChip(
-                            selected = useShadow,
-                            onClick = { useShadow = !useShadow; haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove); saveSettings() },
-                            label = { Text("Tieň") },
-                            leadingIcon = { Icon(Icons.Default.Hd, null) },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-
-                    // Slidery
-                    EnhancedSlider(
-                        label = "Veľkosť",
-                        value = textSizeMult,
-                        range = 0.5f..1.5f,
-                        defaultVal = 1.0f,
-                        icon = Icons.Default.TextFormat,
-                        onValueChange = { textSizeMult = it; saveSettings() }
-                    )
-
-                    EnhancedSlider(
-                        label = "Priehľadnosť",
-                        value = textAlpha,
-                        range = 0.2f..1.0f,
-                        defaultVal = 1.0f,
-                        icon = Icons.Default.Opacity,
-                        onValueChange = { textAlpha = it; saveSettings() }
-                    )
-
-                    EnhancedSlider(
-                        label = "Pozícia (Hore / Dole)",
-                        value = verticalOffset,
-                        range = -1.0f..1.0f,
-                        defaultVal = 0.0f,
-                        icon = Icons.Default.ImportExport,
-                        onValueChange = { verticalOffset = it; saveSettings() }
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // Akčné tlačidlá
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        OutlinedButton(
-                            onClick = { launcher.launch("image/*") },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Icon(Icons.Default.Image, null)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Iná fotka")
-                        }
-
-                        Button(
-                            onClick = {
-                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                runOneTimeWorker(context)
-                                scope.launch { snackbarHostState.showSnackbar("Tapeta sa generuje...") }
-                            },
-                            modifier = Modifier.weight(1f),
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Icon(Icons.Default.Refresh, null)
-                            Spacer(modifier = Modifier.width(8.dp))
-                            Text("Testovať")
-                        }
-                    }
-                } else {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(100.dp)
-                            .border(1.dp, Color.Gray, RoundedCornerShape(12.dp))
-                            .clickable { launcher.launch("image/*") },
-                        contentAlignment = Alignment.Center
+                    // HLAVNÝ PREPÍNAČ (SWITCH)
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Icon(Icons.Default.AddPhotoAlternate, null, tint = MaterialTheme.colorScheme.primary)
-                            Text("Najskôr vyber fotku", color = MaterialTheme.colorScheme.primary)
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Denná zmena tapety",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = if (isDailyActive) "Aktívne (každé ráno 6:00)" else "Vypnuté",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = if (isDailyActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                            )
+                        }
+                        Switch(
+                            checked = isDailyActive,
+                            onCheckedChange = { toggleDailyWorker(it) }
+                        )
+                    }
+
+                    HorizontalDivider()
+
+                    // NASTAVENIA
+                    if (imageUri != null) {
+                        Text("Prispôsobenie textu", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+
+                        // Farba textu
+                        ColorPickerRow(selectedColor = textColor) {
+                            textColor = it; haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove); saveSettings()
+                        }
+
+                        // Štýly
+                        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            FilterChip(
+                                selected = isBold,
+                                onClick = { isBold = !isBold; haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove); saveSettings() },
+                                label = { Text("Tučné") },
+                                leadingIcon = { Icon(Icons.Outlined.FormatBold, null) },
+                                modifier = Modifier.weight(1f)
+                            )
+                            FilterChip(
+                                selected = useShadow,
+                                onClick = { useShadow = !useShadow; haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove); saveSettings() },
+                                label = { Text("Tieň") },
+                                leadingIcon = { Icon(Icons.Default.Hd, null) },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+
+                        // Slidery
+                        EnhancedSlider(
+                            label = "Veľkosť",
+                            value = textSizeMult,
+                            range = 0.5f..2.0f,
+                            defaultVal = 1.0f,
+                            steps = 14, // (2.0 - 0.5) / 0.1 = 15 intervalov -> 14 steps
+                            icon = Icons.Default.TextFormat,
+                            onValueChange = { textSizeMult = it; saveSettings() }
+                        )
+
+                        EnhancedSlider(
+                            label = "Priehľadnosť",
+                            value = textAlpha,
+                            range = 0.2f..1.0f,
+                            defaultVal = 1.0f,
+                            steps = 7, // (1.0 - 0.2) / 0.1 = 8 intervalov -> 7 steps
+                            icon = Icons.Default.Opacity,
+                            onValueChange = { textAlpha = it; saveSettings() }
+                        )
+
+                        EnhancedSlider(
+                            label = "Pozícia (Hore / Dole)",
+                            value = verticalOffset,
+                            range = -1.0f..1.0f,
+                            defaultVal = 0.0f,
+                            steps = 19, // (1.0 - (-1.0)) / 0.1 = 20 intervalov -> 19 steps
+                            icon = Icons.Default.ImportExport,
+                            onValueChange = { verticalOffset = it; saveSettings() }
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        // Akčné tlačidlá
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            OutlinedButton(
+                                onClick = { launcher.launch("image/*") },
+                                modifier = Modifier.weight(1f),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Icon(Icons.Default.Image, null)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Iná fotka")
+                            }
+
+                            Button(
+                                onClick = {
+                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    runOneTimeWorker(context)
+                                    scope.launch { snackbarHostState.showSnackbar("Tapeta sa generuje...") }
+                                },
+                                modifier = Modifier.weight(1f),
+                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary),
+                                shape = RoundedCornerShape(12.dp)
+                            ) {
+                                Icon(Icons.Default.Refresh, null)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Testovať")
+                            }
+                        }
+                    } else {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(100.dp)
+                                .border(1.dp, Color.Gray, RoundedCornerShape(12.dp))
+                                .clickable { launcher.launch("image/*") },
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(Icons.Default.AddPhotoAlternate, null, tint = MaterialTheme.colorScheme.primary)
+                                Text("Najskôr vyber fotku", color = MaterialTheme.colorScheme.primary)
+                            }
                         }
                     }
-                }
 
-                Spacer(modifier = Modifier.height(80.dp))
+                    Spacer(modifier = Modifier.height(80.dp))
+                }
             }
         }
     }
@@ -341,16 +392,187 @@ fun MainScreen() {
 // --- KOMPONENTY ---
 
 @Composable
-fun Pixel6LockScreenPreview(
+fun FullScreenEditor(
     uri: Uri?,
+    verseText: String,
+    verseReference: String,
     textSizeMult: Float,
     verticalOffset: Float,
     textColor: Int,
     textAlpha: Float,
     isBold: Boolean,
     useShadow: Boolean,
-    onClick: () -> Unit
+    onParamsChange: (Float, Float) -> Unit,
+    onDismiss: () -> Unit
 ) {
+    val density = LocalDensity.current
+    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+    
+    // DÔLEŽITÉ: Použitie rememberUpdatedState na zachytenie aktuálnych hodnôt pre lambda funkcie
+    val currentTextSizeMult by rememberUpdatedState(textSizeMult)
+    val currentVerticalOffset by rememberUpdatedState(verticalOffset)
+    val currentOnParamsChange by rememberUpdatedState(onParamsChange)
+    
+    // Konštanta pre rýchlosť posunu - prispôsobíme tak, aby sa to pocitovo zhodovalo s preview
+    val moveFactor = 1f / (screenHeight.value * 0.35f) 
+
+    BoxWithConstraints(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(Color.Black)
+    ) {
+        val maxWidth = maxWidth
+        val maxHeight = maxHeight
+        
+        // Výpočet veľkosti písma presne podľa WallpaperUtils
+        var baseSize = maxWidth.value * 0.055f
+        if (verseText.length > 150) baseSize = maxWidth.value * 0.045f // Match WallpaperUtils logic
+        val fontSize = (baseSize * currentTextSizeMult / density.fontScale).sp
+        
+        // Výpočet Y pozície
+        val defaultOffset = maxHeight * 0.05f
+        val variableOffset = (maxHeight * 0.35f) * currentVerticalOffset
+        val totalOffset = defaultOffset + variableOffset
+
+        // 1. Pozadie
+        if (uri != null) {
+            Image(
+                painter = rememberAsyncImagePainter(uri),
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
+            Box(modifier = Modifier
+                .fillMaxSize()
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(Color.Black.copy(alpha = 0.2f), Color.Transparent, Color.Black.copy(alpha = 0.4f))
+                    )
+                )
+            )
+        }
+
+        // 2. FAKE STATUS BAR & CLOCK
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(top = 60.dp, start = 24.dp, end = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = "09:41",
+                color = Color(0xFFEEEEEE),
+                fontSize = 72.sp,
+                fontWeight = FontWeight.Light,
+                letterSpacing = 2.sp
+            )
+            val date = SimpleDateFormat("EEE, d. MMM", Locale.getDefault()).format(Date())
+            Text(
+                text = date,
+                color = Color(0xFFEEEEEE),
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Normal
+            )
+        }
+
+        // 3. EDITOVATEĽNÝ TEXT BOX
+        // CenterBox pre vertikálne zarovnanie na stred
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            // Widget Wrapper (Border)
+            // Šírka 85% obrazovky (match WallpaperUtils logic)
+            Box(
+                modifier = Modifier
+                    .offset(y = totalOffset)
+                    .width(maxWidth * 0.85f) 
+                    .border(2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(12.dp))
+                    .background(Color.Black.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
+                    .padding(horizontal = maxWidth * 0.025f, vertical = 16.dp) // 2.5% padding = 80% text width effectively
+                    .pointerInput(Unit) {
+                        detectTransformGestures { _, pan, zoom, _ ->
+                            val panYDp = pan.y / density.density
+                            val panOffsetChange = panYDp * moveFactor
+                            
+                            val newOffset = currentVerticalOffset + panOffsetChange
+                            val newSize = currentTextSizeMult * zoom
+                            currentOnParamsChange(newSize, newOffset)
+                        }
+                    }
+            ) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(
+                        text = verseText,
+                        color = Color(textColor).copy(alpha = textAlpha),
+                        fontSize = fontSize,
+                        lineHeight = fontSize * 1.25f,
+                        fontWeight = if (isBold) FontWeight.Bold else FontWeight.Normal,
+                        textAlign = TextAlign.Center,
+                        style = if (useShadow) TextStyleWithShadow else LocalTextStyle.current
+                    )
+                    
+                    Spacer(modifier = Modifier.height((fontSize.value * 0.5).dp))
+                    
+                    Text(
+                        text = verseReference,
+                        color = Color(textColor).copy(alpha = textAlpha * 0.8f),
+                        fontSize = fontSize * 0.75f,
+                        textAlign = TextAlign.Center,
+                        style = if (useShadow) TextStyleWithShadow else LocalTextStyle.current
+                    )
+                }
+                
+                // Indikátory
+                Box(Modifier.align(Alignment.BottomEnd).size(8.dp).background(Color.White, CircleShape))
+                Box(Modifier.align(Alignment.BottomStart).size(8.dp).background(Color.White, CircleShape))
+                Box(Modifier.align(Alignment.TopEnd).size(8.dp).background(Color.White, CircleShape))
+                Box(Modifier.align(Alignment.TopStart).size(8.dp).background(Color.White, CircleShape))
+            }
+        }
+
+        // 4. BOTTOM BAR / DONE BUTTON
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .align(Alignment.BottomCenter)
+                .padding(32.dp)
+        ) {
+             Button(
+                 onClick = onDismiss,
+                 modifier = Modifier.align(Alignment.Center),
+                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
+             ) {
+                 Icon(Icons.Outlined.Check, null)
+                 Spacer(modifier = Modifier.width(8.dp))
+                 Text("Hotovo")
+             }
+             
+             Text(
+                 "Pinch pre zmenu veľkosti, ťahaj pre posun",
+                 style = MaterialTheme.typography.labelSmall,
+                 color = Color.White.copy(alpha=0.7f),
+                 modifier = Modifier.align(Alignment.BottomCenter).padding(top = 48.dp)
+             )
+        }
+    }
+}
+
+@Composable
+fun Pixel6LockScreenPreview(
+    uri: Uri?,
+    verseText: String,
+    verseReference: String,
+    textSizeMult: Float,
+    verticalOffset: Float,
+    textColor: Int,
+    textAlpha: Float,
+    isBold: Boolean,
+    useShadow: Boolean,
+    onClick: () -> Unit,
+    onEditClick: () -> Unit
+) {
+    val density = LocalDensity.current
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val previewHeight = (screenHeight * 0.75f)
 
@@ -364,7 +586,20 @@ fun Pixel6LockScreenPreview(
             .clickable { onClick() },
         elevation = CardDefaults.cardElevation(12.dp)
     ) {
-        Box(modifier = Modifier.fillMaxSize()) {
+        BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
+            val maxWidth = maxWidth
+            val maxHeight = maxHeight
+
+            // Výpočet veľkosti písma
+            var baseSize = maxWidth.value * 0.055f
+            if (verseText.length > 150) baseSize = maxWidth.value * 0.045f
+            val fontSize = (baseSize * textSizeMult / density.fontScale).sp
+            
+            // Výpočet Y pozície
+            val defaultOffset = maxHeight * 0.05f
+            val variableOffset = (maxHeight * 0.35f) * verticalOffset
+            val totalOffset = defaultOffset + variableOffset
+
             // Pozadie
             if (uri != null) {
                 Image(
@@ -413,36 +648,42 @@ fun Pixel6LockScreenPreview(
             }
 
             // --- NÁHĽAD VERŠA ---
+            // CenterBox
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 24.dp),
+                modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                // Výpočet posunu
-                val baseOffset = 80.dp
-                val variableOffset = (verticalOffset * 180).dp
-
-                Column(
-                    modifier = Modifier.offset(y = baseOffset + variableOffset),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                Box(
+                    modifier = Modifier
+                        .offset(y = totalOffset)
+                        .width(maxWidth * 0.85f) // Rovnaká šírka ako v editore (85%)
+                        // Padding 2.5% z každej strany = 80% effective width
+                        .clickable { onEditClick() }
+                        .padding(horizontal = maxWidth * 0.025f, vertical = 16.dp)
                 ) {
-                    Text(
-                        text = "Lebo tak Boh miloval svet, že svojho jednorodeného Syna dal...",
-                        color = Color(textColor).copy(alpha = textAlpha),
-                        fontSize = (18 * textSizeMult).sp,
-                        fontWeight = if (isBold) FontWeight.Bold else FontWeight.Normal,
-                        textAlign = TextAlign.Center,
-                        style = if (useShadow) TextStyleWithShadow else LocalTextStyle.current
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Text(
-                        text = "Ján 3, 16",
-                        color = Color(textColor).copy(alpha = textAlpha * 0.8f),
-                        fontSize = (14 * textSizeMult).sp,
-                        textAlign = TextAlign.Center,
-                        style = if (useShadow) TextStyleWithShadow else LocalTextStyle.current
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = verseText,
+                            color = Color(textColor).copy(alpha = textAlpha),
+                            fontSize = fontSize,
+                            lineHeight = fontSize * 1.25f,
+                            fontWeight = if (isBold) FontWeight.Bold else FontWeight.Normal,
+                            textAlign = TextAlign.Center,
+                            style = if (useShadow) TextStyleWithShadow else LocalTextStyle.current
+                        )
+                        
+                        Spacer(modifier = Modifier.height((fontSize.value * 0.5).dp))
+                        
+                        Text(
+                            text = verseReference,
+                            color = Color(textColor).copy(alpha = textAlpha * 0.8f),
+                            fontSize = fontSize * 0.75f,
+                            textAlign = TextAlign.Center,
+                            style = if (useShadow) TextStyleWithShadow else LocalTextStyle.current
+                        )
+                    }
                 }
             }
 
@@ -527,6 +768,7 @@ fun EnhancedSlider(
     value: Float,
     range: ClosedFloatingPointRange<Float>,
     defaultVal: Float,
+    steps: Int = 0,
     icon: ImageVector,
     onValueChange: (Float) -> Unit
 ) {
@@ -564,10 +806,15 @@ fun EnhancedSlider(
         Slider(
             value = value,
             onValueChange = {
-                onValueChange(it)
-                if ((it * 10).toInt() % 2 == 0) haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                // Rounding to nearest 0.1
+                val rounded = (it * 10).roundToInt() / 10f
+                if (rounded != value) {
+                   onValueChange(rounded)
+                   haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                }
             },
             valueRange = range,
+            steps = steps,
             colors = SliderDefaults.colors(
                 thumbColor = MaterialTheme.colorScheme.primary,
                 activeTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)

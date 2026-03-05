@@ -3,12 +3,16 @@ package com.daklok.biblelockscreen
 import android.content.Context
 import android.graphics.*
 import android.net.Uri
+import android.os.Build
 import android.text.Layout
 import android.text.StaticLayout
 import android.text.TextPaint
+import androidx.annotation.RequiresApi
+import kotlin.math.max
 
 object WallpaperUtils {
 
+    @RequiresApi(Build.VERSION_CODES.P)
     fun createBitmapWithText(
         context: Context,
         imageUri: Uri,
@@ -17,33 +21,47 @@ object WallpaperUtils {
         textSizeMultiplier: Float = 1.0f,
         verticalOffset: Float = 0.0f,
         textColorInt: Int = Color.WHITE,
-        textAlpha: Float = 1.0f, // 0.0 - 1.0
+        textAlpha: Float = 1.0f,
         isBold: Boolean = true,
         useShadow: Boolean = true
     ): Bitmap? {
         try {
+            // 1. Získanie rozmerov obrazovky
+            val metrics = context.resources.displayMetrics
+            val screenW = metrics.widthPixels
+            val screenH = metrics.heightPixels
+
             val source = ImageDecoder.createSource(context.contentResolver, imageUri)
             val original = ImageDecoder.decodeBitmap(source) { decoder, _, _ ->
                 decoder.isMutableRequired = true
             }
 
-            // Kópia bitmapy
-            val bitmap = original.copy(Bitmap.Config.ARGB_8888, true)
-            val canvas = Canvas(bitmap)
-            val width = canvas.width
-            val height = canvas.height
+            // 2. Cieľová bitmapa
+            val finalBitmap = Bitmap.createBitmap(screenW, screenH, Bitmap.Config.ARGB_8888)
+            val canvas = Canvas(finalBitmap)
 
-            // 1. Vignette (stmavovací filter) - prispôsobíme podľa priehľadnosti textu
-            // Ak je text priehľadnejší, chceme tmavšie pozadie pre kontrast
+            // 3. Center-Crop obrázku
+            val scale = max(screenW.toFloat() / original.width, screenH.toFloat() / original.height)
+            val scaledW = original.width * scale
+            val scaledH = original.height * scale
+            val dx = (screenW - scaledW) / 2f
+            val dy = (screenH - scaledH) / 2f
+
+            val matrix = Matrix().apply {
+                postScale(scale, scale)
+                postTranslate(dx, dy)
+            }
+            canvas.drawBitmap(original, matrix, Paint(Paint.FILTER_BITMAP_FLAG))
+
+            // 4. Vignette
             val paintScrim = Paint().apply {
                 color = Color.BLACK
                 alpha = (60 + (1.0f - textAlpha) * 40).toInt().coerceIn(0, 150)
             }
-            canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), paintScrim)
+            canvas.drawRect(0f, 0f, screenW.toFloat(), screenH.toFloat(), paintScrim)
 
-            // 2. Nastavenie farby a priehľadnosti
+            // 5. Text Settings
             val finalTextColor = applyAlpha(textColorInt, textAlpha)
-
             val textPaint = TextPaint().apply {
                 color = finalTextColor
                 isAntiAlias = true
@@ -53,41 +71,30 @@ object WallpaperUtils {
                 }
             }
 
-            // Výpočet veľkosti
-            var baseSize = width * 0.055f
-            if (verse.length > 150) baseSize = width * 0.045f
+            // KONZISTENTNÁ LOGIKA VEĽKOSTI A ŠÍRKY
+            // Text zaberá presne 80% šírky obrazovky.
+            // (V UI je to Box 85% s paddingom 2.5% z každej strany => 80% pre text)
+            val textLayoutWidth = (screenW * 0.80f).toInt()
+            
+            var baseSize = screenW * 0.055f
+            if (verse.length > 150) baseSize = screenW * 0.045f
             textPaint.textSize = baseSize * textSizeMultiplier
 
-            val textWidth = (width * 0.85).toInt()
-            var staticLayout = createLayout(verse, textPaint, textWidth)
+            var staticLayout = createLayout(verse, textPaint, textLayoutWidth)
 
-            // Zmenšovanie ak sa nezmestí
-            while (staticLayout.height > height * 0.6 && textPaint.textSize > 20f) {
+            // Zmenšovanie ak sa nezmestí (safety check)
+            while (staticLayout.height > screenH * 0.6 && textPaint.textSize > 20f) {
                 textPaint.textSize -= 2f
-                staticLayout = createLayout(verse, textPaint, textWidth)
+                staticLayout = createLayout(verse, textPaint, textLayoutWidth)
             }
 
-            // 3. Pozícia
-            val xPos = (width - textWidth) / 2f
-            val centerY = (height / 2f) - (staticLayout.height / 2f)
-            // Pixel 6 má hodiny vysoko, posuňme default trochu nižšie
-            val defaultOffset = height * 0.05f
-            val userOffsetPixels = (height * 0.35f) * verticalOffset
-            val yPos = centerY + userOffsetPixels + defaultOffset
-
-            // 4. Kreslenie verša
-            canvas.save()
-            canvas.translate(xPos, yPos)
-            staticLayout.draw(canvas)
-            canvas.restore()
-
-            // 5. Kreslenie referencie
+            // Ref Settings
             val cleanRef = ref.replace(" Katolícky preklad", "")
                 .replace(" SSV", "")
                 .trim()
 
             val refPaint = TextPaint().apply {
-                color = applyAlpha(if (textColorInt == Color.BLACK) Color.DKGRAY else Color.LTGRAY, textAlpha) // Jemne iná farba
+                color = applyAlpha(if (textColorInt == Color.BLACK) Color.DKGRAY else Color.LTGRAY, textAlpha)
                 textSize = textPaint.textSize * 0.75f
                 isAntiAlias = true
                 typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL)
@@ -97,14 +104,33 @@ object WallpaperUtils {
                 }
             }
 
-            canvas.drawText(
-                cleanRef,
-                width / 2f,
-                yPos + staticLayout.height + (textPaint.textSize * 1.5f),
-                refPaint
-            )
+            // Výpočet výšky celého bloku
+            val gap = textPaint.textSize * 0.5f
+            val fontMetrics = refPaint.fontMetrics
+            val refHeight = fontMetrics.descent - fontMetrics.ascent
+            val totalBlockHeight = staticLayout.height + gap + refHeight
 
-            return bitmap
+            // 6. Pozícia
+            val centerX = screenW / 2f
+            val centerY = (screenH / 2f) - (totalBlockHeight / 2f)
+            
+            val defaultOffset = screenH * 0.05f
+            val userOffsetPixels = (screenH * 0.35f) * verticalOffset
+            val blockTopY = centerY + userOffsetPixels + defaultOffset
+
+            // 7. Kreslenie verša (vycentrovaný StaticLayout)
+            canvas.save()
+            // StaticLayout je široký "textLayoutWidth". Aby bol v strede obrazovky:
+            val xPos = (screenW - textLayoutWidth) / 2f
+            canvas.translate(xPos, blockTopY)
+            staticLayout.draw(canvas)
+            canvas.restore()
+
+            // 8. Kreslenie referencie
+            val refBaselineY = blockTopY + staticLayout.height + gap - fontMetrics.ascent
+            canvas.drawText(cleanRef, centerX, refBaselineY, refPaint)
+
+            return finalBitmap
         } catch (e: Exception) {
             e.printStackTrace()
             return null
@@ -114,7 +140,7 @@ object WallpaperUtils {
     private fun createLayout(text: String, paint: TextPaint, width: Int): StaticLayout {
         return StaticLayout.Builder.obtain(text, 0, text.length, paint, width)
             .setAlignment(Layout.Alignment.ALIGN_CENTER)
-            .setLineSpacing(0f, 1.25f) // Trochu vzdušnejšie riadkovanie
+            .setLineSpacing(0f, 1.25f)
             .build()
     }
 
