@@ -50,6 +50,7 @@ dependencies {
     implementation(libs.androidx.compose.ui.graphics)
     implementation(libs.androidx.compose.ui.tooling.preview)
     implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.compose.foundation)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
@@ -69,4 +70,9 @@ dependencies {
 
     // Gson - na ukladanie objektov (ak by bolo treba)
     implementation("com.google.code.gson:gson:2.10.1")
+    implementation("com.google.accompanist:accompanist-systemuicontroller:0.32.0")
+
+    implementation(libs.androidx.compose.material3)
+    implementation(libs.androidx.material.icons.extended) // Add this line
+
 }
