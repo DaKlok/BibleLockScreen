@@ -1005,7 +1005,7 @@ fun MainScreen(
                             Text(strings.supportDesc, style = MaterialTheme.typography.bodySmall)
                             OutlinedButton(
                                 onClick = { 
-                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://buymeacoffee.com")) 
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ko-fi.com/daklok"))
                                     context.startActivity(intent)
                                 },
                                 modifier = Modifier.fillMaxWidth()
