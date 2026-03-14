@@ -5,6 +5,11 @@ plugins {
 }
 
 android {
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
+
     namespace = "com.daklok.biblelockscreen"
     compileSdk {
         version = release(36)
