@@ -16,25 +16,30 @@ class DailyVerseWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
 
         // Načítanie všetkých nastavení
         val textSizeMult = prefs.getFloat("text_size_mult", 1.0f)
+        val textWidthMult = prefs.getFloat("text_width_mult", 1.0f)
         val verticalOffset = prefs.getFloat("vertical_offset", 0.0f)
         val textColor = prefs.getInt("text_color", Color.WHITE)
         val textAlpha = prefs.getFloat("text_alpha", 1.0f)
         val isBold = prefs.getBoolean("is_bold", true)
         val useShadow = prefs.getBoolean("use_shadow", true)
+        val fontFamilyStr = prefs.getString("font_family", "sans-serif") ?: "sans-serif"
+        val verseLang = prefs.getString("verse_lang", "SK") ?: "SK"
 
-        val verseData = YouVersionFetcher.getVerseOfTheDay() ?: return Result.retry()
+        val verseData = YouVersionFetcher.getVerseOfTheDay(verseLang) ?: return Result.retry()
 
         val finalBitmap = WallpaperUtils.createBitmapWithText(
-            applicationContext,
-            Uri.parse(uriString),
-            verseData.first,
-            verseData.second,
-            textSizeMult,
-            verticalOffset,
-            textColor,
-            textAlpha,
-            isBold,
-            useShadow
+            context = applicationContext,
+            imageUri = Uri.parse(uriString),
+            verse = verseData.first,
+            ref = verseData.second,
+            textSizeMultiplier = textSizeMult,
+            textWidthMultiplier = textWidthMult,
+            verticalOffset = verticalOffset,
+            textColorInt = textColor,
+            textAlpha = textAlpha,
+            isBold = isBold,
+            useShadow = useShadow,
+            fontFamilyStr = fontFamilyStr
         )
 
         if (finalBitmap != null) {

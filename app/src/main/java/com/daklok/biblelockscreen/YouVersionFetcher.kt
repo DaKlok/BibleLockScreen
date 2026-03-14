@@ -11,7 +11,7 @@ object YouVersionFetcher {
     private const val USER_AGENT =
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
-    suspend fun getVerseOfTheDay(): Pair<String, String>? {
+    suspend fun getVerseOfTheDay(language: String = "SK"): Pair<String, String>? {
         return withContext(Dispatchers.IO) {
             try {
                 Log.d(TAG, "--- ŠTART SŤAHOVANIA ---")
@@ -30,28 +30,36 @@ object YouVersionFetcher {
 
                 Log.d(TAG, "Získané ID verša: $verseId")
 
-                // 2. KROK: Načítame slovenskú stránku (Preklad 163)
-                val slovakUrl = "https://www.bible.com/sk/bible/163/$verseId"
-                val svkDoc = Jsoup.connect(slovakUrl)
+                // 2. KROK: Načítame cieľovú stránku podľa jazyka
+                val url = when (language.uppercase()) {
+                    "EN" -> "https://www.bible.com/en-GB/bible/111/$verseId" // NIV
+                    "CZ" -> "https://www.bible.com/cs/bible/509/$verseId" // CEP
+                    "ES" -> "https://www.bible.com/es/bible/128/$verseId" // NVI (Spanish)
+                    "IT" -> "https://www.bible.com/it/bible/122/$verseId" // NR2006 (Italian)
+                    "FR" -> "https://www.bible.com/fr/bible/133/$verseId" // BDS (French)
+                    "DE" -> "https://www.bible.com/de/bible/157/$verseId" // SCH2000 (German)
+                    "HU" -> "https://www.bible.com/hu/bible/17/$verseId" // KAR (Hungarian)
+                    "PL" -> "https://www.bible.com/pl/bible/138/$verseId" // UBG (Polish)
+                    else -> "https://www.bible.com/sk/bible/163/$verseId" // SK SSV (Default)
+                }
+                
+                val doc = Jsoup.connect(url)
                     .userAgent(USER_AGENT)
                     .timeout(15000)
                     .get()
 
                 // 3. KROK: Získanie textu priamo z HTML <p> v sekcii <main>
-                val verseText = svkDoc
+                val verseText = doc
                     .select("main p")
                     .first()
                     ?.text()
                     ?.trim()
                     ?: ""
 
-                Log.d(TAG, "--------------------------------------------------")
-                Log.d(TAG, "TEXT VERŠA (Dĺžka: ${verseText.length} znakov):")
-                Log.d(TAG, verseText)
-                Log.d(TAG, "--------------------------------------------------")
+                Log.d(TAG, "TEXT VERŠA: $verseText")
 
                 // 4. KROK: Získanie referencie z og:title
-                val fullTitle = svkDoc.select("meta[property=og:title]").attr("content")
+                val fullTitle = doc.select("meta[property=og:title]").attr("content")
 
                 var reference = fullTitle.substringBefore(" -").trim()
 
@@ -59,6 +67,14 @@ object YouVersionFetcher {
                     .replace(Regex("\\s*\\([^)]*\\)"), "")
                     .replace("SSV", "")
                     .replace("Katolícky preklad", "")
+                    .replace("NIV", "")
+                    .replace("CEP", "")
+                    .replace("NVI", "")
+                    .replace("NR2006", "")
+                    .replace("BDS", "")
+                    .replace("SCH2000", "")
+                    .replace("KAR", "")
+                    .replace("UBG", "")
                     .trim()
 
                 Log.d(TAG, "Vyčistená referencia: $reference")

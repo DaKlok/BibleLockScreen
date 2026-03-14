@@ -19,11 +19,14 @@ object WallpaperUtils {
         verse: String,
         ref: String,
         textSizeMultiplier: Float = 1.0f,
+        textWidthMultiplier: Float = 1.0f,
         verticalOffset: Float = 0.0f,
         textColorInt: Int = Color.WHITE,
         textAlpha: Float = 1.0f,
         isBold: Boolean = true,
-        useShadow: Boolean = true
+        useShadow: Boolean = true,
+        fontFamilyStr: String = "sans-serif",
+        bgBlurRadius: Float = 0f
     ): Bitmap? {
         try {
             // 1. Získanie rozmerov obrazovky
@@ -36,9 +39,9 @@ object WallpaperUtils {
                 decoder.isMutableRequired = true
             }
 
-            // 2. Cieľová bitmapa
-            val finalBitmap = Bitmap.createBitmap(screenW, screenH, Bitmap.Config.ARGB_8888)
-            val canvas = Canvas(finalBitmap)
+            // 2. Vytvoríme si dočasnú bitmapu pre pozadie
+            var workingBitmap = Bitmap.createBitmap(screenW, screenH, Bitmap.Config.ARGB_8888)
+            val bgCanvas = Canvas(workingBitmap)
 
             // 3. Center-Crop obrázku
             val scale = max(screenW.toFloat() / original.width, screenH.toFloat() / original.height)
@@ -51,30 +54,40 @@ object WallpaperUtils {
                 postScale(scale, scale)
                 postTranslate(dx, dy)
             }
-            canvas.drawBitmap(original, matrix, Paint(Paint.FILTER_BITMAP_FLAG))
+            bgCanvas.drawBitmap(original, matrix, Paint(Paint.FILTER_BITMAP_FLAG))
 
-            // 4. Vignette
+            // 4. Aplikácia Blur efektu na pozadie
+            if (bgBlurRadius > 0f) {
+                val blurred = blurBitmap(context, workingBitmap, bgBlurRadius)
+                workingBitmap.recycle()
+                workingBitmap = blurred
+            }
+
+            // Vytvoríme už finálny canvas na upravenom (alebo neupravenom) pozadí
+            val canvas = Canvas(workingBitmap)
+
+            // 5. Vignette
             val paintScrim = Paint().apply {
                 color = Color.BLACK
                 alpha = (60 + (1.0f - textAlpha) * 40).toInt().coerceIn(0, 150)
             }
             canvas.drawRect(0f, 0f, screenW.toFloat(), screenH.toFloat(), paintScrim)
 
-            // 5. Text Settings
+            // 6. Text Settings
             val finalTextColor = applyAlpha(textColorInt, textAlpha)
             val textPaint = TextPaint().apply {
                 color = finalTextColor
                 isAntiAlias = true
-                typeface = Typeface.create(Typeface.SANS_SERIF, if (isBold) Typeface.BOLD else Typeface.NORMAL)
+                typeface = Typeface.create(fontFamilyStr, if (isBold) Typeface.BOLD else Typeface.NORMAL)
                 if (useShadow) {
                     setShadowLayer(12f, 0f, 0f, Color.BLACK)
                 }
             }
 
             // KONZISTENTNÁ LOGIKA VEĽKOSTI A ŠÍRKY
-            // Text zaberá presne 80% šírky obrazovky.
-            // (V UI je to Box 85% s paddingom 2.5% z každej strany => 80% pre text)
-            val textLayoutWidth = (screenW * 0.80f).toInt()
+            val boxWidth = screenW * 0.80f * textWidthMultiplier
+            val paddingPx = screenW * 0.025f
+            val textLayoutWidth = max(1f, boxWidth - (2 * paddingPx)).toInt()
             
             var baseSize = screenW * 0.055f
             if (verse.length > 150) baseSize = screenW * 0.045f
@@ -97,7 +110,7 @@ object WallpaperUtils {
                 color = applyAlpha(if (textColorInt == Color.BLACK) Color.DKGRAY else Color.LTGRAY, textAlpha)
                 textSize = textPaint.textSize * 0.75f
                 isAntiAlias = true
-                typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.NORMAL)
+                typeface = Typeface.create(fontFamilyStr, Typeface.NORMAL)
                 textAlign = Paint.Align.CENTER
                 if (useShadow) {
                     setShadowLayer(8f, 0f, 0f, Color.BLACK)
@@ -110,7 +123,7 @@ object WallpaperUtils {
             val refHeight = fontMetrics.descent - fontMetrics.ascent
             val totalBlockHeight = staticLayout.height + gap + refHeight
 
-            // 6. Pozícia
+            // 7. Pozícia
             val centerX = screenW / 2f
             val centerY = (screenH / 2f) - (totalBlockHeight / 2f)
             
@@ -118,23 +131,53 @@ object WallpaperUtils {
             val userOffsetPixels = (screenH * 0.35f) * verticalOffset
             val blockTopY = centerY + userOffsetPixels + defaultOffset
 
-            // 7. Kreslenie verša (vycentrovaný StaticLayout)
+            // 8. Kreslenie verša (vycentrovaný StaticLayout)
             canvas.save()
-            // StaticLayout je široký "textLayoutWidth". Aby bol v strede obrazovky:
             val xPos = (screenW - textLayoutWidth) / 2f
             canvas.translate(xPos, blockTopY)
             staticLayout.draw(canvas)
             canvas.restore()
 
-            // 8. Kreslenie referencie
+            // 9. Kreslenie referencie
             val refBaselineY = blockTopY + staticLayout.height + gap - fontMetrics.ascent
             canvas.drawText(cleanRef, centerX, refBaselineY, refPaint)
 
-            return finalBitmap
+            return workingBitmap
         } catch (e: Exception) {
             e.printStackTrace()
             return null
         }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun blurBitmap(context: Context, bitmap: Bitmap, radius: Float): Bitmap {
+        if (radius <= 0f) return bitmap
+        val r = radius.coerceIn(1f, 25f)
+        val outputBitmap = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
+        
+        var rs: android.renderscript.RenderScript? = null
+        try {
+            rs = android.renderscript.RenderScript.create(context)
+            val input = android.renderscript.Allocation.createFromBitmap(
+                rs, 
+                bitmap, 
+                android.renderscript.Allocation.MipmapControl.MIPMAP_NONE, 
+                android.renderscript.Allocation.USAGE_SCRIPT
+            )
+            val output = android.renderscript.Allocation.createTyped(rs, input.type)
+            val script = android.renderscript.ScriptIntrinsicBlur.create(rs, android.renderscript.Element.U8_4(rs))
+            script.setRadius(r)
+            script.setInput(input)
+            script.forEach(output)
+            output.copyTo(outputBitmap)
+        } catch (e: Exception) {
+            // Fallback ak RenderScript zlyhá: jednoduché škálovanie
+            val smallBitmap = Bitmap.createScaledBitmap(bitmap, bitmap.width / 10, bitmap.height / 10, true)
+            return Bitmap.createScaledBitmap(smallBitmap, bitmap.width, bitmap.height, true)
+        } finally {
+            rs?.destroy()
+        }
+        return outputBitmap
     }
 
     private fun createLayout(text: String, paint: TextPaint, width: Int): StaticLayout {

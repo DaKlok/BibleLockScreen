@@ -14,26 +14,30 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.border
-import androidx.compose.foundation.gestures.detectTransformGestures
+import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.Check
-import androidx.compose.material.icons.outlined.Fingerprint
-import androidx.compose.material.icons.outlined.FormatBold
-import androidx.compose.material.icons.outlined.RestartAlt
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.blur
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
@@ -43,6 +47,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -51,11 +56,440 @@ import androidx.core.content.ContextCompat
 import androidx.work.*
 import coil.compose.rememberAsyncImagePainter
 import com.daklok.biblelockscreen.ui.theme.BibleLockScreenTheme
+import com.github.skydoves.colorpicker.compose.BrightnessSlider
+import com.github.skydoves.colorpicker.compose.ColorPickerController
+import com.github.skydoves.colorpicker.compose.HsvColorPicker
+import com.github.skydoves.colorpicker.compose.rememberColorPickerController
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
+
+// --- TRANSLATIONS ---
+data class AppStrings(
+    val appName: String = "Bible Lock Screen",
+    val settings: String = "Nastavenia aplikácie",
+    val dailyWallpaper: String = "Denná zmena tapety",
+    val active: String = "Aktívne (každé ráno 6:00)",
+    val inactive: String = "Vypnuté",
+    val textCustomization: String = "Prispôsobenie textu",
+    val bold: String = "Tučné",
+    val shadow: String = "Tieň",
+    val textSize: String = "Veľkosť písma",
+    val textWidth: String = "Šírka textu",
+    val textAlpha: String = "Priehľadnosť",
+    val bgBlur: String = "Rozmazanie pozadia",
+    val anotherPhoto: String = "Iná fotka",
+    val test: String = "Testovať",
+    val selectPhotoFirst: String = "Najskôr vyber fotku",
+    val appearance: String = "Vzhľad",
+    val system: String = "Systém",
+    val light: String = "Svetlý",
+    val dark: String = "Tmavý",
+    val dynamicColor: String = "Material You (Farby systému)",
+    val haptics: String = "Haptická odozva",
+    val hapticsDesc: String = "Vibrácie pri upravovaní widgetu",
+    val support: String = "Podpora",
+    val supportDesc: String = "Ak sa ti aplikácia páči a chceš podporiť jej vývoj, môžeš mi kúpiť kávu ☕",
+    val donate: String = "Prispieť",
+    val close: String = "Zavrieť",
+    val dragHint: String = "Ťahaj body pre veľkosť a šírku\nŤahaj do stredu pre presun",
+    val cancel: String = "Zrušiť",
+    val done: String = "Hotovo",
+    val clickToSelect: String = "Klikni pre výber fotky",
+    val loading: String = "Načítavam verš...",
+    val appLanguage: String = "Jazyk aplikácie",
+    val verseLanguage: String = "Jazyk veršov",
+    val dailyWorkerOn: String = "Zapnuté! Tapeta sa zmení zajtra o 6:00.",
+    val dailyWorkerOff: String = "Denná zmena bola vypnutá.",
+    val generating: String = "Tapeta sa generuje...",
+    val fontModern: String = "Moderný",
+    val fontBook: String = "Knižný",
+    val fontMono: String = "Strojový",
+    val fontCursive: String = "Písaný",
+    val fontLight: String = "Tenký",
+    val fontCondensed: String = "Úzky",
+    val langSk: String = "Slovenčina",
+    val langEn: String = "English",
+    val langCz: String = "Čeština"
+)
+
+val skStrings = AppStrings()
+
+val enStrings = AppStrings(
+    settings = "App Settings",
+    dailyWallpaper = "Daily Wallpaper Change",
+    active = "Active (every morning 6:00)",
+    inactive = "Disabled",
+    textCustomization = "Text Customization",
+    bold = "Bold",
+    shadow = "Shadow",
+    textSize = "Text Size",
+    textWidth = "Text Width",
+    textAlpha = "Transparency",
+    bgBlur = "Background Blur",
+    anotherPhoto = "Change Photo",
+    test = "Test",
+    selectPhotoFirst = "Select a photo first",
+    appearance = "Appearance",
+    system = "System",
+    light = "Light",
+    dark = "Dark",
+    dynamicColor = "Material You (System Colors)",
+    haptics = "Haptic Feedback",
+    hapticsDesc = "Vibrations when editing the widget",
+    support = "Support",
+    supportDesc = "If you like the app and want to support its development, you can buy me a coffee ☕",
+    donate = "Donate",
+    close = "Close",
+    dragHint = "Drag dots for size and width\nDrag the center to move",
+    cancel = "Cancel",
+    done = "Done",
+    clickToSelect = "Tap to select photo",
+    loading = "Loading verse...",
+    appLanguage = "App Language",
+    verseLanguage = "Verse Language",
+    dailyWorkerOn = "Enabled! Wallpaper will change tomorrow at 6:00.",
+    dailyWorkerOff = "Daily change disabled.",
+    generating = "Generating wallpaper...",
+    fontModern = "Modern",
+    fontBook = "Book",
+    fontMono = "Typewriter",
+    fontCursive = "Cursive",
+    fontLight = "Light",
+    fontCondensed = "Condensed"
+)
+
+val czStrings = AppStrings(
+    settings = "Nastavení aplikace",
+    dailyWallpaper = "Denní změna tapety",
+    active = "Aktivní (každé ráno 6:00)",
+    inactive = "Vypnuto",
+    textCustomization = "Přizpůsobení textu",
+    bold = "Tučné",
+    shadow = "Stín",
+    textSize = "Velikost písma",
+    textWidth = "Šířka textu",
+    textAlpha = "Průhlednost",
+    bgBlur = "Rozmazání pozadí",
+    anotherPhoto = "Jiná fotka",
+    test = "Testovat",
+    selectPhotoFirst = "Nejdříve vyber fotku",
+    appearance = "Vzhled",
+    system = "Systém",
+    light = "Světlý",
+    dark = "Tmavý",
+    dynamicColor = "Material You (Barvy systému)",
+    haptics = "Haptická odezva",
+    hapticsDesc = "Vibrace při úpravě widgetu",
+    support = "Podpora",
+    supportDesc = "Pokud se ti aplikace líbí a chceš podpořit její vývoj, můžeš mi koupit kávu ☕",
+    donate = "Přispět",
+    close = "Zavřít",
+    dragHint = "Potažením bodů změň velikost\nTahem ve středu widget přesuň",
+    cancel = "Zrušit",
+    done = "Hotovo",
+    clickToSelect = "Klikni pro výběr fotky",
+    loading = "Načítám verš...",
+    appLanguage = "Jazyk aplikace",
+    verseLanguage = "Jazyk veršů",
+    dailyWorkerOn = "Zapnuto! Tapeta se změní zítra v 6:00.",
+    dailyWorkerOff = "Denní změna byla vypnuta.",
+    generating = "Tapeta se generuje...",
+    fontModern = "Moderní",
+    fontBook = "Knižní",
+    fontMono = "Strojový",
+    fontCursive = "Psaný",
+    fontLight = "Tenký",
+    fontCondensed = "Úzký"
+)
+
+val esStrings = AppStrings(
+    settings = "Ajustes de la App",
+    dailyWallpaper = "Cambio diario de fondo",
+    active = "Activo (cada mañana 6:00)",
+    inactive = "Desactivado",
+    textCustomization = "Personalización de texto",
+    bold = "Negrita",
+    shadow = "Sombra",
+    textSize = "Tamaño del texto",
+    textWidth = "Ancho del texto",
+    textAlpha = "Transparencia",
+    bgBlur = "Desenfocar fondo",
+    anotherPhoto = "Cambiar foto",
+    test = "Probar",
+    selectPhotoFirst = "Selecciona una foto primero",
+    appearance = "Apariencia",
+    system = "Sistema",
+    light = "Claro",
+    dark = "Oscuro",
+    dynamicColor = "Material You (Colores del sistema)",
+    haptics = "Respuesta háptica",
+    hapticsDesc = "Vibraciones al editar el widget",
+    support = "Soporte",
+    supportDesc = "Si te gusta la app y quieres apoyar su desarrollo, puedes comprarme un café ☕",
+    donate = "Donar",
+    close = "Cerrar",
+    dragHint = "Arrastra los puntos para el tamaño y ancho\nArrastra en el centro para mover",
+    cancel = "Cancelar",
+    done = "Hecho",
+    clickToSelect = "Toca para seleccionar una foto",
+    loading = "Cargando versículo...",
+    appLanguage = "Idioma de la aplicación",
+    verseLanguage = "Idioma del versículo",
+    dailyWorkerOn = "¡Activado! El fondo cambiará mañana a las 6:00.",
+    dailyWorkerOff = "Cambio diario desactivado.",
+    generating = "Generando fondo...",
+    fontModern = "Moderno",
+    fontBook = "Libro",
+    fontMono = "Máquina de escribir",
+    fontCursive = "Cursiva",
+    fontLight = "Fino",
+    fontCondensed = "Condensada"
+)
+
+val itStrings = AppStrings(
+    settings = "Impostazioni App",
+    dailyWallpaper = "Sfondo giornaliero",
+    active = "Attivo (ogni mattina 6:00)",
+    inactive = "Inattivo",
+    textCustomization = "Personalizzazione testo",
+    bold = "Grassetto",
+    shadow = "Ombra",
+    textSize = "Dimensione testo",
+    textWidth = "Larghezza testo",
+    textAlpha = "Trasparenza",
+    bgBlur = "Sfocatura sfondo",
+    anotherPhoto = "Cambia foto",
+    test = "Test",
+    selectPhotoFirst = "Seleziona prima una foto",
+    appearance = "Aspetto",
+    system = "Sistema",
+    light = "Chiaro",
+    dark = "Scuro",
+    dynamicColor = "Material You (Colori di sistema)",
+    haptics = "Feedback tattile",
+    hapticsDesc = "Vibrazioni durante la modifica",
+    support = "Supporto",
+    supportDesc = "Se ti piace l'app e vuoi supportarne lo sviluppo, puoi offrirmi un caffè ☕",
+    donate = "Dona",
+    close = "Chiudi",
+    dragHint = "Trascina i punti per la dimensione e la larghezza\nTrascina al centro per spostare",
+    cancel = "Annulla",
+    done = "Fatto",
+    clickToSelect = "Tocca per selezionare una foto",
+    loading = "Caricamento versetto...",
+    appLanguage = "Lingua dell'app",
+    verseLanguage = "Lingua del versetto",
+    dailyWorkerOn = "Attivato! Lo sfondo cambierà domani alle 6:00.",
+    dailyWorkerOff = "Cambio giornaliero disattivato.",
+    generating = "Generazione sfondo...",
+    fontModern = "Moderno",
+    fontBook = "Libro",
+    fontMono = "Macchina da scrivere",
+    fontCursive = "Corsivo",
+    fontLight = "Sottile",
+    fontCondensed = "Condensato"
+)
+
+val frStrings = AppStrings(
+    settings = "Paramètres",
+    dailyWallpaper = "Fond d'écran quotidien",
+    active = "Actif (chaque matin à 6:00)",
+    inactive = "Inactif",
+    textCustomization = "Personnalisation du texte",
+    bold = "Gras",
+    shadow = "Ombre",
+    textSize = "Taille du texte",
+    textWidth = "Largeur du texte",
+    textAlpha = "Transparence",
+    bgBlur = "Flou d'arrière-plan",
+    anotherPhoto = "Changer de photo",
+    test = "Tester",
+    selectPhotoFirst = "Sélectionnez d'abord une photo",
+    appearance = "Apparence",
+    system = "Système",
+    light = "Clair",
+    dark = "Sombre",
+    dynamicColor = "Material You (Couleurs système)",
+    haptics = "Retour haptique",
+    hapticsDesc = "Vibrations lors de l'édition",
+    support = "Soutien",
+    supportDesc = "Si vous aimez l'application et souhaitez soutenir son développement, vous pouvez m'offrir un café ☕",
+    donate = "Faire un don",
+    close = "Fermer",
+    dragHint = "Faites glisser les points pour la taille et la largeur\nFaites glisser au centre pour déplacer",
+    cancel = "Annuler",
+    done = "Terminé",
+    clickToSelect = "Touchez pour sélectionner une photo",
+    loading = "Chargement du verset...",
+    appLanguage = "Langue de l'app",
+    verseLanguage = "Langue du verset",
+    dailyWorkerOn = "Activé ! Le fond d'écran changera demain à 6:00.",
+    dailyWorkerOff = "Changement quotidien désactivé.",
+    generating = "Génération du fond d'écran...",
+    fontModern = "Moderne",
+    fontBook = "Livre",
+    fontMono = "Machine à écrire",
+    fontCursive = "Cursive",
+    fontLight = "Fin",
+    fontCondensed = "Condensé"
+)
+
+val deStrings = AppStrings(
+    settings = "App-Einstellungen",
+    dailyWallpaper = "Tägliches Hintergrundbild",
+    active = "Aktiv (jeden Morgen 6:00)",
+    inactive = "Inaktiv",
+    textCustomization = "Textanpassung",
+    bold = "Fett",
+    shadow = "Schatten",
+    textSize = "Textgröße",
+    textWidth = "Textbreite",
+    textAlpha = "Transparenz",
+    bgBlur = "Hintergrundunschärfe",
+    anotherPhoto = "Anderes Foto",
+    test = "Testen",
+    selectPhotoFirst = "Wähle zuerst ein Foto aus",
+    appearance = "Erscheinungsbild",
+    system = "System",
+    light = "Hell",
+    dark = "Dunkel",
+    dynamicColor = "Material You (Systemfarben)",
+    haptics = "Haptisches Feedback",
+    hapticsDesc = "Vibrationen beim Bearbeiten",
+    support = "Unterstützung",
+    supportDesc = "Wenn dir die App gefällt und du ihre Entwicklung unterstützen möchtest, kannst du mir einen Kaffee spendieren ☕",
+    donate = "Spenden",
+    close = "Schließen",
+    dragHint = "Ziehe die Punkte für die Größe und Breite\nZiehe in die Mitte zum Bewegen",
+    cancel = "Abbrechen",
+    done = "Fertig",
+    clickToSelect = "Tippe, um ein Foto auszuwählen",
+    loading = "Lade Vers...",
+    appLanguage = "App-Sprache",
+    verseLanguage = "Vers-Sprache",
+    dailyWorkerOn = "Aktiviert! Hintergrundbild ändert sich morgen um 6:00.",
+    dailyWorkerOff = "Tägliche Änderung deaktiviert.",
+    generating = "Hintergrundbild wird generiert...",
+    fontModern = "Modern",
+    fontBook = "Buch",
+    fontMono = "Schreibmaschine",
+    fontCursive = "Kursiv",
+    fontLight = "Leicht",
+    fontCondensed = "Schmal"
+)
+
+val huStrings = AppStrings(
+    settings = "Alkalmazás beállításai",
+    dailyWallpaper = "Napi háttérkép",
+    active = "Aktív (minden reggel 6:00)",
+    inactive = "Inaktív",
+    textCustomization = "Szöveg testreszabása",
+    bold = "Félkövér",
+    shadow = "Árnyék",
+    textSize = "Szövegméret",
+    textWidth = "Szöveg szélessége",
+    textAlpha = "Átlátszóság",
+    bgBlur = "Háttér elmosása",
+    anotherPhoto = "Másik fotó",
+    test = "Teszt",
+    selectPhotoFirst = "Először válassz egy fotót",
+    appearance = "Megjelenés",
+    system = "Rendszer",
+    light = "Világos",
+    dark = "Sötét",
+    dynamicColor = "Material You (Rendszerszínek)",
+    haptics = "Haptikus visszajelzés",
+    hapticsDesc = "Rezgés szerkesztéskor",
+    support = "Támogatás",
+    supportDesc = "Ha tetszik az alkalmazás és szeretnéd támogatni a fejlesztését, meghívhatsz egy kávéra ☕",
+    donate = "Adomány",
+    close = "Bezárás",
+    dragHint = "Húzd a pontokat a méretért és szélességért\nHúzd a közepén a mozgatáshoz",
+    cancel = "Mégse",
+    done = "Kész",
+    clickToSelect = "Koppints a fotó kiválasztásához",
+    loading = "Ige betöltése...",
+    appLanguage = "Alkalmazás nyelve",
+    verseLanguage = "Ige nyelve",
+    dailyWorkerOn = "Bekapcsolva! A háttérkép holnap 6:00-kor változik.",
+    dailyWorkerOff = "Napi módosítás kikapcsolva.",
+    generating = "Háttérkép generálása...",
+    fontModern = "Modern",
+    fontBook = "Könyv",
+    fontMono = "Írógép",
+    fontCursive = "Dőlt",
+    fontLight = "Vékony",
+    fontCondensed = "Sűrített"
+)
+
+val plStrings = AppStrings(
+    settings = "Ustawienia aplikacji",
+    dailyWallpaper = "Codzienna tapeta",
+    active = "Aktywne (codziennie o 6:00)",
+    inactive = "Nieaktywne",
+    textCustomization = "Dostosowanie tekstu",
+    bold = "Pogrubienie",
+    shadow = "Cień",
+    textSize = "Rozmiar tekstu",
+    textWidth = "Szerokość tekstu",
+    textAlpha = "Przezroczystość",
+    bgBlur = "Rozmycie tła",
+    anotherPhoto = "Zmień zdjęcie",
+    test = "Testuj",
+    selectPhotoFirst = "Najpierw wybierz zdjęcie",
+    appearance = "Wygląd",
+    system = "System",
+    light = "Jasny",
+    dark = "Ciemny",
+    dynamicColor = "Material You (Kolory systemu)",
+    haptics = "Wibracje",
+    hapticsDesc = "Wibracje podczas edycji",
+    support = "Wsparcie",
+    supportDesc = "Jeśli podoba Ci się aplikacja i chcesz wesprzeć jej rozwój, możesz postawić mi kawę ☕",
+    donate = "Wesprzyj",
+    close = "Zamknij",
+    dragHint = "Przeciągnij kropki dla rozmiaru i szerokości\nPrzeciągnij środek, aby przesunąć",
+    cancel = "Anuluj",
+    done = "Gotowe",
+    clickToSelect = "Dotknij, aby wybrać zdjęcie",
+    loading = "Ładowanie wersetu...",
+    appLanguage = "Język aplikacji",
+    verseLanguage = "Język wersetu",
+    dailyWorkerOn = "Włączone! Tapeta zmieni się jutro o 6:00.",
+    dailyWorkerOff = "Codzienna zmiana wyłączona.",
+    generating = "Generowanie tapety...",
+    fontModern = "Nowoczesny",
+    fontBook = "Książka",
+    fontMono = "Maszyna do pisania",
+    fontCursive = "Kursywa",
+    fontLight = "Cienki",
+    fontCondensed = "Zwężony"
+)
+
+// Helper function to dynamically select system language or fallback to EN
+fun getDefaultAppLanguage(): String {
+    val sysLang = Locale.getDefault().language.uppercase()
+    return when (sysLang) {
+        "CS" -> "CZ"
+        "SK", "EN", "CZ", "ES", "IT", "FR", "DE", "HU", "PL" -> sysLang
+        else -> "EN"
+    }
+}
+
+val availableLanguages = listOf(
+    "EN" to "English",
+    "SK" to "Slovenčina",
+    "CZ" to "Čeština",
+    "ES" to "Español",
+    "IT" to "Italiano",
+    "FR" to "Français",
+    "DE" to "Deutsch",
+    "HU" to "Magyar",
+    "PL" to "Polski"
+)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,8 +502,31 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            BibleLockScreenTheme {
-                MainScreen()
+            val context = LocalContext.current
+            val prefs = remember { context.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE) }
+            
+            var themeMode by remember { mutableIntStateOf(prefs.getInt("theme_mode", 0)) } // 0=System, 1=Light, 2=Dark
+            var useDynamicColor by remember { mutableStateOf(prefs.getBoolean("use_dynamic_color", true)) }
+
+            val darkTheme = when (themeMode) {
+                1 -> false
+                2 -> true
+                else -> isSystemInDarkTheme()
+            }
+
+            BibleLockScreenTheme(darkTheme = darkTheme, dynamicColor = useDynamicColor) {
+                MainScreen(
+                    themeMode = themeMode,
+                    useDynamicColor = useDynamicColor,
+                    onThemeChange = { newMode ->
+                        themeMode = newMode
+                        prefs.edit().putInt("theme_mode", newMode).apply()
+                    },
+                    onDynamicColorChange = { useDynamic ->
+                        useDynamicColor = useDynamic
+                        prefs.edit().putBoolean("use_dynamic_color", useDynamic).apply()
+                    }
+                )
             }
         }
     }
@@ -77,9 +534,14 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen() {
+fun MainScreen(
+    themeMode: Int,
+    useDynamicColor: Boolean,
+    onThemeChange: (Int) -> Unit,
+    onDynamicColorChange: (Boolean) -> Unit
+) {
     val context = LocalContext.current
-    val haptic = LocalHapticFeedback.current
+    val sysHaptic = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
@@ -92,17 +554,46 @@ fun MainScreen() {
 
     // Nastavenia
     var textSizeMult by remember { mutableFloatStateOf(1.0f) }
+    var textWidthMult by remember { mutableFloatStateOf(1.0f) }
     var verticalOffset by remember { mutableFloatStateOf(0.0f) }
     var textColor by remember { mutableIntStateOf(AndroidColor.WHITE) }
     var textAlpha by remember { mutableFloatStateOf(1.0f) }
+    var bgBlur by remember { mutableFloatStateOf(0f) }
     var isBold by remember { mutableStateOf(true) }
     var useShadow by remember { mutableStateOf(true) }
+    var fontFamilyStr by remember { mutableStateOf("sans-serif") }
+    var useHaptics by remember { mutableStateOf(true) }
+    
+    val defaultSystemLang = remember { getDefaultAppLanguage() }
+    var appLang by remember { mutableStateOf(defaultSystemLang) }
+    var verseLang by remember { mutableStateOf(defaultSystemLang) }
 
-    // Edit Mode
+    // Strings
+    val strings = when (appLang) {
+        "EN" -> enStrings
+        "CZ" -> czStrings
+        "ES" -> esStrings
+        "IT" -> itStrings
+        "FR" -> frStrings
+        "DE" -> deStrings
+        "HU" -> huStrings
+        "PL" -> plStrings
+        else -> skStrings
+    }
+
+    // Edit Mode a Settings
     var isEditing by remember { mutableStateOf(false) }
+    var showSettings by remember { mutableStateOf(false) }
 
     // Stav Workera
     var isDailyActive by remember { mutableStateOf(false) }
+
+    // Custom Haptic Helper
+    val performHaptic = { type: HapticFeedbackType ->
+        if (useHaptics) {
+            sysHaptic.performHapticFeedback(type)
+        }
+    }
 
     // --- LOAD SAVED ---
     LaunchedEffect(Unit) {
@@ -111,11 +602,18 @@ fun MainScreen() {
         if (savedUri != null) imageUri = Uri.parse(savedUri)
 
         textSizeMult = prefs.getFloat("text_size_mult", 1.0f)
+        textWidthMult = prefs.getFloat("text_width_mult", 1.0f)
         verticalOffset = prefs.getFloat("vertical_offset", 0.0f)
         textColor = prefs.getInt("text_color", AndroidColor.WHITE)
         textAlpha = prefs.getFloat("text_alpha", 1.0f)
+        bgBlur = prefs.getFloat("bg_blur", 0f)
         isBold = prefs.getBoolean("is_bold", true)
         useShadow = prefs.getBoolean("use_shadow", true)
+        fontFamilyStr = prefs.getString("font_family", "sans-serif") ?: "sans-serif"
+        useHaptics = prefs.getBoolean("use_haptics", true)
+        
+        appLang = prefs.getString("app_lang", defaultSystemLang) ?: defaultSystemLang
+        verseLang = prefs.getString("verse_lang", defaultSystemLang) ?: defaultSystemLang
 
         val workInfos = WorkManager.getInstance(context).getWorkInfosForUniqueWorkLiveData("DailyBibleWallpaper")
         workInfos.observeForever { infos ->
@@ -124,7 +622,7 @@ fun MainScreen() {
         
         // Fetch verse
         launch {
-             versePair = YouVersionFetcher.getVerseOfTheDay()
+             versePair = YouVersionFetcher.getVerseOfTheDay(verseLang)
         }
     }
 
@@ -133,25 +631,29 @@ fun MainScreen() {
         val prefs = context.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
         prefs.edit()
             .putFloat("text_size_mult", textSizeMult)
+            .putFloat("text_width_mult", textWidthMult)
             .putFloat("vertical_offset", verticalOffset)
             .putInt("text_color", textColor)
             .putFloat("text_alpha", textAlpha)
+            .putFloat("bg_blur", bgBlur)
             .putBoolean("is_bold", isBold)
             .putBoolean("use_shadow", useShadow)
+            .putString("font_family", fontFamilyStr)
+            .putBoolean("use_haptics", useHaptics)
             .apply()
     }
 
     fun toggleDailyWorker(enable: Boolean) {
-        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        performHaptic(HapticFeedbackType.LongPress)
         saveSettings()
         isDailyActive = enable
 
         if (enable) {
             scheduleWorker(context)
-            scope.launch { snackbarHostState.showSnackbar("Zapnuté! Tapeta sa zmení zajtra o 6:00.") }
+            scope.launch { snackbarHostState.showSnackbar(strings.dailyWorkerOn) }
         } else {
             WorkManager.getInstance(context).cancelUniqueWork("DailyBibleWallpaper")
-            scope.launch { snackbarHostState.showSnackbar("Denná zmena bola vypnutá.") }
+            scope.launch { snackbarHostState.showSnackbar(strings.dailyWorkerOff) }
         }
     }
 
@@ -166,33 +668,27 @@ fun MainScreen() {
         }
     }
 
-    BackHandler(enabled = isEditing) {
-        saveSettings()
-        isEditing = false
+    BackHandler(enabled = isEditing || showSettings) {
+        if (isEditing) isEditing = false
+        if (showSettings) showSettings = false
     }
 
-    if (isEditing) {
-        FullScreenEditor(
-            uri = imageUri,
-            verseText = versePair?.first ?: "Načítavam verš...",
-            verseReference = versePair?.second ?: "",
-            textSizeMult = textSizeMult,
-            verticalOffset = verticalOffset,
-            textColor = textColor,
-            textAlpha = textAlpha,
-            isBold = isBold,
-            useShadow = useShadow,
-            onParamsChange = { size, offset ->
-                textSizeMult = size.coerceIn(0.5f, 3.0f)
-                verticalOffset = offset.coerceIn(-1.0f, 1.0f)
-            },
-            onDismiss = {
-                saveSettings()
-                isEditing = false
-            }
-        )
-    } else {
+    Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(strings.appName, fontWeight = FontWeight.Bold) },
+                    actions = {
+                        IconButton(onClick = { showSettings = true }) {
+                            Icon(Icons.Outlined.Settings, contentDescription = strings.settings)
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.background,
+                        titleContentColor = MaterialTheme.colorScheme.onBackground
+                    )
+                )
+            },
             snackbarHost = { SnackbarHost(snackbarHostState) },
             containerColor = MaterialTheme.colorScheme.background
         ) { padding ->
@@ -208,7 +704,7 @@ fun MainScreen() {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp)
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
                         .graphicsLayer {
                             val scrollOffset = scrollState.value.toFloat()
                             val scale = (1f - (scrollOffset / 1500f)).coerceIn(0.6f, 1f)
@@ -222,20 +718,25 @@ fun MainScreen() {
                 ) {
                     Pixel6LockScreenPreview(
                         uri = imageUri,
-                        verseText = versePair?.first ?: "Načítavam verš...",
+                        verseText = versePair?.first ?: strings.loading,
                         verseReference = versePair?.second ?: "",
                         textSizeMult = textSizeMult,
+                        textWidthMult = textWidthMult,
                         verticalOffset = verticalOffset,
                         textColor = textColor,
                         textAlpha = textAlpha,
+                        bgBlur = bgBlur,
                         isBold = isBold,
                         useShadow = useShadow,
+                        fontFamilyStr = fontFamilyStr,
+                        showEditHint = true, // Ukazuje obrys s ceruzkou
+                        strings = strings,
                         onClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            performHaptic(HapticFeedbackType.LongPress)
                             launcher.launch("image/*")
                         },
                         onEditClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            performHaptic(HapticFeedbackType.LongPress)
                             isEditing = true
                         }
                     )
@@ -261,12 +762,12 @@ fun MainScreen() {
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Denná zmena tapety",
+                                text = strings.dailyWallpaper,
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = if (isDailyActive) "Aktívne (každé ráno 6:00)" else "Vypnuté",
+                                text = if (isDailyActive) strings.active else strings.inactive,
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = if (isDailyActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
                             )
@@ -281,60 +782,75 @@ fun MainScreen() {
 
                     // NASTAVENIA
                     if (imageUri != null) {
-                        Text("Prispôsobenie textu", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                        Text(strings.textCustomization, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
 
                         // Farba textu
                         ColorPickerRow(selectedColor = textColor) {
-                            textColor = it; haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove); saveSettings()
+                            textColor = it; performHaptic(HapticFeedbackType.TextHandleMove); saveSettings()
+                        }
+                        
+                        // Písmo (Font)
+                        FontPickerRow(selectedFont = fontFamilyStr, strings = strings) {
+                            fontFamilyStr = it; performHaptic(HapticFeedbackType.TextHandleMove); saveSettings()
                         }
 
                         // Štýly
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             FilterChip(
                                 selected = isBold,
-                                onClick = { isBold = !isBold; haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove); saveSettings() },
-                                label = { Text("Tučné") },
+                                onClick = { isBold = !isBold; performHaptic(HapticFeedbackType.TextHandleMove); saveSettings() },
+                                label = { Text(strings.bold) },
                                 leadingIcon = { Icon(Icons.Outlined.FormatBold, null) },
                                 modifier = Modifier.weight(1f)
                             )
                             FilterChip(
                                 selected = useShadow,
-                                onClick = { useShadow = !useShadow; haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove); saveSettings() },
-                                label = { Text("Tieň") },
+                                onClick = { useShadow = !useShadow; performHaptic(HapticFeedbackType.TextHandleMove); saveSettings() },
+                                label = { Text(strings.shadow) },
                                 leadingIcon = { Icon(Icons.Default.Hd, null) },
                                 modifier = Modifier.weight(1f)
                             )
                         }
 
-                        // Slidery
                         EnhancedSlider(
-                            label = "Veľkosť",
+                            label = strings.bgBlur,
+                            value = bgBlur,
+                            range = 0f..25f,
+                            defaultVal = 0f,
+                            steps = 24,
+                            icon = Icons.Outlined.BlurOn,
+                            onValueChange = { bgBlur = it; saveSettings() }
+                        )
+
+                        // Slidery (Pozícia bola odstránená, upravuje sa len v editore)
+                        EnhancedSlider(
+                            label = strings.textSize,
                             value = textSizeMult,
                             range = 0.5f..2.0f,
                             defaultVal = 1.0f,
-                            steps = 14, // (2.0 - 0.5) / 0.1 = 15 intervalov -> 14 steps
+                            steps = 14,
                             icon = Icons.Default.TextFormat,
                             onValueChange = { textSizeMult = it; saveSettings() }
                         )
-
+                        
                         EnhancedSlider(
-                            label = "Priehľadnosť",
-                            value = textAlpha,
-                            range = 0.2f..1.0f,
+                            label = strings.textWidth,
+                            value = textWidthMult,
+                            range = 0.5f..1.5f,
                             defaultVal = 1.0f,
-                            steps = 7, // (1.0 - 0.2) / 0.1 = 8 intervalov -> 7 steps
-                            icon = Icons.Default.Opacity,
-                            onValueChange = { textAlpha = it; saveSettings() }
+                            steps = 9, 
+                            icon = Icons.Default.FormatAlignJustify,
+                            onValueChange = { textWidthMult = it; saveSettings() }
                         )
 
                         EnhancedSlider(
-                            label = "Pozícia (Hore / Dole)",
-                            value = verticalOffset,
-                            range = -1.0f..1.0f,
-                            defaultVal = 0.0f,
-                            steps = 19, // (1.0 - (-1.0)) / 0.1 = 20 intervalov -> 19 steps
-                            icon = Icons.Default.ImportExport,
-                            onValueChange = { verticalOffset = it; saveSettings() }
+                            label = strings.textAlpha,
+                            value = textAlpha,
+                            range = 0.2f..1.0f,
+                            defaultVal = 1.0f,
+                            steps = 7,
+                            icon = Icons.Default.Opacity,
+                            onValueChange = { textAlpha = it; saveSettings() }
                         )
 
                         Spacer(modifier = Modifier.height(12.dp))
@@ -348,14 +864,14 @@ fun MainScreen() {
                             ) {
                                 Icon(Icons.Default.Image, null)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Iná fotka")
+                                Text(strings.anotherPhoto)
                             }
 
                             Button(
                                 onClick = {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    performHaptic(HapticFeedbackType.LongPress)
                                     runOneTimeWorker(context)
-                                    scope.launch { snackbarHostState.showSnackbar("Tapeta sa generuje...") }
+                                    scope.launch { snackbarHostState.showSnackbar(strings.generating) }
                                 },
                                 modifier = Modifier.weight(1f),
                                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary),
@@ -363,7 +879,7 @@ fun MainScreen() {
                             ) {
                                 Icon(Icons.Default.Refresh, null)
                                 Spacer(modifier = Modifier.width(8.dp))
-                                Text("Testovať")
+                                Text(strings.test)
                             }
                         }
                     } else {
@@ -377,7 +893,7 @@ fun MainScreen() {
                         ) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Icon(Icons.Default.AddPhotoAlternate, null, tint = MaterialTheme.colorScheme.primary)
-                                Text("Najskôr vyber fotku", color = MaterialTheme.colorScheme.primary)
+                                Text(strings.selectPhotoFirst, color = MaterialTheme.colorScheme.primary)
                             }
                         }
                     }
@@ -386,35 +902,276 @@ fun MainScreen() {
                 }
             }
         }
+
+        // Nastavenia Aplikácie
+        if (showSettings) {
+            AlertDialog(
+                onDismissRequest = { showSettings = false },
+                title = { Text(strings.settings, fontWeight = FontWeight.Bold) },
+                text = {
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(24.dp),
+                        modifier = Modifier.verticalScroll(rememberScrollState())
+                    ) {
+                        
+                        // Jazyk aplikacie
+                        LanguageDropdown(
+                            label = strings.appLanguage,
+                            selectedCode = appLang,
+                            options = availableLanguages,
+                            onSelect = { 
+                                appLang = it
+                                context.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
+                                    .edit().putString("app_lang", it).apply()
+                            }
+                        )
+                        
+                        HorizontalDivider()
+                        
+                        // Jazyk versov
+                        LanguageDropdown(
+                            label = strings.verseLanguage,
+                            selectedCode = verseLang,
+                            options = availableLanguages,
+                            onSelect = { 
+                                if (verseLang != it) {
+                                    verseLang = it
+                                    context.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
+                                        .edit().putString("verse_lang", it).apply()
+                                    versePair = null // Zobrazenie načítania
+                                    scope.launch {
+                                        versePair = YouVersionFetcher.getVerseOfTheDay(it)
+                                    }
+                                }
+                            }
+                        )
+
+                        HorizontalDivider()
+
+                        // Téma
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(strings.appearance, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                            val options = listOf(strings.system, strings.light, strings.dark)
+                            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                                options.forEachIndexed { index, label ->
+                                    SegmentedButton(
+                                        selected = themeMode == index,
+                                        onClick = { onThemeChange(index) },
+                                        shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size)
+                                    ) {
+                                        Text(label, maxLines = 1)
+                                    }
+                                }
+                            }
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Text(strings.dynamicColor)
+                                    Switch(checked = useDynamicColor, onCheckedChange = { onDynamicColorChange(it) })
+                                }
+                            }
+                        }
+
+                        HorizontalDivider()
+
+                        // Vibrácie
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(strings.haptics, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                                Text(strings.hapticsDesc, style = MaterialTheme.typography.bodySmall)
+                            }
+                            Switch(
+                                checked = useHaptics,
+                                onCheckedChange = { 
+                                    useHaptics = it; 
+                                    saveSettings()
+                                    if(it) sysHaptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                }
+                            )
+                        }
+                        
+                        HorizontalDivider()
+                        
+                        // Podpora
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(strings.support, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                            Text(strings.supportDesc, style = MaterialTheme.typography.bodySmall)
+                            OutlinedButton(
+                                onClick = { 
+                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://buymeacoffee.com")) 
+                                    context.startActivity(intent)
+                                },
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Icon(Icons.Outlined.Favorite, contentDescription = null, tint = Color.Red)
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text(strings.donate)
+                            }
+                        }
+                    }
+                },
+                confirmButton = {
+                    TextButton(onClick = { showSettings = false }) {
+                        Text(strings.close)
+                    }
+                }
+            )
+        }
+
+        // Expressive Full-Screen Editor s animáciou
+        AnimatedVisibility(
+            visible = isEditing,
+            enter = scaleIn(
+                initialScale = 0.8f,
+                animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow)
+            ) + fadeIn(animationSpec = tween(300)),
+            exit = scaleOut(
+                targetScale = 0.8f,
+                animationSpec = tween(durationMillis = 250, easing = FastOutLinearInEasing)
+            ) + fadeOut(animationSpec = tween(250))
+        ) {
+            FullScreenEditor(
+                uri = imageUri,
+                verseText = versePair?.first ?: strings.loading,
+                verseReference = versePair?.second ?: "",
+                initialTextSizeMult = textSizeMult,
+                initialTextWidthMult = textWidthMult,
+                initialVerticalOffset = verticalOffset,
+                textColor = textColor,
+                textAlpha = textAlpha,
+                bgBlur = bgBlur,
+                isBold = isBold,
+                useShadow = useShadow,
+                fontFamilyStr = fontFamilyStr,
+                strings = strings,
+                onSave = { newSize, newWidth, newOffset ->
+                    textSizeMult = newSize
+                    textWidthMult = newWidth
+                    verticalOffset = newOffset
+                    saveSettings()
+                    isEditing = false
+                },
+                onDismiss = {
+                    isEditing = false
+                },
+                performHaptic = performHaptic
+            )
+        }
     }
 }
 
 // --- KOMPONENTY ---
 
 @Composable
+fun LanguageDropdown(
+    label: String,
+    selectedCode: String,
+    options: List<Pair<String, String>>,
+    onSelect: (String) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val selectedLabel = options.find { it.first == selectedCode }?.second ?: selectedCode
+
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text(label, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+        Box {
+            OutlinedButton(
+                onClick = { expanded = true },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text(selectedLabel)
+                Spacer(modifier = Modifier.weight(1f))
+                Icon(Icons.Default.ArrowDropDown, null)
+            }
+            DropdownMenu(
+                expanded = expanded,
+                onDismissRequest = { expanded = false },
+                modifier = Modifier.fillMaxWidth(0.7f)
+            ) {
+                options.forEach { (code, name) ->
+                    DropdownMenuItem(
+                        text = { Text(name) },
+                        onClick = {
+                            onSelect(code)
+                            expanded = false
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun FullScreenEditor(
     uri: Uri?,
     verseText: String,
     verseReference: String,
-    textSizeMult: Float,
-    verticalOffset: Float,
+    initialTextSizeMult: Float,
+    initialTextWidthMult: Float,
+    initialVerticalOffset: Float,
     textColor: Int,
     textAlpha: Float,
+    bgBlur: Float,
     isBold: Boolean,
     useShadow: Boolean,
-    onParamsChange: (Float, Float) -> Unit,
-    onDismiss: () -> Unit
+    fontFamilyStr: String,
+    strings: AppStrings,
+    onSave: (Float, Float, Float) -> Unit,
+    onDismiss: () -> Unit,
+    performHaptic: (HapticFeedbackType) -> Unit
 ) {
     val density = LocalDensity.current
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     
-    // DÔLEŽITÉ: Použitie rememberUpdatedState na zachytenie aktuálnych hodnôt pre lambda funkcie
-    val currentTextSizeMult by rememberUpdatedState(textSizeMult)
-    val currentVerticalOffset by rememberUpdatedState(verticalOffset)
-    val currentOnParamsChange by rememberUpdatedState(onParamsChange)
+    // Lokálny stav
+    var localSizeMult by remember { mutableFloatStateOf(initialTextSizeMult) }
+    var rawSizeMult by remember { mutableFloatStateOf(initialTextSizeMult) }
+    var isSizeSnapped by remember { mutableStateOf(kotlin.math.abs(initialTextSizeMult - 1.0f) < 0.05f) }
+
+    var localWidthMult by remember { mutableFloatStateOf(initialTextWidthMult) }
+    var rawWidthMult by remember { mutableFloatStateOf(initialTextWidthMult) }
+    var isWidthSnapped by remember { mutableStateOf(kotlin.math.abs(initialTextWidthMult - 1.0f) < 0.05f) }
     
-    // Konštanta pre rýchlosť posunu - prispôsobíme tak, aby sa to pocitovo zhodovalo s preview
+    var localVerticalOffset by remember { mutableFloatStateOf(initialVerticalOffset) }
+    var rawVerticalOffset by remember { mutableFloatStateOf(initialVerticalOffset) }
+    var isPositionSnapped by remember { mutableStateOf(kotlin.math.abs(initialVerticalOffset) < 0.04f) }
+    
+    // Konštanta pre rýchlosť vertikálneho posunu
     val moveFactor = 1f / (screenHeight.value * 0.35f) 
+
+    val updateWidth = { delta: Float ->
+        rawWidthMult = (rawWidthMult + delta).coerceIn(0.5f, 1.5f)
+        val snapZone = 0.05f
+        val newSnapped = if (kotlin.math.abs(rawWidthMult - 1.0f) < snapZone) 1.0f else rawWidthMult
+        if (newSnapped == 1.0f && !isWidthSnapped) {
+            performHaptic(HapticFeedbackType.LongPress)
+            isWidthSnapped = true
+        } else if (newSnapped != 1.0f && isWidthSnapped) {
+            isWidthSnapped = false
+        }
+        localWidthMult = newSnapped
+    }
+
+    val updateSize = { delta: Float ->
+        rawSizeMult = (rawSizeMult + delta).coerceIn(0.5f, 3.0f)
+        val snapZone = 0.08f
+        val newSnapped = if (kotlin.math.abs(rawSizeMult - 1.0f) < snapZone) 1.0f else rawSizeMult
+        if (newSnapped == 1.0f && !isSizeSnapped) {
+            performHaptic(HapticFeedbackType.LongPress)
+            isSizeSnapped = true
+        } else if (newSnapped != 1.0f && isSizeSnapped) {
+            isSizeSnapped = false
+        }
+        localSizeMult = newSnapped
+    }
 
     BoxWithConstraints(
         modifier = Modifier
@@ -424,14 +1181,21 @@ fun FullScreenEditor(
         val maxWidth = maxWidth
         val maxHeight = maxHeight
         
-        // Výpočet veľkosti písma presne podľa WallpaperUtils
+        val screenWidthPx = with(density) { maxWidth.toPx() }
+        val baseWidthPx = screenWidthPx * 0.80f
+        
+        // Výpočet veľkosti písma
         var baseSize = maxWidth.value * 0.055f
-        if (verseText.length > 150) baseSize = maxWidth.value * 0.045f // Match WallpaperUtils logic
-        val fontSize = (baseSize * currentTextSizeMult / density.fontScale).sp
+        if (verseText.length > 150) baseSize = maxWidth.value * 0.045f
+        
+        val fontScale = density.fontScale
+        val fontSize = (baseSize * localSizeMult / fontScale).sp
+        val composeFontFamily = getComposeFontFamily(fontFamilyStr)
+        val composeFontWeight = getComposeFontWeight(fontFamilyStr, isBold)
         
         // Výpočet Y pozície
         val defaultOffset = maxHeight * 0.05f
-        val variableOffset = (maxHeight * 0.35f) * currentVerticalOffset
+        val variableOffset = (maxHeight * 0.35f) * localVerticalOffset
         val totalOffset = defaultOffset + variableOffset
 
         // 1. Pozadie
@@ -440,7 +1204,11 @@ fun FullScreenEditor(
                 painter = rememberAsyncImagePainter(uri),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .then(
+                        if (bgBlur > 0f) Modifier.blur(bgBlur.dp) else Modifier
+                    )
             )
             Box(modifier = Modifier
                 .fillMaxSize()
@@ -476,84 +1244,202 @@ fun FullScreenEditor(
         }
 
         // 3. EDITOVATEĽNÝ TEXT BOX
-        // CenterBox pre vertikálne zarovnanie na stred
         Box(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+                .fillMaxSize()
+                .pointerInput(Unit) {
+                    detectDragGestures { change, dragAmount ->
+                        change.consume()
+                        val panYDp = dragAmount.y / density.density
+                        val panOffsetChange = panYDp * moveFactor
+                        
+                        rawVerticalOffset = (rawVerticalOffset + panOffsetChange).coerceIn(-1.0f, 1.0f)
+                        
+                        val snapZone = 0.04f
+                        val newSnappedOffset = if (kotlin.math.abs(rawVerticalOffset) < snapZone) {
+                            0.0f
+                        } else {
+                            rawVerticalOffset
+                        }
+                        
+                        if (newSnappedOffset == 0.0f && !isPositionSnapped) {
+                            performHaptic(HapticFeedbackType.LongPress)
+                            isPositionSnapped = true
+                        } else if (newSnappedOffset != 0.0f && isPositionSnapped) {
+                            isPositionSnapped = false
+                        }
+                        
+                        localVerticalOffset = newSnappedOffset
+                    }
+                },
             contentAlignment = Alignment.Center
         ) {
-            // Widget Wrapper (Border)
-            // Šírka 85% obrazovky (match WallpaperUtils logic)
+            // Widget kontajner
             Box(
                 modifier = Modifier
                     .offset(y = totalOffset)
-                    .width(maxWidth * 0.85f) 
-                    .border(2.dp, MaterialTheme.colorScheme.primary, RoundedCornerShape(12.dp))
-                    .background(Color.Black.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
-                    .padding(horizontal = maxWidth * 0.025f, vertical = 16.dp) // 2.5% padding = 80% text width effectively
-                    .pointerInput(Unit) {
-                        detectTransformGestures { _, pan, zoom, _ ->
-                            val panYDp = pan.y / density.density
-                            val panOffsetChange = panYDp * moveFactor
-                            
-                            val newOffset = currentVerticalOffset + panOffsetChange
-                            val newSize = currentTextSizeMult * zoom
-                            currentOnParamsChange(newSize, newOffset)
-                        }
-                    }
+                    .width(maxWidth * 0.80f * localWidthMult) 
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = verseText,
-                        color = Color(textColor).copy(alpha = textAlpha),
-                        fontSize = fontSize,
-                        lineHeight = fontSize * 1.25f,
-                        fontWeight = if (isBold) FontWeight.Bold else FontWeight.Normal,
-                        textAlign = TextAlign.Center,
-                        style = if (useShadow) TextStyleWithShadow else LocalTextStyle.current
-                    )
-                    
-                    Spacer(modifier = Modifier.height((fontSize.value * 0.5).dp))
-                    
-                    Text(
-                        text = verseReference,
-                        color = Color(textColor).copy(alpha = textAlpha * 0.8f),
-                        fontSize = fontSize * 0.75f,
-                        textAlign = TextAlign.Center,
-                        style = if (useShadow) TextStyleWithShadow else LocalTextStyle.current
-                    )
+                // Vnútorne ohraničený box s textom a pozadím
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(
+                            width = if (isPositionSnapped) 3.dp else 2.dp, // Indikácia snapu stredovej pozície
+                            color = if (isPositionSnapped) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary, 
+                            shape = RoundedCornerShape(16.dp)
+                        ) 
+                        .background(Color.Black.copy(alpha = 0.35f), RoundedCornerShape(16.dp))
+                        .padding(horizontal = maxWidth * 0.025f, vertical = 16.dp)
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = verseText,
+                            color = Color(textColor).copy(alpha = textAlpha),
+                            fontSize = fontSize,
+                            fontFamily = composeFontFamily,
+                            lineHeight = fontSize * 1.25f,
+                            fontWeight = composeFontWeight,
+                            textAlign = TextAlign.Center,
+                            style = if (useShadow) TextStyleWithShadow else LocalTextStyle.current
+                        )
+                        
+                        Spacer(modifier = Modifier.height((fontSize.value * 0.5).dp))
+                        
+                        Text(
+                            text = verseReference,
+                            color = Color(textColor).copy(alpha = textAlpha * 0.8f),
+                            fontSize = fontSize * 0.75f, 
+                            fontFamily = composeFontFamily,
+                            fontWeight = getComposeFontWeight(fontFamilyStr, false),
+                            textAlign = TextAlign.Center,
+                            style = if (useShadow) TextStyleWithShadow else LocalTextStyle.current
+                        )
+                    }
                 }
                 
-                // Indikátory
-                Box(Modifier.align(Alignment.BottomEnd).size(8.dp).background(Color.White, CircleShape))
-                Box(Modifier.align(Alignment.BottomStart).size(8.dp).background(Color.White, CircleShape))
-                Box(Modifier.align(Alignment.TopEnd).size(8.dp).background(Color.White, CircleShape))
-                Box(Modifier.align(Alignment.TopStart).size(8.dp).background(Color.White, CircleShape))
+                // DRAG HANDLES
+                val handleSize = 48.dp
+                val dotSize = 10.dp
+
+                // Pravá strana (Šírka)
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterEnd)
+                        .offset(x = 24.dp)
+                        .size(handleSize)
+                        .pointerInput(Unit) {
+                            detectDragGestures { change, dragAmount ->
+                                change.consume()
+                                val widthChangeMult = dragAmount.x / baseWidthPx
+                                updateWidth(widthChangeMult * 2)
+                            }
+                        },
+                    contentAlignment = Alignment.Center
+                ) { Box(Modifier.size(dotSize).background(Color.White, CircleShape)) }
+                
+                // Ľavá strana (Šírka)
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.CenterStart)
+                        .offset(x = -24.dp)
+                        .size(handleSize)
+                        .pointerInput(Unit) {
+                            detectDragGestures { change, dragAmount ->
+                                change.consume()
+                                val widthChangeMult = -dragAmount.x / baseWidthPx
+                                updateWidth(widthChangeMult * 2)
+                            }
+                        },
+                    contentAlignment = Alignment.Center
+                ) { Box(Modifier.size(dotSize).background(Color.White, CircleShape)) }
+
+                // Dolná strana (Veľkosť)
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .offset(y = 24.dp)
+                        .size(handleSize)
+                        .pointerInput(Unit) {
+                            detectDragGestures { change, dragAmount ->
+                                change.consume()
+                                updateSize(dragAmount.y / (200f * density.density))
+                            }
+                        },
+                    contentAlignment = Alignment.Center
+                ) { Box(Modifier.size(dotSize).background(Color.White, CircleShape)) }
+
+                // Horná strana (Veľkosť)
+                Box(
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .offset(y = -24.dp)
+                        .size(handleSize)
+                        .pointerInput(Unit) {
+                            detectDragGestures { change, dragAmount ->
+                                change.consume()
+                                updateSize(-dragAmount.y / (200f * density.density))
+                            }
+                        },
+                    contentAlignment = Alignment.Center
+                ) { Box(Modifier.size(dotSize).background(Color.White, CircleShape)) }
             }
         }
 
-        // 4. BOTTOM BAR / DONE BUTTON
+        // 4. BOTTOM BAR WITH ACTIONS
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
-                .padding(32.dp)
+                .padding(horizontal = 24.dp, vertical = 40.dp)
         ) {
-             Button(
-                 onClick = onDismiss,
-                 modifier = Modifier.align(Alignment.Center),
-                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-             ) {
-                 Icon(Icons.Outlined.Check, null)
-                 Spacer(modifier = Modifier.width(8.dp))
-                 Text("Hotovo")
-             }
-             
-             Text(
-                 "Pinch pre zmenu veľkosti, ťahaj pre posun",
-                 style = MaterialTheme.typography.labelSmall,
-                 color = Color.White.copy(alpha=0.7f),
-                 modifier = Modifier.align(Alignment.BottomCenter).padding(top = 48.dp)
-             )
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Text(
+                    text = strings.dragHint,
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        shadow = androidx.compose.ui.graphics.Shadow(Color.Black, blurRadius = 12f)
+                    ),
+                    color = Color.White.copy(alpha = 0.9f),
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(bottom = 24.dp)
+                )
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    FilledTonalButton(
+                        onClick = { 
+                            performHaptic(HapticFeedbackType.LongPress)
+                            onDismiss() 
+                        },
+                        modifier = Modifier.weight(1f).height(56.dp),
+                        colors = ButtonDefaults.filledTonalButtonColors(
+                            containerColor = Color.DarkGray.copy(alpha = 0.8f),
+                            contentColor = Color.White
+                        )
+                    ) {
+                        Icon(Icons.Outlined.Close, contentDescription = strings.cancel)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(strings.cancel, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    }
+
+                    Button(
+                        onClick = { 
+                            performHaptic(HapticFeedbackType.LongPress)
+                            onSave(localSizeMult, localWidthMult, localVerticalOffset) 
+                        },
+                        modifier = Modifier.weight(1f).height(56.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary,
+                            contentColor = MaterialTheme.colorScheme.onPrimary
+                        )
+                    ) {
+                        Icon(Icons.Outlined.Check, contentDescription = strings.done)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(strings.done, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    }
+                }
+            }
         }
     }
 }
@@ -564,11 +1450,16 @@ fun Pixel6LockScreenPreview(
     verseText: String,
     verseReference: String,
     textSizeMult: Float,
+    textWidthMult: Float,
     verticalOffset: Float,
     textColor: Int,
     textAlpha: Float,
+    bgBlur: Float,
     isBold: Boolean,
     useShadow: Boolean,
+    fontFamilyStr: String,
+    showEditHint: Boolean = false,
+    strings: AppStrings,
     onClick: () -> Unit,
     onEditClick: () -> Unit
 ) {
@@ -594,6 +1485,8 @@ fun Pixel6LockScreenPreview(
             var baseSize = maxWidth.value * 0.055f
             if (verseText.length > 150) baseSize = maxWidth.value * 0.045f
             val fontSize = (baseSize * textSizeMult / density.fontScale).sp
+            val composeFontFamily = getComposeFontFamily(fontFamilyStr)
+            val composeFontWeight = getComposeFontWeight(fontFamilyStr, isBold)
             
             // Výpočet Y pozície
             val defaultOffset = maxHeight * 0.05f
@@ -606,7 +1499,11 @@ fun Pixel6LockScreenPreview(
                     painter = rememberAsyncImagePainter(uri),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .then(
+                            if (bgBlur > 0f) Modifier.blur(bgBlur.dp) else Modifier
+                        )
                 )
                 Box(modifier = Modifier
                     .fillMaxSize()
@@ -618,7 +1515,7 @@ fun Pixel6LockScreenPreview(
                 )
             } else {
                 Box(modifier = Modifier.fillMaxSize().background(Color(0xFF212121)), contentAlignment = Alignment.Center) {
-                    Text("Klikni pre výber fotky", color = Color.White)
+                    Text(strings.clickToSelect, color = Color.White)
                 }
             }
 
@@ -648,41 +1545,80 @@ fun Pixel6LockScreenPreview(
             }
 
             // --- NÁHĽAD VERŠA ---
-            // CenterBox
+            // CenterBox pre náhľad a obal
             Box(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
+                // Vonkajší Box definuje presné rozmery celého orámovaného bloku textu aj na výšku vďaka intrinsic Content
                 Box(
                     modifier = Modifier
                         .offset(y = totalOffset)
-                        .width(maxWidth * 0.85f) // Rovnaká šírka ako v editore (85%)
-                        // Padding 2.5% z každej strany = 80% effective width
+                        .width(maxWidth * 0.80f * textWidthMult)
                         .clickable { onEditClick() }
-                        .padding(horizontal = maxWidth * 0.025f, vertical = 16.dp)
+                        .then(
+                            if (showEditHint) Modifier.drawBehind {
+                                drawRoundRect(
+                                    color = Color.White.copy(alpha = 0.6f),
+                                    style = Stroke(
+                                        width = 1.5.dp.toPx(),
+                                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(15f, 15f), 0f)
+                                    ),
+                                    cornerRadius = CornerRadius(16.dp.toPx())
+                                )
+                            } else Modifier
+                        )
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = verseText,
-                            color = Color(textColor).copy(alpha = textAlpha),
-                            fontSize = fontSize,
-                            lineHeight = fontSize * 1.25f,
-                            fontWeight = if (isBold) FontWeight.Bold else FontWeight.Normal,
-                            textAlign = TextAlign.Center,
-                            style = if (useShadow) TextStyleWithShadow else LocalTextStyle.current
-                        )
-                        
-                        Spacer(modifier = Modifier.height((fontSize.value * 0.5).dp))
-                        
-                        Text(
-                            text = verseReference,
-                            color = Color(textColor).copy(alpha = textAlpha * 0.8f),
-                            fontSize = fontSize * 0.75f,
-                            textAlign = TextAlign.Center,
-                            style = if (useShadow) TextStyleWithShadow else LocalTextStyle.current
-                        )
+                    // Padded vnútorný obsah s textom - určuje výšku predchádzajúceho boxu
+                    Box(modifier = Modifier.padding(horizontal = maxWidth * 0.025f, vertical = 16.dp)) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = verseText,
+                                color = Color(textColor).copy(alpha = textAlpha),
+                                fontSize = fontSize,
+                                fontFamily = composeFontFamily,
+                                lineHeight = fontSize * 1.25f,
+                                fontWeight = composeFontWeight,
+                                textAlign = TextAlign.Center,
+                                style = if (useShadow) TextStyleWithShadow else LocalTextStyle.current
+                            )
+                            
+                            Spacer(modifier = Modifier.height((fontSize.value * 0.5).dp))
+                            
+                            Text(
+                                text = verseReference,
+                                color = Color(textColor).copy(alpha = textAlpha * 0.8f),
+                                fontSize = fontSize * 0.75f,
+                                fontFamily = composeFontFamily,
+                                fontWeight = getComposeFontWeight(fontFamilyStr, false),
+                                textAlign = TextAlign.Center,
+                                style = if (useShadow) TextStyleWithShadow else LocalTextStyle.current
+                            )
+                        }
+                    }
+
+                    // Ikonka ceruzky - posunutá presne na stred pravej hornej hranice
+                    if (showEditHint) {
+                        Box(
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                // Box je veľký 32.dp. Posunom o 16.dp ho vycentrujeme presne na roh.
+                                .offset(x = 16.dp, y = (-16).dp)
+                                .size(32.dp)
+                                .background(Color.Black.copy(alpha = 0.4f), CircleShape)
+                                .border(1.5.dp, Color.White.copy(alpha = 0.6f), CircleShape),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Edit,
+                                contentDescription = "Editovať",
+                                tint = Color.White.copy(alpha = 0.9f),
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
                     }
                 }
             }
@@ -714,6 +1650,34 @@ fun Pixel6LockScreenPreview(
     }
 }
 
+@Composable
+fun FontPickerRow(selectedFont: String, strings: AppStrings, onFontSelected: (String) -> Unit) {
+    val fonts = listOf(
+        "sans-serif" to strings.fontModern,
+        "sans-serif-light" to strings.fontLight,
+        "sans-serif-condensed" to strings.fontCondensed,
+        "serif" to strings.fontBook,
+        "monospace" to strings.fontMono,
+        "cursive" to strings.fontCursive
+    )
+
+    Row(
+        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        fonts.forEach { (fontId, fontName) ->
+            FilterChip(
+                selected = selectedFont == fontId,
+                onClick = { onFontSelected(fontId) },
+                label = { Text(fontName, fontFamily = getComposeFontFamily(fontId), fontWeight = getComposeFontWeight(fontId, false)) },
+                leadingIcon = if (selectedFont == fontId) {
+                    { Icon(Icons.Default.Check, null) }
+                } else null
+            )
+        }
+    }
+}
+
 val TextStyleWithShadow = TextStyle(
     shadow = androidx.compose.ui.graphics.Shadow(
         color = Color.Black,
@@ -721,8 +1685,28 @@ val TextStyleWithShadow = TextStyle(
     )
 )
 
+fun getComposeFontFamily(fontFamilyStr: String): FontFamily {
+    return when (fontFamilyStr) {
+        "serif" -> FontFamily.Serif
+        "monospace" -> FontFamily.Monospace
+        "cursive" -> FontFamily.Cursive
+        else -> FontFamily.SansSerif
+    }
+}
+
+fun getComposeFontWeight(fontFamilyStr: String, isBold: Boolean): FontWeight {
+    if (isBold) return FontWeight.Bold
+    return when (fontFamilyStr) {
+        "sans-serif-light" -> FontWeight.Light
+        else -> FontWeight.Normal
+    }
+}
+
 @Composable
 fun ColorPickerRow(selectedColor: Int, onColorSelected: (Int) -> Unit) {
+    var showDialog by remember { mutableStateOf(false) }
+    val controller = rememberColorPickerController()
+
     val colors = listOf(
         AndroidColor.WHITE,
         AndroidColor.BLACK,
@@ -731,6 +1715,39 @@ fun ColorPickerRow(selectedColor: Int, onColorSelected: (Int) -> Unit) {
         AndroidColor.parseColor("#FFB6C1"), // Light Pink
         AndroidColor.parseColor("#98FB98")  // Pale Green
     )
+
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            title = { Text("Vyberte farbu") },
+            text = {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    HsvColorPicker(
+                        modifier = Modifier.fillMaxWidth().height(300.dp),
+                        controller = controller
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    BrightnessSlider(
+                        modifier = Modifier.fillMaxWidth().height(32.dp),
+                        controller = controller
+                    )
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    onColorSelected(controller.selectedColor.value.toArgb())
+                    showDialog = false
+                }) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text("Zrušiť")
+                }
+            }
+        )
+    }
 
     Row(
         modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
@@ -758,6 +1775,21 @@ fun ColorPickerRow(selectedColor: Int, onColorSelected: (Int) -> Unit) {
                     )
                 }
             }
+        }
+        // Tlačidlo pre otvorenie Color Wheel
+        Box(
+            modifier = Modifier
+                .size(48.dp)
+                .clip(CircleShape)
+                .background(
+                    brush = Brush.sweepGradient(
+                        listOf(Color.Red, Color.Magenta, Color.Blue, Color.Cyan, Color.Green, Color.Yellow, Color.Red)
+                    )
+                )
+                .clickable { showDialog = true },
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(Icons.Default.ColorLens, "Custom Color", tint = Color.White)
         }
     }
 }

@@ -71,6 +71,9 @@ dependencies {
     // Gson - na ukladanie objektov (ak by bolo treba)
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.32.0")
+    
+    // Color Picker - pre pokročilý výber farieb
+    implementation("com.github.skydoves:colorpicker-compose:1.0.0")
 
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.material.icons.extended) // Add this line

@@ -26,18 +26,23 @@ private val LightColorScheme = lightColorScheme(
     primary = Primary40,
     secondary = Secondary40,
     tertiary = Tertiary40
-    // Pre tento "Vibe" aplikácie odporúčam primárne Dark mode,
-    // ale tu je light fallback
 )
 
 @Composable
 fun BibleLockScreenTheme(
-    darkTheme: Boolean = true, // Vynútime predvolene Dark Theme pre lepší vizuál
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    dynamicColor: Boolean = true,
     content: @Composable () -> Unit
 ) {
-    val colorScheme = if (darkTheme) DarkColorScheme else LightColorScheme
+    val colorScheme = when {
+        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+            val context = LocalContext.current
+            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+        }
+        darkTheme -> DarkColorScheme
+        else -> LightColorScheme
+    }
 
-    // Nastavenie farby status baru
     val view = LocalView.current
     if (!view.isInEditMode) {
         val systemUiController = rememberSystemUiController()
