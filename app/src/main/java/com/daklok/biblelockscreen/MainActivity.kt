@@ -23,7 +23,15 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Favorite
+import androidx.compose.material.icons.outlined.Fingerprint
+import androidx.compose.material.icons.outlined.FormatBold
+import androidx.compose.material.icons.outlined.RestartAlt
+import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.BlurOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -1515,136 +1523,141 @@ fun Pixel6LockScreenPreview(
                 )
             } else {
                 Box(modifier = Modifier.fillMaxSize().background(Color(0xFF212121)), contentAlignment = Alignment.Center) {
-                    Text(strings.clickToSelect, color = Color.White)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Icon(Icons.Default.AddPhotoAlternate, contentDescription = null, tint = Color.White.copy(alpha = 0.7f), modifier = Modifier.size(48.dp).padding(bottom = 8.dp))
+                        Text(strings.clickToSelect, color = Color.White.copy(alpha = 0.7f))
+                    }
                 }
             }
 
-            // FAKE STATUS BAR & CLOCK (Pixel Style)
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = 60.dp, start = 24.dp, end = 24.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                // Clock
-                Text(
-                    text = "09:41",
-                    color = Color(0xFFEEEEEE),
-                    fontSize = 72.sp,
-                    fontWeight = FontWeight.Light,
-                    letterSpacing = 2.sp
-                )
-                // Date
-                val date = SimpleDateFormat("EEE, d. MMM", Locale.getDefault()).format(Date())
-                Text(
-                    text = date,
-                    color = Color(0xFFEEEEEE),
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Normal
-                )
-            }
-
-            // --- NÁHĽAD VERŠA ---
-            // CenterBox pre náhľad a obal
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                // Vonkajší Box definuje presné rozmery celého orámovaného bloku textu aj na výšku vďaka intrinsic Content
-                Box(
+            if (uri != null) {
+                // FAKE STATUS BAR & CLOCK (Pixel Style)
+                Column(
                     modifier = Modifier
-                        .offset(y = totalOffset)
-                        .width(maxWidth * 0.80f * textWidthMult)
-                        .clickable { onEditClick() }
-                        .then(
-                            if (showEditHint) Modifier.drawBehind {
-                                drawRoundRect(
-                                    color = Color.White.copy(alpha = 0.6f),
-                                    style = Stroke(
-                                        width = 1.5.dp.toPx(),
-                                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(15f, 15f), 0f)
-                                    ),
-                                    cornerRadius = CornerRadius(16.dp.toPx())
-                                )
-                            } else Modifier
-                        )
+                        .fillMaxSize()
+                        .padding(top = 60.dp, start = 24.dp, end = 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Padded vnútorný obsah s textom - určuje výšku predchádzajúceho boxu
-                    Box(modifier = Modifier.padding(horizontal = maxWidth * 0.025f, vertical = 16.dp)) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(
-                                text = verseText,
-                                color = Color(textColor).copy(alpha = textAlpha),
-                                fontSize = fontSize,
-                                fontFamily = composeFontFamily,
-                                lineHeight = fontSize * 1.25f,
-                                fontWeight = composeFontWeight,
-                                textAlign = TextAlign.Center,
-                                style = if (useShadow) TextStyleWithShadow else LocalTextStyle.current
-                            )
-                            
-                            Spacer(modifier = Modifier.height((fontSize.value * 0.5).dp))
-                            
-                            Text(
-                                text = verseReference,
-                                color = Color(textColor).copy(alpha = textAlpha * 0.8f),
-                                fontSize = fontSize * 0.75f,
-                                fontFamily = composeFontFamily,
-                                fontWeight = getComposeFontWeight(fontFamilyStr, false),
-                                textAlign = TextAlign.Center,
-                                style = if (useShadow) TextStyleWithShadow else LocalTextStyle.current
-                            )
-                        }
-                    }
-
-                    // Ikonka ceruzky - posunutá presne na stred pravej hornej hranice
-                    if (showEditHint) {
-                        Box(
-                            modifier = Modifier
-                                .align(Alignment.TopEnd)
-                                // Box je veľký 32.dp. Posunom o 16.dp ho vycentrujeme presne na roh.
-                                .offset(x = 16.dp, y = (-16).dp)
-                                .size(32.dp)
-                                .background(Color.Black.copy(alpha = 0.4f), CircleShape)
-                                .border(1.5.dp, Color.White.copy(alpha = 0.6f), CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Outlined.Edit,
-                                contentDescription = "Editovať",
-                                tint = Color.White.copy(alpha = 0.9f),
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                    }
+                    // Clock
+                    Text(
+                        text = "09:41",
+                        color = Color(0xFFEEEEEE),
+                        fontSize = 72.sp,
+                        fontWeight = FontWeight.Light,
+                        letterSpacing = 2.sp
+                    )
+                    // Date
+                    val date = SimpleDateFormat("EEE, d. MMM", Locale.getDefault()).format(Date())
+                    Text(
+                        text = date,
+                        color = Color(0xFFEEEEEE),
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Normal
+                    )
                 }
-            }
 
-            // --- FINGERPRINT & BOTTOM ICONS ---
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(bottom = 32.dp, start = 32.dp, end = 32.dp),
-                contentAlignment = Alignment.BottomCenter
-            ) {
-                // Senzor odtlačku
+                // --- NÁHĽAD VERŠA ---
+                // CenterBox pre náhľad a obal
                 Box(
-                    modifier = Modifier
-                        .padding(bottom = 100.dp)
-                        .size(64.dp)
-                        .background(Color(0x33FFFFFF), CircleShape)
-                        .border(1.dp, Color(0x66FFFFFF), CircleShape),
+                    modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(Icons.Outlined.Fingerprint, null, tint = Color.White, modifier = Modifier.size(32.dp))
+                    // Vonkajší Box definuje presné rozmery celého orámovaného bloku textu aj na výšku vďaka intrinsic Content
+                    Box(
+                        modifier = Modifier
+                            .offset(y = totalOffset)
+                            .width(maxWidth * 0.80f * textWidthMult)
+                            .clickable { onEditClick() }
+                            .then(
+                                if (showEditHint) Modifier.drawBehind {
+                                    drawRoundRect(
+                                        color = Color.White.copy(alpha = 0.6f),
+                                        style = Stroke(
+                                            width = 1.5.dp.toPx(),
+                                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(15f, 15f), 0f)
+                                        ),
+                                        cornerRadius = CornerRadius(16.dp.toPx())
+                                    )
+                                } else Modifier
+                            )
+                    ) {
+                        // Padded vnútorný obsah s textom - určuje výšku predchádzajúceho boxu
+                        Box(modifier = Modifier.padding(horizontal = maxWidth * 0.025f, vertical = 16.dp)) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Text(
+                                    text = verseText,
+                                    color = Color(textColor).copy(alpha = textAlpha),
+                                    fontSize = fontSize,
+                                    fontFamily = composeFontFamily,
+                                    lineHeight = fontSize * 1.25f,
+                                    fontWeight = composeFontWeight,
+                                    textAlign = TextAlign.Center,
+                                    style = if (useShadow) TextStyleWithShadow else LocalTextStyle.current
+                                )
+                                
+                                Spacer(modifier = Modifier.height((fontSize.value * 0.5).dp))
+                                
+                                Text(
+                                    text = verseReference,
+                                    color = Color(textColor).copy(alpha = textAlpha * 0.8f),
+                                    fontSize = fontSize * 0.75f,
+                                    fontFamily = composeFontFamily,
+                                    fontWeight = getComposeFontWeight(fontFamilyStr, false),
+                                    textAlign = TextAlign.Center,
+                                    style = if (useShadow) TextStyleWithShadow else LocalTextStyle.current
+                                )
+                            }
+                        }
+
+                        // Ikonka ceruzky - posunutá presne na stred pravej hornej hranice
+                        if (showEditHint) {
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    // Box je veľký 32.dp. Posunom o 16.dp ho vycentrujeme presne na roh.
+                                    .offset(x = 16.dp, y = (-16).dp)
+                                    .size(32.dp)
+                                    .background(Color.Black.copy(alpha = 0.4f), CircleShape)
+                                    .border(1.5.dp, Color.White.copy(alpha = 0.6f), CircleShape),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Edit,
+                                    contentDescription = "Editovať",
+                                    tint = Color.White.copy(alpha = 0.9f),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                        }
+                    }
                 }
 
-                // Ikony na krajoch
-                Icon(Icons.Default.PhotoCamera, null, tint = Color.White, modifier = Modifier.align(Alignment.BottomEnd).padding(bottom=16.dp))
-                Icon(Icons.Default.AccountBalanceWallet, null, tint = Color.White, modifier = Modifier.align(Alignment.BottomStart).padding(bottom=16.dp))
+                // --- FINGERPRINT & BOTTOM ICONS ---
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(bottom = 32.dp, start = 32.dp, end = 32.dp),
+                    contentAlignment = Alignment.BottomCenter
+                ) {
+                    // Senzor odtlačku
+                    Box(
+                        modifier = Modifier
+                            .padding(bottom = 100.dp)
+                            .size(64.dp)
+                            .background(Color(0x33FFFFFF), CircleShape)
+                            .border(1.dp, Color(0x66FFFFFF), CircleShape),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(Icons.Outlined.Fingerprint, null, tint = Color.White, modifier = Modifier.size(32.dp))
+                    }
+
+                    // Ikony na krajoch
+                    Icon(Icons.Default.PhotoCamera, null, tint = Color.White, modifier = Modifier.align(Alignment.BottomEnd).padding(bottom=16.dp))
+                    Icon(Icons.Default.AccountBalanceWallet, null, tint = Color.White, modifier = Modifier.align(Alignment.BottomStart).padding(bottom=16.dp))
+                }
             }
         }
     }
