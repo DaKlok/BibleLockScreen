@@ -4,17 +4,21 @@ import android.app.WallpaperManager
 import android.content.Context
 import android.graphics.Color
 import android.net.Uri
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 
 class DailyVerseWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, params) {
 
+    @RequiresApi(Build.VERSION_CODES.P)
     override suspend fun doWork(): Result {
         val prefs = applicationContext.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
 
         val uriString = prefs.getString("bg_uri", null) ?: return Result.failure()
 
         // Načítanie všetkých nastavení
+        val bgBlurRadius = prefs.getFloat("bg_blur", 0f)
         val textSizeMult = prefs.getFloat("text_size_mult", 1.0f)
         val textWidthMult = prefs.getFloat("text_width_mult", 1.0f)
         val verticalOffset = prefs.getFloat("vertical_offset", 0.0f)
@@ -23,7 +27,10 @@ class DailyVerseWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
         val isBold = prefs.getBoolean("is_bold", true)
         val useShadow = prefs.getBoolean("use_shadow", true)
         val fontFamilyStr = prefs.getString("font_family", "sans-serif") ?: "sans-serif"
-        val verseLang = prefs.getString("verse_lang", "SK") ?: "SK"
+        
+        // Use YouVersionFetcher.getDefaultLanguage() if no language is saved in prefs
+        val defaultLang = YouVersionFetcher.getDefaultLanguage()
+        val verseLang = prefs.getString("verse_lang", defaultLang) ?: defaultLang
 
         val verseData = YouVersionFetcher.getVerseOfTheDay(verseLang) ?: return Result.retry()
 
@@ -39,7 +46,8 @@ class DailyVerseWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
             textAlpha = textAlpha,
             isBold = isBold,
             useShadow = useShadow,
-            fontFamilyStr = fontFamilyStr
+            fontFamilyStr = fontFamilyStr,
+            bgBlurRadius = bgBlurRadius
         )
 
         if (finalBitmap != null) {

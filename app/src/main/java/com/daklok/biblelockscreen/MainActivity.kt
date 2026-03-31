@@ -1,6 +1,7 @@
 package com.daklok.biblelockscreen
 
 import android.Manifest
+import android.R
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -32,6 +33,7 @@ import androidx.compose.material.icons.outlined.FormatBold
 import androidx.compose.material.icons.outlined.RestartAlt
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.BlurOn
+import androidx.compose.material.icons.outlined.TouchApp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -76,6 +78,7 @@ import kotlin.math.roundToInt
 
 // --- TRANSLATIONS ---
 data class AppStrings(
+    val tapToEdit: String = "Kliknutím upravíš polohu a veľkosť",
     val appName: String = "Bible Lock Screen",
     val settings: String = "Nastavenia aplikácie",
     val dailyWallpaper: String = "Denná zmena tapety",
@@ -126,6 +129,7 @@ data class AppStrings(
 val skStrings = AppStrings()
 
 val enStrings = AppStrings(
+    tapToEdit = "Tap to edit position and size",
     settings = "App Settings",
     dailyWallpaper = "Daily Wallpaper Change",
     active = "Active (every morning 6:00)",
@@ -559,6 +563,7 @@ fun MainScreen(
     // --- STATES ---
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     var versePair by remember { mutableStateOf<Pair<String, String>?>(null) }
+    var hasSeenEditHint by remember { mutableStateOf(true) }
 
     // Nastavenia
     var textSizeMult by remember { mutableFloatStateOf(1.0f) }
@@ -619,7 +624,9 @@ fun MainScreen(
         useShadow = prefs.getBoolean("use_shadow", true)
         fontFamilyStr = prefs.getString("font_family", "sans-serif") ?: "sans-serif"
         useHaptics = prefs.getBoolean("use_haptics", true)
-        
+
+        hasSeenEditHint = prefs.getBoolean("has_seen_edit_hint", false)
+
         appLang = prefs.getString("app_lang", defaultSystemLang) ?: defaultSystemLang
         verseLang = prefs.getString("verse_lang", defaultSystemLang) ?: defaultSystemLang
 
@@ -739,6 +746,7 @@ fun MainScreen(
                         fontFamilyStr = fontFamilyStr,
                         showEditHint = true, // Ukazuje obrys s ceruzkou
                         strings = strings,
+                        showBubbleHint = imageUri != null && !hasSeenEditHint,
                         onClick = {
                             performHaptic(HapticFeedbackType.LongPress)
                             launcher.launch("image/*")
@@ -746,6 +754,12 @@ fun MainScreen(
                         onEditClick = {
                             performHaptic(HapticFeedbackType.LongPress)
                             isEditing = true
+
+                            if (!hasSeenEditHint) {
+                                hasSeenEditHint = true
+                                context.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
+                                    .edit().putBoolean("has_seen_edit_hint", true).apply()
+                            }
                         }
                     )
                 }
@@ -1215,7 +1229,7 @@ fun FullScreenEditor(
                 modifier = Modifier
                     .fillMaxSize()
                     .then(
-                        if (bgBlur > 0f) Modifier.blur(bgBlur.dp) else Modifier
+                        if (bgBlur > 0f) Modifier.blur((bgBlur * 0.7f).dp) else Modifier
                     )
             )
             Box(modifier = Modifier
@@ -1260,23 +1274,23 @@ fun FullScreenEditor(
                         change.consume()
                         val panYDp = dragAmount.y / density.density
                         val panOffsetChange = panYDp * moveFactor
-                        
+
                         rawVerticalOffset = (rawVerticalOffset + panOffsetChange).coerceIn(-1.0f, 1.0f)
-                        
+
                         val snapZone = 0.04f
                         val newSnappedOffset = if (kotlin.math.abs(rawVerticalOffset) < snapZone) {
                             0.0f
                         } else {
                             rawVerticalOffset
                         }
-                        
+
                         if (newSnappedOffset == 0.0f && !isPositionSnapped) {
                             performHaptic(HapticFeedbackType.LongPress)
                             isPositionSnapped = true
                         } else if (newSnappedOffset != 0.0f && isPositionSnapped) {
                             isPositionSnapped = false
                         }
-                        
+
                         localVerticalOffset = newSnappedOffset
                     }
                 },
@@ -1294,9 +1308,9 @@ fun FullScreenEditor(
                         .fillMaxWidth()
                         .border(
                             width = if (isPositionSnapped) 3.dp else 2.dp, // Indikácia snapu stredovej pozície
-                            color = if (isPositionSnapped) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary, 
+                            color = if (isPositionSnapped) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary,
                             shape = RoundedCornerShape(16.dp)
-                        ) 
+                        )
                         .background(Color.Black.copy(alpha = 0.35f), RoundedCornerShape(16.dp))
                         .padding(horizontal = maxWidth * 0.025f, vertical = 16.dp)
                 ) {
@@ -1453,6 +1467,50 @@ fun FullScreenEditor(
 }
 
 @Composable
+fun EditHintBubble(text: String, modifier: Modifier = Modifier) {
+    val infiniteTransition = rememberInfiniteTransition(label = "bounce")
+    val bounceOffset by infiniteTransition.animateFloat(
+        initialValue = 0f,
+        targetValue = -15f, // Bounces up by 15dp
+        animationSpec = infiniteRepeatable(
+            animation = tween(1000, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Reverse
+        ),
+        label = "bounceOffset"
+    )
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = modifier.offset(y = bounceOffset.dp)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            color = MaterialTheme.colorScheme.secondaryContainer,
+            contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
+            shadowElevation = 8.dp
+        ) {
+            Row(
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(Icons.Outlined.TouchApp, contentDescription = null)
+                Spacer(Modifier.width(8.dp))
+                Text(text, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.labelLarge)
+            }
+        }
+        // Triangle pointing down at the verse
+        Icon(
+            Icons.Default.ArrowDropDown,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.secondaryContainer,
+            modifier = Modifier
+                .size(40.dp)
+                .offset(y = (-14).dp) // Overlap to seamlessly connect to the bubble
+        )
+    }
+}
+
+@Composable
 fun Pixel6LockScreenPreview(
     uri: Uri?,
     verseText: String,
@@ -1467,6 +1525,7 @@ fun Pixel6LockScreenPreview(
     useShadow: Boolean,
     fontFamilyStr: String,
     showEditHint: Boolean = false,
+    showBubbleHint: Boolean = false,
     strings: AppStrings,
     onClick: () -> Unit,
     onEditClick: () -> Unit
@@ -1610,6 +1669,20 @@ fun Pixel6LockScreenPreview(
                                     style = if (useShadow) TextStyleWithShadow else LocalTextStyle.current
                                 )
                             }
+                        }
+
+
+                        // --- PRIDANÁ BUBLINA ---
+                        androidx.compose.animation.AnimatedVisibility( // Using explicit package to avoid receiver ambiguity
+                            visible = showBubbleHint,
+                            enter = fadeIn(tween(400)) + scaleIn(initialScale = 0.5f, animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)),
+                            exit = fadeOut(tween(300)) + scaleOut(targetScale = 0.8f),
+                            modifier = Modifier
+                                .align(Alignment.TopCenter)
+                                // Posunieme bublinu presne nad rámček s textom
+                                .offset(y = (-70).dp)
+                        ) {
+                            EditHintBubble(text = strings.tapToEdit)
                         }
 
                         // Ikonka ceruzky - posunutá presne na stred pravej hornej hranice
@@ -1819,9 +1892,11 @@ fun EnhancedSlider(
 ) {
     val haptic = LocalHapticFeedback.current
 
-    Column {
+    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 0.dp)){
         Row(
-            modifier = Modifier.fillMaxWidth(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(40.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
@@ -1838,12 +1913,27 @@ fun EnhancedSlider(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                if (value != defaultVal) {
-                    IconButton(onClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onValueChange(defaultVal)
-                    }) {
-                        Icon(Icons.Outlined.RestartAlt, "Reset", modifier = Modifier.size(16.dp))
+                AnimatedVisibility(
+                    visible = (value != defaultVal),
+                    // This creates the "slide left" effect for the text
+                    // and "fade/expand" effect for the button
+                    enter = fadeIn() + expandHorizontally(expandFrom = Alignment.Start),
+                    exit = fadeOut() + shrinkHorizontally(shrinkTowards = Alignment.Start)
+                ) {
+                    IconButton(
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            onValueChange(defaultVal)
+                        },
+                        // Fixed size ensures the button doesn't stretch the row vertically
+                        modifier = Modifier.size(32.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.RestartAlt,
+                            contentDescription = "Reset",
+                            modifier = Modifier.size(18.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
                     }
                 }
             }

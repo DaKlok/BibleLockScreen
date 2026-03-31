@@ -4,6 +4,7 @@ import android.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jsoup.Jsoup
+import java.util.Locale
 
 object YouVersionFetcher {
 
@@ -11,10 +12,19 @@ object YouVersionFetcher {
     private const val USER_AGENT =
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
+    fun getDefaultLanguage(): String {
+        val sysLang = Locale.getDefault().language.uppercase()
+        return when (sysLang) {
+            "CS" -> "CZ"
+            "SK", "EN", "CZ", "ES", "IT", "FR", "DE", "HU", "PL" -> sysLang
+            else -> "EN"
+        }
+    }
+
     suspend fun getVerseOfTheDay(language: String = "SK"): Pair<String, String>? {
         return withContext(Dispatchers.IO) {
             try {
-                Log.d(TAG, "--- ŠTART SŤAHOVANIA ---")
+                Log.d(TAG, "--- ŠTART SŤAHOVANIA (Jazyk: $language) ---")
 
                 // 1. KROK: Načítame anglickú stránku pre získanie ID
                 val engDoc = Jsoup.connect("https://www.bible.com/en-GB/verse-of-the-day")
@@ -38,7 +48,7 @@ object YouVersionFetcher {
                     "IT" -> "https://www.bible.com/it/bible/122/$verseId" // NR2006 (Italian)
                     "FR" -> "https://www.bible.com/fr/bible/133/$verseId" // BDS (French)
                     "DE" -> "https://www.bible.com/de/bible/157/$verseId" // SCH2000 (German)
-                    "HU" -> "https://www.bible.com/hu/bible/17/$verseId" // KAR (Hungarian)
+                    "HU" -> "https://www.bible.com/hu/bible/920/$verseId" // KAR (Hungarian)
                     "PL" -> "https://www.bible.com/pl/bible/138/$verseId" // UBG (Polish)
                     else -> "https://www.bible.com/sk/bible/163/$verseId" // SK SSV (Default)
                 }

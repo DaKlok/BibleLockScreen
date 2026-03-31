@@ -55,10 +55,12 @@ object WallpaperUtils {
                 postTranslate(dx, dy)
             }
             bgCanvas.drawBitmap(original, matrix, Paint(Paint.FILTER_BITMAP_FLAG))
+            original.recycle()
 
-            // 4. Aplikácia Blur efektu na pozadie
+            // 4. Aplikácia Blur efektu na pozadie - teraz s ohľadom na hustotu pixelov (DP -> PX)
             if (bgBlurRadius > 0f) {
-                val blurred = blurBitmap(context, workingBitmap, bgBlurRadius)
+                val density = metrics.density
+                val blurred = blurBitmap(context, workingBitmap, bgBlurRadius * density)
                 workingBitmap.recycle()
                 workingBitmap = blurred
             }
@@ -151,33 +153,45 @@ object WallpaperUtils {
 
     @Suppress("DEPRECATION")
     private fun blurBitmap(context: Context, bitmap: Bitmap, radius: Float): Bitmap {
-        if (radius <= 0f) return bitmap
-        val r = radius.coerceIn(1f, 25f)
-        val outputBitmap = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
-        
+        if (radius <= 0.1f) return bitmap
+
+        // 1. Calculate downscale factor.
+        // We use a fixed factor if radius is high to keep performance consistent
+        // across preview and final render.
+        val downscale = if (radius > 25f) radius / 25f else 1f
+        val internalRadius = (radius / downscale).coerceIn(1f, 25f)
+
+        val width = max(1, (bitmap.width / downscale).toInt())
+        val height = max(1, (bitmap.height / downscale).toInt())
+
+        // Create the smaller bitmap for blurring
+        val workingBitmap = Bitmap.createScaledBitmap(bitmap, width, height, true)
+        val outputBitmap = Bitmap.createBitmap(workingBitmap.width, workingBitmap.height, Bitmap.Config.ARGB_8888)
+
         var rs: android.renderscript.RenderScript? = null
         try {
             rs = android.renderscript.RenderScript.create(context)
-            val input = android.renderscript.Allocation.createFromBitmap(
-                rs, 
-                bitmap, 
-                android.renderscript.Allocation.MipmapControl.MIPMAP_NONE, 
-                android.renderscript.Allocation.USAGE_SCRIPT
-            )
+            val input = android.renderscript.Allocation.createFromBitmap(rs, workingBitmap)
             val output = android.renderscript.Allocation.createTyped(rs, input.type)
             val script = android.renderscript.ScriptIntrinsicBlur.create(rs, android.renderscript.Element.U8_4(rs))
-            script.setRadius(r)
+
+            script.setRadius(internalRadius)
             script.setInput(input)
             script.forEach(output)
             output.copyTo(outputBitmap)
         } catch (e: Exception) {
-            // Fallback ak RenderScript zlyhá: jednoduché škálovanie
-            val smallBitmap = Bitmap.createScaledBitmap(bitmap, bitmap.width / 10, bitmap.height / 10, true)
-            return Bitmap.createScaledBitmap(smallBitmap, bitmap.width, bitmap.height, true)
+            e.printStackTrace()
+            // Fallback: If RS fails, the scaled-down workingBitmap already provides a "cheap" blur
+            return Bitmap.createScaledBitmap(workingBitmap, bitmap.width, bitmap.height, true)
         } finally {
+            if (workingBitmap != bitmap) workingBitmap.recycle()
             rs?.destroy()
         }
-        return outputBitmap
+
+        // Scale back to original size with bilinear filtering (true)
+        val finalBitmap = Bitmap.createScaledBitmap(outputBitmap, bitmap.width, bitmap.height, true)
+        outputBitmap.recycle()
+        return finalBitmap
     }
 
     private fun createLayout(text: String, paint: TextPaint, width: Int): StaticLayout {
