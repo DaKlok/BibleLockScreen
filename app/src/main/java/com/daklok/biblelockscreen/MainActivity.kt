@@ -639,10 +639,11 @@ fun MainScreen(
         // 1. Prioritize the local "owned" file
         val localFile = java.io.File(context.filesDir, "user_wallpaper.jpg")
         if (localFile.exists()) {
-            val internalUri = Uri.fromFile(localFile)
+            // Add a timestamp here too so the first load is always the latest version on disk
+            val internalUri = Uri.fromFile(localFile).buildUpon()
+                .appendQueryParameter("v", System.currentTimeMillis().toString())
+                .build()
             imageUri = internalUri
-            // Ensure the preference matches the actual file we found
-            prefs.edit().putString("bg_uri", internalUri.toString()).apply()
         } else {
             val savedUri = prefs.getString("bg_uri", null)
             if (savedUri != null) imageUri = Uri.parse(savedUri)
@@ -725,9 +726,21 @@ fun MainScreen(
                     val internalUri = Uri.fromFile(destinationFile).toString()
 
                     withContext(Dispatchers.Main) {
-                        imageUri = Uri.parse(internalUri)
+                        // 1. Create a "cache breaker" using the current time
+                        val timestamp = System.currentTimeMillis()
+                        val internalUriWithCacheBreaker = Uri.fromFile(destinationFile).buildUpon()
+                            .appendQueryParameter("v", timestamp.toString())
+                            .build()
+
+                        // 2. Set the imageUri to null first, then the new URI
+                        // This combined with the timestamp forces Coil to reload from disk
+                        imageUri = null
+                        imageUri = internalUriWithCacheBreaker
+
+                        // 3. Save the base URI to prefs (without the timestamp, to keep it clean)
+                        val baseInternalUri = Uri.fromFile(destinationFile).toString()
                         context.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
-                            .edit().putString("bg_uri", internalUri).apply()
+                            .edit().putString("bg_uri", baseInternalUri).apply()
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
