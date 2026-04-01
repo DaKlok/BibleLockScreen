@@ -36,6 +36,8 @@ import androidx.compose.material.icons.outlined.BlurOn
 import androidx.compose.material.icons.outlined.TouchApp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -70,7 +72,9 @@ import com.github.skydoves.colorpicker.compose.BrightnessSlider
 import com.github.skydoves.colorpicker.compose.ColorPickerController
 import com.github.skydoves.colorpicker.compose.HsvColorPicker
 import com.github.skydoves.colorpicker.compose.rememberColorPickerController
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
@@ -78,6 +82,11 @@ import kotlin.math.roundToInt
 
 // --- TRANSLATIONS ---
 data class AppStrings(
+    val test: String = "Generovať", //tlacitko
+    val generatingBtn: String = "Generuje sa...",
+    val generating: String = "Tapeta sa generuje...",
+    val done: String = "Hotovo",
+
     val tapToEdit: String = "Kliknutím upravíš polohu a veľkosť",
     val appName: String = "Bible Lock Screen",
     val settings: String = "Nastavenia aplikácie",
@@ -92,7 +101,6 @@ data class AppStrings(
     val textAlpha: String = "Priehľadnosť",
     val bgBlur: String = "Rozmazanie pozadia",
     val anotherPhoto: String = "Iná fotka",
-    val test: String = "Testovať",
     val selectPhotoFirst: String = "Najskôr vyber fotku",
     val appearance: String = "Vzhľad",
     val system: String = "Systém",
@@ -107,14 +115,12 @@ data class AppStrings(
     val close: String = "Zavrieť",
     val dragHint: String = "Ťahaj body pre veľkosť a šírku\nŤahaj do stredu pre presun",
     val cancel: String = "Zrušiť",
-    val done: String = "Hotovo",
     val clickToSelect: String = "Klikni pre výber fotky",
     val loading: String = "Načítavam verš...",
     val appLanguage: String = "Jazyk aplikácie",
     val verseLanguage: String = "Jazyk veršov",
     val dailyWorkerOn: String = "Zapnuté! Tapeta sa zmení zajtra o 6:00.",
     val dailyWorkerOff: String = "Denná zmena bola vypnutá.",
-    val generating: String = "Tapeta sa generuje...",
     val fontModern: String = "Moderný",
     val fontBook: String = "Knižný",
     val fontMono: String = "Strojový",
@@ -129,6 +135,7 @@ data class AppStrings(
 val skStrings = AppStrings()
 
 val enStrings = AppStrings(
+    generatingBtn = "Generating...",
     tapToEdit = "Tap to edit position and size",
     settings = "App Settings",
     dailyWallpaper = "Daily Wallpaper Change",
@@ -142,7 +149,7 @@ val enStrings = AppStrings(
     textAlpha = "Transparency",
     bgBlur = "Background Blur",
     anotherPhoto = "Change Photo",
-    test = "Test",
+    test = "Generate",
     selectPhotoFirst = "Select a photo first",
     appearance = "Appearance",
     system = "System",
@@ -186,7 +193,7 @@ val czStrings = AppStrings(
     textAlpha = "Průhlednost",
     bgBlur = "Rozmazání pozadí",
     anotherPhoto = "Jiná fotka",
-    test = "Testovat",
+    test = "Generovat",
     selectPhotoFirst = "Nejdříve vyber fotku",
     appearance = "Vzhled",
     system = "Systém",
@@ -214,7 +221,9 @@ val czStrings = AppStrings(
     fontMono = "Strojový",
     fontCursive = "Psaný",
     fontLight = "Tenký",
-    fontCondensed = "Úzký"
+    fontCondensed = "Úzký",
+    generatingBtn = "Generuje se...",
+    tapToEdit = "Kliknutím upravíš polohu a velikost"
 )
 
 val esStrings = AppStrings(
@@ -230,7 +239,7 @@ val esStrings = AppStrings(
     textAlpha = "Transparencia",
     bgBlur = "Desenfocar fondo",
     anotherPhoto = "Cambiar foto",
-    test = "Probar",
+    test = "Generar",
     selectPhotoFirst = "Selecciona una foto primero",
     appearance = "Apariencia",
     system = "Sistema",
@@ -258,7 +267,9 @@ val esStrings = AppStrings(
     fontMono = "Máquina de escribir",
     fontCursive = "Cursiva",
     fontLight = "Fino",
-    fontCondensed = "Condensada"
+    fontCondensed = "Condensada",
+    generatingBtn = "Generando...",
+    tapToEdit = "Toca para editar la posición y el tamaño"
 )
 
 val itStrings = AppStrings(
@@ -274,7 +285,7 @@ val itStrings = AppStrings(
     textAlpha = "Trasparenza",
     bgBlur = "Sfocatura sfondo",
     anotherPhoto = "Cambia foto",
-    test = "Test",
+    test = "Generare",
     selectPhotoFirst = "Seleziona prima una foto",
     appearance = "Aspetto",
     system = "Sistema",
@@ -302,7 +313,9 @@ val itStrings = AppStrings(
     fontMono = "Macchina da scrivere",
     fontCursive = "Corsivo",
     fontLight = "Sottile",
-    fontCondensed = "Condensato"
+    fontCondensed = "Condensato",
+    generatingBtn = "Generazione...",
+    tapToEdit = "Tocca per cambiare posizione e dimensione"
 )
 
 val frStrings = AppStrings(
@@ -318,7 +331,7 @@ val frStrings = AppStrings(
     textAlpha = "Transparence",
     bgBlur = "Flou d'arrière-plan",
     anotherPhoto = "Changer de photo",
-    test = "Tester",
+    test = "Générer",
     selectPhotoFirst = "Sélectionnez d'abord une photo",
     appearance = "Apparence",
     system = "Système",
@@ -346,7 +359,9 @@ val frStrings = AppStrings(
     fontMono = "Machine à écrire",
     fontCursive = "Cursive",
     fontLight = "Fin",
-    fontCondensed = "Condensé"
+    fontCondensed = "Condensé",
+    generatingBtn = "Génération...",
+    tapToEdit = "Touchez pour modifier la position et la taille"
 )
 
 val deStrings = AppStrings(
@@ -362,7 +377,7 @@ val deStrings = AppStrings(
     textAlpha = "Transparenz",
     bgBlur = "Hintergrundunschärfe",
     anotherPhoto = "Anderes Foto",
-    test = "Testen",
+    test = "Erzeugen",
     selectPhotoFirst = "Wähle zuerst ein Foto aus",
     appearance = "Erscheinungsbild",
     system = "System",
@@ -390,7 +405,9 @@ val deStrings = AppStrings(
     fontMono = "Schreibmaschine",
     fontCursive = "Kursiv",
     fontLight = "Leicht",
-    fontCondensed = "Schmal"
+    fontCondensed = "Schmal",
+    generatingBtn = "Generieren...",
+    tapToEdit = "Tippe, um die Position und Größe zu ändern"
 )
 
 val huStrings = AppStrings(
@@ -406,7 +423,7 @@ val huStrings = AppStrings(
     textAlpha = "Átlátszóság",
     bgBlur = "Háttér elmosása",
     anotherPhoto = "Másik fotó",
-    test = "Teszt",
+    test = "Generálni",
     selectPhotoFirst = "Először válassz egy fotót",
     appearance = "Megjelenés",
     system = "Rendszer",
@@ -434,10 +451,13 @@ val huStrings = AppStrings(
     fontMono = "Írógép",
     fontCursive = "Dőlt",
     fontLight = "Vékony",
-    fontCondensed = "Sűrített"
+    fontCondensed = "Sűrített",
+    generatingBtn = "Generálom...",
+    tapToEdit = "Koppintson a pozíció és a méret módosításához."
 )
 
 val plStrings = AppStrings(
+    generatingBtn = "generowanie...",
     settings = "Ustawienia aplikacji",
     dailyWallpaper = "Codzienna tapeta",
     active = "Aktywne (codziennie o 6:00)",
@@ -450,7 +470,7 @@ val plStrings = AppStrings(
     textAlpha = "Przezroczystość",
     bgBlur = "Rozmycie tła",
     anotherPhoto = "Zmień zdjęcie",
-    test = "Testuj",
+    test = "Stwarzać",
     selectPhotoFirst = "Najpierw wybierz zdjęcie",
     appearance = "Wygląd",
     system = "System",
@@ -478,7 +498,8 @@ val plStrings = AppStrings(
     fontMono = "Maszyna do pisania",
     fontCursive = "Kursywa",
     fontLight = "Cienki",
-    fontCondensed = "Zwężony"
+    fontCondensed = "Zwężony",
+    tapToEdit = "Dotknij, aby zmienić położenie i wielkość"
 )
 
 // Helper function to dynamically select system language or fallback to EN
@@ -564,6 +585,9 @@ fun MainScreen(
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     var versePair by remember { mutableStateOf<Pair<String, String>?>(null) }
     var hasSeenEditHint by remember { mutableStateOf(true) }
+
+    // Status of the generation: "idle", "generating", or "done"
+    var generationStatus by remember { mutableStateOf("idle") }
 
     // Nastavenia
     var textSizeMult by remember { mutableFloatStateOf(1.0f) }
@@ -673,13 +697,33 @@ fun MainScreen(
     }
 
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let {
-            imageUri = it
-            try {
-                context.contentResolver.takePersistableUriPermission(it, Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                context.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
-                    .edit().putString("bg_uri", it.toString()).apply()
-            } catch (e: Exception) { /* Ignorovať */ }
+        uri?.let { sourceUri ->
+            scope.launch(Dispatchers.IO) {
+                try {
+                    // 1. Create a unique file name in internal storage
+                    val fileName = "user_wallpaper.jpg"
+                    val destinationFile = java.io.File(context.filesDir, fileName)
+
+                    // 2. Copy the content from the gallery URI to your app's internal folder
+                    context.contentResolver.openInputStream(sourceUri)?.use { input ->
+                        destinationFile.outputStream().use { output ->
+                            input.copyTo(output)
+                        }
+                    }
+
+                    // 3. Save the internal FILE URI instead of the system Gallery URI
+                    val internalUri = Uri.fromFile(destinationFile).toString()
+
+                    withContext(Dispatchers.Main) {
+                        imageUri = Uri.parse(internalUri)
+                        context.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
+                            .edit().putString("bg_uri", internalUri).apply()
+                    }
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                    // Handle error (e.g., show snackbar)
+                }
+            }
         }
     }
 
@@ -878,6 +922,7 @@ fun MainScreen(
                         Spacer(modifier = Modifier.height(12.dp))
 
                         // Akčné tlačidlá
+                        // Find your "Akčné tlačidlá" Row
                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             OutlinedButton(
                                 onClick = { launcher.launch("image/*") },
@@ -890,18 +935,45 @@ fun MainScreen(
                             }
 
                             Button(
+                                // 1. Disable the button if generating OR if there is no image
+                                enabled = generationStatus == "idle" && imageUri != null,
                                 onClick = {
-                                    performHaptic(HapticFeedbackType.LongPress)
-                                    runOneTimeWorker(context)
-                                    scope.launch { snackbarHostState.showSnackbar(strings.generating) }
+                                    if (imageUri != null) {
+                                        // 2. Initial Haptic
+                                        performHaptic(HapticFeedbackType.LongPress)
+
+                                        scope.launch {
+                                            generationStatus = "generating"
+
+                                            // Run your existing worker logic
+                                            runOneTimeWorker(context)
+
+                                            // Simulated delay for the "Done" state
+                                            kotlinx.coroutines.delay(2000)
+
+                                            // 3. Success Haptic (Changed from Reject to indicate success)
+                                            performHaptic(HapticFeedbackType.TextHandleMove)
+                                            generationStatus = "Done"
+
+                                            // Auto-hide the popup after a short while
+                                            kotlinx.coroutines.delay(2000)
+                                            generationStatus = "idle"
+                                        }
+                                    }
                                 },
                                 modifier = Modifier.weight(1f),
-                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.tertiary),
                                 shape = RoundedCornerShape(12.dp)
                             ) {
-                                Icon(Icons.Default.Refresh, null)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(strings.test)
+                                Icon(Icons.Default.AutoAwesome, null)
+                                Spacer(Modifier.width(8.dp))
+                                // Optional: Change text based on state
+                                Text(
+                                    text = if (generationStatus == "generating") {
+                                        strings.generatingBtn
+                                    } else {
+                                        strings.test
+                                    }
+                                )
                             }
                         }
                     } else {
@@ -1086,6 +1158,50 @@ fun MainScreen(
                 performHaptic = performHaptic
             )
         }
+
+        // Floating Status Popup
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = 80.dp),
+            contentAlignment = Alignment.BottomCenter
+        ) {
+            AnimatedVisibility(
+                visible = generationStatus != "idle",
+                enter = fadeIn() + slideInVertically(initialOffsetY = { it / 2 }) + scaleIn(initialScale = 0.9f),
+                exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 2 }) + scaleOut(targetScale = 0.9f)
+            ) {
+                Surface(
+                    shape = RoundedCornerShape(24.dp),
+                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    tonalElevation = 6.dp,
+                    shadowElevation = 4.dp
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        if (generationStatus == "generating") {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(20.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                            Text(strings.generating, style = MaterialTheme.typography.labelLarge)
+                        } else {
+                            Icon(
+                                Icons.Outlined.Check,
+                                contentDescription = null,
+                                tint = Color(0xFF4CAF50),
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(strings.done, style = MaterialTheme.typography.labelLarge)
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -1236,7 +1352,11 @@ fun FullScreenEditor(
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
-                        colors = listOf(Color.Black.copy(alpha = 0.2f), Color.Transparent, Color.Black.copy(alpha = 0.4f))
+                        colors = listOf(
+                            Color.Black.copy(alpha = 0.2f),
+                            Color.Transparent,
+                            Color.Black.copy(alpha = 0.4f)
+                        )
                     )
                 )
             )
@@ -1275,7 +1395,8 @@ fun FullScreenEditor(
                         val panYDp = dragAmount.y / density.density
                         val panOffsetChange = panYDp * moveFactor
 
-                        rawVerticalOffset = (rawVerticalOffset + panOffsetChange).coerceIn(-1.0f, 1.0f)
+                        rawVerticalOffset =
+                            (rawVerticalOffset + panOffsetChange).coerceIn(-1.0f, 1.0f)
 
                         val snapZone = 0.04f
                         val newSnappedOffset = if (kotlin.math.abs(rawVerticalOffset) < snapZone) {
@@ -1358,7 +1479,9 @@ fun FullScreenEditor(
                             }
                         },
                     contentAlignment = Alignment.Center
-                ) { Box(Modifier.size(dotSize).background(Color.White, CircleShape)) }
+                ) { Box(Modifier
+                    .size(dotSize)
+                    .background(Color.White, CircleShape)) }
                 
                 // Ľavá strana (Šírka)
                 Box(
@@ -1374,7 +1497,9 @@ fun FullScreenEditor(
                             }
                         },
                     contentAlignment = Alignment.Center
-                ) { Box(Modifier.size(dotSize).background(Color.White, CircleShape)) }
+                ) { Box(Modifier
+                    .size(dotSize)
+                    .background(Color.White, CircleShape)) }
 
                 // Dolná strana (Veľkosť)
                 Box(
@@ -1389,7 +1514,9 @@ fun FullScreenEditor(
                             }
                         },
                     contentAlignment = Alignment.Center
-                ) { Box(Modifier.size(dotSize).background(Color.White, CircleShape)) }
+                ) { Box(Modifier
+                    .size(dotSize)
+                    .background(Color.White, CircleShape)) }
 
                 // Horná strana (Veľkosť)
                 Box(
@@ -1404,7 +1531,9 @@ fun FullScreenEditor(
                             }
                         },
                     contentAlignment = Alignment.Center
-                ) { Box(Modifier.size(dotSize).background(Color.White, CircleShape)) }
+                ) { Box(Modifier
+                    .size(dotSize)
+                    .background(Color.White, CircleShape)) }
             }
         }
 
@@ -1434,7 +1563,9 @@ fun FullScreenEditor(
                             performHaptic(HapticFeedbackType.LongPress)
                             onDismiss() 
                         },
-                        modifier = Modifier.weight(1f).height(56.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(56.dp),
                         colors = ButtonDefaults.filledTonalButtonColors(
                             containerColor = Color.DarkGray.copy(alpha = 0.8f),
                             contentColor = Color.White
@@ -1450,7 +1581,9 @@ fun FullScreenEditor(
                             performHaptic(HapticFeedbackType.LongPress)
                             onSave(localSizeMult, localWidthMult, localVerticalOffset) 
                         },
-                        modifier = Modifier.weight(1f).height(56.dp),
+                        modifier = Modifier
+                            .weight(1f)
+                            .height(56.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary,
                             contentColor = MaterialTheme.colorScheme.onPrimary
@@ -1537,7 +1670,8 @@ fun Pixel6LockScreenPreview(
     Card(
         shape = RoundedCornerShape(32.dp),
         modifier = Modifier
-            .fillMaxWidth().wrapContentWidth(Alignment.CenterHorizontally)
+            .fillMaxWidth()
+            .wrapContentWidth(Alignment.CenterHorizontally)
             .height(previewHeight)
             .aspectRatio(9f / 20f)
             .border(2.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(32.dp))
@@ -1576,14 +1710,22 @@ fun Pixel6LockScreenPreview(
                     .fillMaxSize()
                     .background(
                         Brush.verticalGradient(
-                            colors = listOf(Color.Black.copy(alpha = 0.2f), Color.Transparent, Color.Black.copy(alpha = 0.4f))
+                            colors = listOf(
+                                Color.Black.copy(alpha = 0.2f),
+                                Color.Transparent,
+                                Color.Black.copy(alpha = 0.4f)
+                            )
                         )
                     )
                 )
             } else {
-                Box(modifier = Modifier.fillMaxSize().background(Color(0xFF212121)), contentAlignment = Alignment.Center) {
+                Box(modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color(0xFF212121)), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Default.AddPhotoAlternate, contentDescription = null, tint = Color.White.copy(alpha = 0.7f), modifier = Modifier.size(48.dp).padding(bottom = 8.dp))
+                        Icon(Icons.Default.AddPhotoAlternate, contentDescription = null, tint = Color.White.copy(alpha = 0.7f), modifier = Modifier
+                            .size(48.dp)
+                            .padding(bottom = 8.dp))
                         Text(strings.clickToSelect, color = Color.White.copy(alpha = 0.7f))
                     }
                 }
@@ -1633,7 +1775,12 @@ fun Pixel6LockScreenPreview(
                                         color = Color.White.copy(alpha = 0.6f),
                                         style = Stroke(
                                             width = 1.5.dp.toPx(),
-                                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(15f, 15f), 0f)
+                                            pathEffect = PathEffect.dashPathEffect(
+                                                floatArrayOf(
+                                                    15f,
+                                                    15f
+                                                ), 0f
+                                            )
                                         ),
                                         cornerRadius = CornerRadius(16.dp.toPx())
                                     )
@@ -1728,8 +1875,12 @@ fun Pixel6LockScreenPreview(
                     }
 
                     // Ikony na krajoch
-                    Icon(Icons.Default.PhotoCamera, null, tint = Color.White, modifier = Modifier.align(Alignment.BottomEnd).padding(bottom=16.dp))
-                    Icon(Icons.Default.AccountBalanceWallet, null, tint = Color.White, modifier = Modifier.align(Alignment.BottomStart).padding(bottom=16.dp))
+                    Icon(Icons.Default.PhotoCamera, null, tint = Color.White, modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(bottom = 16.dp))
+                    Icon(Icons.Default.AccountBalanceWallet, null, tint = Color.White, modifier = Modifier
+                        .align(Alignment.BottomStart)
+                        .padding(bottom = 16.dp))
                 }
             }
         }
@@ -1748,7 +1899,9 @@ fun FontPickerRow(selectedFont: String, strings: AppStrings, onFontSelected: (St
     )
 
     Row(
-        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         fonts.forEach { (fontId, fontName) ->
@@ -1809,12 +1962,16 @@ fun ColorPickerRow(selectedColor: Int, onColorSelected: (Int) -> Unit) {
             text = {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     HsvColorPicker(
-                        modifier = Modifier.fillMaxWidth().height(300.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(300.dp),
                         controller = controller
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     BrightnessSlider(
-                        modifier = Modifier.fillMaxWidth().height(32.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(32.dp),
                         controller = controller
                     )
                 }
@@ -1836,7 +1993,9 @@ fun ColorPickerRow(selectedColor: Int, onColorSelected: (Int) -> Unit) {
     }
 
     Row(
-        modifier = Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         colors.forEach { color ->
@@ -1869,7 +2028,15 @@ fun ColorPickerRow(selectedColor: Int, onColorSelected: (Int) -> Unit) {
                 .clip(CircleShape)
                 .background(
                     brush = Brush.sweepGradient(
-                        listOf(Color.Red, Color.Magenta, Color.Blue, Color.Cyan, Color.Green, Color.Yellow, Color.Red)
+                        listOf(
+                            Color.Red,
+                            Color.Magenta,
+                            Color.Blue,
+                            Color.Cyan,
+                            Color.Green,
+                            Color.Yellow,
+                            Color.Red
+                        )
                     )
                 )
                 .clickable { showDialog = true },
@@ -1892,7 +2059,9 @@ fun EnhancedSlider(
 ) {
     val haptic = LocalHapticFeedback.current
 
-    Column(modifier = Modifier.fillMaxWidth().padding(vertical = 0.dp)){
+    Column(modifier = Modifier
+        .fillMaxWidth()
+        .padding(vertical = 0.dp)){
         Row(
             modifier = Modifier
                 .fillMaxWidth()
