@@ -635,8 +635,18 @@ fun MainScreen(
     // --- LOAD SAVED ---
     LaunchedEffect(Unit) {
         val prefs = context.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
-        val savedUri = prefs.getString("bg_uri", null)
-        if (savedUri != null) imageUri = Uri.parse(savedUri)
+
+        // 1. Prioritize the local "owned" file
+        val localFile = java.io.File(context.filesDir, "user_wallpaper.jpg")
+        if (localFile.exists()) {
+            val internalUri = Uri.fromFile(localFile)
+            imageUri = internalUri
+            // Ensure the preference matches the actual file we found
+            prefs.edit().putString("bg_uri", internalUri.toString()).apply()
+        } else {
+            val savedUri = prefs.getString("bg_uri", null)
+            if (savedUri != null) imageUri = Uri.parse(savedUri)
+        }
 
         textSizeMult = prefs.getFloat("text_size_mult", 1.0f)
         textWidthMult = prefs.getFloat("text_width_mult", 1.0f)

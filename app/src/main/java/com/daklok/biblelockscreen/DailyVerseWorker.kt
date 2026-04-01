@@ -15,7 +15,14 @@ class DailyVerseWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
     override suspend fun doWork(): Result {
         val prefs = applicationContext.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
 
-        val uriString = prefs.getString("bg_uri", null) ?: return Result.failure()
+        val localFile = java.io.File(applicationContext.filesDir, "user_wallpaper.jpg")
+        val uriString = if (localFile.exists()) {
+            Uri.fromFile(localFile).toString()
+        } else {
+            prefs.getString("bg_uri", null)
+        }
+
+        if (uriString == null) return Result.failure()
 
         // Načítanie všetkých nastavení
         val bgBlurRadius = prefs.getFloat("bg_blur", 0f)
