@@ -12,7 +12,7 @@ KEY FEATURES
 
 - Automatic Daily Updates: Get a fresh Verse of the Day without lifting a finger.
 - Personalized Backgrounds: Use your own pictures for a truly custom experience.
-- Powerful Text Editor: An intuitive, full-screen editor lets you drag to adjust size, width, and vertical position.
+- Full screen widget adjuster: An intuitive, full-screen editor lets you drag to adjust size, width, and vertical position.
 - Deep Customization: Fine-tune every detail, including:
     * Font Style: Modern, Book, Cursive, and more.
     * Color: Presets and a full color wheel.
