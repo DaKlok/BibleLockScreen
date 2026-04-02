@@ -36,10 +36,12 @@ class DailyVerseWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
         val fontFamilyStr = prefs.getString("font_family", "sans-serif") ?: "sans-serif"
         
         // Use YouVersionFetcher.getDefaultLanguage() if no language is saved in prefs
-        val defaultLang = YouVersionFetcher.getDefaultLanguage()
+        //val defaultLang = YouVersionFetcher.getDefaultLanguage()
+        val defaultLang = LocalBibleProvider.getDefaultLanguage()
         val verseLang = prefs.getString("verse_lang", defaultLang) ?: defaultLang
 
-        val verseData = YouVersionFetcher.getVerseOfTheDay(verseLang) ?: return Result.retry()
+        //val verseData = YouVersionFetcher.getVerseOfTheDay(verseLang) ?: return Result.retry()
+        val verseData = LocalBibleProvider.getVerse(applicationContext, verseLang)
 
         val finalBitmap = WallpaperUtils.createBitmapWithText(
             context = applicationContext,

@@ -1,7 +1,6 @@
 package com.daklok.biblelockscreen
 
 import android.Manifest
-import android.R
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -69,7 +68,6 @@ import androidx.work.*
 import coil.compose.rememberAsyncImagePainter
 import com.daklok.biblelockscreen.ui.theme.BibleLockScreenTheme
 import com.github.skydoves.colorpicker.compose.BrightnessSlider
-import com.github.skydoves.colorpicker.compose.ColorPickerController
 import com.github.skydoves.colorpicker.compose.HsvColorPicker
 import com.github.skydoves.colorpicker.compose.rememberColorPickerController
 import kotlinx.coroutines.Dispatchers
@@ -87,11 +85,13 @@ data class AppStrings(
     val generating: String = "Tapeta sa generuje...",
     val done: String = "Hotovo",
 
+    val updateTime: String = "Čas dennej aktualizácie",
+
     val tapToEdit: String = "Kliknutím upravíš polohu a veľkosť",
     val appName: String = "Bible Lock Screen",
     val settings: String = "Nastavenia aplikácie",
     val dailyWallpaper: String = "Denná zmena tapety",
-    val active: String = "Aktívne (každé ráno 6:00)",
+    val active: String = "Aktívne (každý deň o %s:00)",
     val inactive: String = "Vypnuté",
     val textCustomization: String = "Prispôsobenie textu",
     val bold: String = "Tučné",
@@ -119,7 +119,7 @@ data class AppStrings(
     val loading: String = "Načítavam verš...",
     val appLanguage: String = "Jazyk aplikácie",
     val verseLanguage: String = "Jazyk veršov",
-    val dailyWorkerOn: String = "Zapnuté! Tapeta sa zmení zajtra o 6:00.",
+    val dailyWorkerOn: String = "Zapnuté! Tapeta sa zmení zajtra o %s:00.",
     val dailyWorkerOff: String = "Denná zmena bola vypnutá.",
     val fontModern: String = "Moderný",
     val fontBook: String = "Knižný",
@@ -135,11 +135,12 @@ data class AppStrings(
 val skStrings = AppStrings()
 
 val enStrings = AppStrings(
+    updateTime = "Time of daily update",
     generatingBtn = "Generating...",
     tapToEdit = "Tap to edit position and size",
     settings = "App Settings",
     dailyWallpaper = "Daily Wallpaper Change",
-    active = "Active (every morning 6:00)",
+    active = "Active (every day at %s:00)",
     inactive = "Disabled",
     textCustomization = "Text Customization",
     bold = "Bold",
@@ -169,7 +170,7 @@ val enStrings = AppStrings(
     loading = "Loading verse...",
     appLanguage = "App Language",
     verseLanguage = "Verse Language",
-    dailyWorkerOn = "Enabled! Wallpaper will change tomorrow at 6:00.",
+    dailyWorkerOn = "Enabled! Wallpaper will change tomorrow at %s:00.",
     dailyWorkerOff = "Daily change disabled.",
     generating = "Generating wallpaper...",
     fontModern = "Modern",
@@ -181,9 +182,10 @@ val enStrings = AppStrings(
 )
 
 val czStrings = AppStrings(
+    updateTime = "Čas denní aktualizace",
     settings = "Nastavení aplikace",
     dailyWallpaper = "Denní změna tapety",
-    active = "Aktivní (každé ráno 6:00)",
+    active = "Aktivní (každý den v %s:00)",
     inactive = "Vypnuto",
     textCustomization = "Přizpůsobení textu",
     bold = "Tučné",
@@ -213,7 +215,7 @@ val czStrings = AppStrings(
     loading = "Načítám verš...",
     appLanguage = "Jazyk aplikace",
     verseLanguage = "Jazyk veršů",
-    dailyWorkerOn = "Zapnuto! Tapeta se změní zítra v 6:00.",
+    dailyWorkerOn = "Zapnuto! Tapeta se změní zítra v %s:00.",
     dailyWorkerOff = "Denní změna byla vypnuta.",
     generating = "Tapeta se generuje...",
     fontModern = "Moderní",
@@ -227,9 +229,10 @@ val czStrings = AppStrings(
 )
 
 val esStrings = AppStrings(
+    updateTime = "Hora de actualización diaria",
     settings = "Ajustes de la App",
     dailyWallpaper = "Cambio diario de fondo",
-    active = "Activo (cada mañana 6:00)",
+    active = "Activo (todos los días a las %s:00)",
     inactive = "Desactivado",
     textCustomization = "Personalización de texto",
     bold = "Negrita",
@@ -259,7 +262,7 @@ val esStrings = AppStrings(
     loading = "Cargando versículo...",
     appLanguage = "Idioma de la aplicación",
     verseLanguage = "Idioma del versículo",
-    dailyWorkerOn = "¡Activado! El fondo cambiará mañana a las 6:00.",
+    dailyWorkerOn = "¡Activado! El fondo cambiará mañana a las %s:00.",
     dailyWorkerOff = "Cambio diario desactivado.",
     generating = "Generando fondo...",
     fontModern = "Moderno",
@@ -273,9 +276,10 @@ val esStrings = AppStrings(
 )
 
 val itStrings = AppStrings(
+    updateTime = "Ora della modifica giornaliera",
     settings = "Impostazioni App",
     dailyWallpaper = "Sfondo giornaliero",
-    active = "Attivo (ogni mattina 6:00)",
+    active = "Attivo (ogni giorno alle %s:00)",
     inactive = "Inattivo",
     textCustomization = "Personalizzazione testo",
     bold = "Grassetto",
@@ -305,7 +309,7 @@ val itStrings = AppStrings(
     loading = "Caricamento versetto...",
     appLanguage = "Lingua dell'app",
     verseLanguage = "Lingua del versetto",
-    dailyWorkerOn = "Attivato! Lo sfondo cambierà domani alle 6:00.",
+    dailyWorkerOn = "Attivato! Lo sfondo cambierà domani alle %s:00.",
     dailyWorkerOff = "Cambio giornaliero disattivato.",
     generating = "Generazione sfondo...",
     fontModern = "Moderno",
@@ -319,9 +323,10 @@ val itStrings = AppStrings(
 )
 
 val frStrings = AppStrings(
+    updateTime = "Heure de mise à jour quotidienne",
     settings = "Paramètres",
     dailyWallpaper = "Fond d'écran quotidien",
-    active = "Actif (chaque matin à 6:00)",
+    active = "Actif (tous les jours à %s:00)",
     inactive = "Inactif",
     textCustomization = "Personnalisation du texte",
     bold = "Gras",
@@ -351,7 +356,7 @@ val frStrings = AppStrings(
     loading = "Chargement du verset...",
     appLanguage = "Langue de l'app",
     verseLanguage = "Langue du verset",
-    dailyWorkerOn = "Activé ! Le fond d'écran changera demain à 6:00.",
+    dailyWorkerOn = "Activé ! Le fond d'écran changera demain à %s:00.",
     dailyWorkerOff = "Changement quotidien désactivé.",
     generating = "Génération du fond d'écran...",
     fontModern = "Moderne",
@@ -365,9 +370,10 @@ val frStrings = AppStrings(
 )
 
 val deStrings = AppStrings(
+    updateTime = "Zeitliche Aktualisierungszeit",
     settings = "App-Einstellungen",
     dailyWallpaper = "Tägliches Hintergrundbild",
-    active = "Aktiv (jeden Morgen 6:00)",
+    active = "Aktiv (jeden Tag bei %s:00)",
     inactive = "Inaktiv",
     textCustomization = "Textanpassung",
     bold = "Fett",
@@ -397,7 +403,7 @@ val deStrings = AppStrings(
     loading = "Lade Vers...",
     appLanguage = "App-Sprache",
     verseLanguage = "Vers-Sprache",
-    dailyWorkerOn = "Aktiviert! Hintergrundbild ändert sich morgen um 6:00.",
+    dailyWorkerOn = "Aktiviert! Hintergrundbild ändert sich morgen um %s:00.",
     dailyWorkerOff = "Tägliche Änderung deaktiviert.",
     generating = "Hintergrundbild wird generiert...",
     fontModern = "Modern",
@@ -411,9 +417,10 @@ val deStrings = AppStrings(
 )
 
 val huStrings = AppStrings(
+    updateTime = "Napi frissítés időpontja",
     settings = "Alkalmazás beállításai",
     dailyWallpaper = "Napi háttérkép",
-    active = "Aktív (minden reggel 6:00)",
+    active = "Aktív (minden nap %s:00)",
     inactive = "Inaktív",
     textCustomization = "Szöveg testreszabása",
     bold = "Félkövér",
@@ -443,7 +450,7 @@ val huStrings = AppStrings(
     loading = "Ige betöltése...",
     appLanguage = "Alkalmazás nyelve",
     verseLanguage = "Ige nyelve",
-    dailyWorkerOn = "Bekapcsolva! A háttérkép holnap 6:00-kor változik.",
+    dailyWorkerOn = "Bekapcsolva! A háttérkép holnap %s:00-kor változik.",
     dailyWorkerOff = "Napi módosítás kikapcsolva.",
     generating = "Háttérkép generálása...",
     fontModern = "Modern",
@@ -457,10 +464,11 @@ val huStrings = AppStrings(
 )
 
 val plStrings = AppStrings(
+    updateTime = "Czas aktualizacji dziennie",
     generatingBtn = "generowanie...",
     settings = "Ustawienia aplikacji",
     dailyWallpaper = "Codzienna tapeta",
-    active = "Aktywne (codziennie o 6:00)",
+    active = "Aktywne (codziennie o %s:00)",
     inactive = "Nieaktywne",
     textCustomization = "Dostosowanie tekstu",
     bold = "Pogrubienie",
@@ -490,7 +498,7 @@ val plStrings = AppStrings(
     loading = "Ładowanie wersetu...",
     appLanguage = "Język aplikacji",
     verseLanguage = "Język wersetu",
-    dailyWorkerOn = "Włączone! Tapeta zmieni się jutro o 6:00.",
+    dailyWorkerOn = "Włączone! Tapeta zmieni się jutro o %s:00.",
     dailyWorkerOff = "Codzienna zmiana wyłączona.",
     generating = "Generowanie tapety...",
     fontModern = "Nowoczesny",
@@ -584,7 +592,14 @@ fun MainScreen(
     // --- STATES ---
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     var versePair by remember { mutableStateOf<Pair<String, String>?>(null) }
-    var hasSeenEditHint by remember { mutableStateOf(true) }
+
+    val prefs = remember { context.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE) }
+    var hasSeenEditHint by remember {
+        mutableStateOf(prefs.getBoolean("has_seen_edit_hint", false))
+    }
+
+
+    var dailyHour by remember { mutableIntStateOf(prefs.getInt("daily_hour", 6)) }
 
     // Status of the generation: "idle", "generating", or "done"
     var generationStatus by remember { mutableStateOf("idle") }
@@ -634,12 +649,10 @@ fun MainScreen(
 
     // --- LOAD SAVED ---
     LaunchedEffect(Unit) {
-        val prefs = context.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
+        // No need to redeclare prefs here, we use the one defined in MainScreen
 
-        // 1. Prioritize the local "owned" file
         val localFile = java.io.File(context.filesDir, "user_wallpaper.jpg")
         if (localFile.exists()) {
-            // Add a timestamp here too so the first load is always the latest version on disk
             val internalUri = Uri.fromFile(localFile).buildUpon()
                 .appendQueryParameter("v", System.currentTimeMillis().toString())
                 .build()
@@ -649,31 +662,19 @@ fun MainScreen(
             if (savedUri != null) imageUri = Uri.parse(savedUri)
         }
 
-        textSizeMult = prefs.getFloat("text_size_mult", 1.0f)
-        textWidthMult = prefs.getFloat("text_width_mult", 1.0f)
-        verticalOffset = prefs.getFloat("vertical_offset", 0.0f)
-        textColor = prefs.getInt("text_color", AndroidColor.WHITE)
-        textAlpha = prefs.getFloat("text_alpha", 1.0f)
-        bgBlur = prefs.getFloat("bg_blur", 0f)
-        isBold = prefs.getBoolean("is_bold", true)
-        useShadow = prefs.getBoolean("use_shadow", true)
-        fontFamilyStr = prefs.getString("font_family", "sans-serif") ?: "sans-serif"
-        useHaptics = prefs.getBoolean("use_haptics", true)
-
-        hasSeenEditHint = prefs.getBoolean("has_seen_edit_hint", false)
-
         appLang = prefs.getString("app_lang", defaultSystemLang) ?: defaultSystemLang
         verseLang = prefs.getString("verse_lang", defaultSystemLang) ?: defaultSystemLang
 
-        val workInfos = WorkManager.getInstance(context).getWorkInfosForUniqueWorkLiveData("DailyBibleWallpaper")
-        workInfos.observeForever { infos ->
-            isDailyActive = infos?.any { it.state == WorkInfo.State.ENQUEUED || it.state == WorkInfo.State.RUNNING } ?: false
-        }
-        
-        // Fetch verse
-        launch {
-             versePair = YouVersionFetcher.getVerseOfTheDay(verseLang)
-        }
+        versePair = LocalBibleProvider.getVerse(context, verseLang)
+
+        // Standard WorkManager observer
+        WorkManager.getInstance(context)
+            .getWorkInfosForUniqueWorkLiveData("DailyBibleWallpaper")
+            .observeForever { infos ->
+                isDailyActive = infos?.any {
+                    it.state == WorkInfo.State.ENQUEUED || it.state == WorkInfo.State.RUNNING
+                } ?: false
+            }
     }
 
     // --- SAVE & ACTIONS ---
@@ -699,8 +700,11 @@ fun MainScreen(
         isDailyActive = enable
 
         if (enable) {
-            scheduleWorker(context)
-            scope.launch { snackbarHostState.showSnackbar(strings.dailyWorkerOn) }
+            // Use the function that accepts the custom hour
+            scheduleDailyWallpaper(context, dailyHour)
+            scope.launch { snackbarHostState.showSnackbar(
+                String.format(strings.dailyWorkerOn, String.format("%02d", dailyHour))
+            )}
         } else {
             WorkManager.getInstance(context).cancelUniqueWork("DailyBibleWallpaper")
             scope.launch { snackbarHostState.showSnackbar(strings.dailyWorkerOff) }
@@ -824,8 +828,7 @@ fun MainScreen(
 
                             if (!hasSeenEditHint) {
                                 hasSeenEditHint = true
-                                context.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
-                                    .edit().putBoolean("has_seen_edit_hint", true).apply()
+                                prefs.edit().putBoolean("has_seen_edit_hint", true).apply()
                             }
                         }
                     )
@@ -856,7 +859,12 @@ fun MainScreen(
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = if (isDailyActive) strings.active else strings.inactive,
+                                text = if (isDailyActive) {
+                                    val formattedHour = String.format("%02d", dailyHour)
+                                    String.format(strings.active, formattedHour)
+                                } else {
+                                    strings.inactive
+                                },
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = if (isDailyActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
                             )
@@ -1057,7 +1065,7 @@ fun MainScreen(
                                         .edit().putString("verse_lang", it).apply()
                                     versePair = null // Zobrazenie načítania
                                     scope.launch {
-                                        versePair = YouVersionFetcher.getVerseOfTheDay(it)
+                                        versePair = LocalBibleProvider.getVerse(context, it)
                                     }
                                 }
                             }
@@ -1115,6 +1123,72 @@ fun MainScreen(
                         }
                         
                         HorizontalDivider()
+
+
+                        // Denna zmena tapety - zmena času
+
+
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 8.dp)
+                        ) {
+                            Text(
+                                text = strings.dailyWallpaper,
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                text = if (isDailyActive) {
+                                    // First format the hour (e.g., 6 -> "06")
+                                    val formattedHour = String.format("%02d", dailyHour)
+                                    // Then inject that into the translation string
+                                    String.format(strings.active, formattedHour)
+                                } else {
+                                    strings.inactive
+                                },
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Slider(
+                                    value = dailyHour.toFloat(),
+                                    onValueChange = {
+                                        dailyHour = it.roundToInt()
+                                        // Trigger haptic feedback here, whenever the value changes
+                                        if (useHaptics) {
+                                            performHaptic(HapticFeedbackType.TextHandleMove)
+                                        }
+                                    },
+                                    valueRange = 0f..23f,
+                                    steps = 22, // Correct: 22 steps between 0 and 23 creates 24 distinct points
+                                    modifier = Modifier.weight(1f)
+                                )
+                                Text(
+                                    text = String.format("%02d:00", dailyHour),
+                                    modifier = Modifier.padding(start = 12.dp),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    fontWeight = FontWeight.Bold
+                                )
+                            }
+
+                            // Re-schedule worker whenever the hour changes
+                            LaunchedEffect(dailyHour) {
+                                prefs.edit().putInt("daily_hour", dailyHour).apply()
+                                // Check if worker is currently supposed to be active
+                                if (isDailyActive) {
+                                    scheduleDailyWallpaper(context, dailyHour)
+                                }
+                            }
+                        }
+
+
+
+                        HorizontalDivider()
+
                         
                         // Podpora
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -2152,10 +2226,12 @@ fun EnhancedSlider(
 
 // --- WORKER LOGIC ---
 
-fun scheduleWorker(context: Context) {
+fun scheduleDailyWallpaper(context: Context, hour: Int) {
+    val workManager = WorkManager.getInstance(context)
+
     val currentDate = Calendar.getInstance()
     val dueDate = Calendar.getInstance().apply {
-        set(Calendar.HOUR_OF_DAY, 6)
+        set(Calendar.HOUR_OF_DAY, hour)
         set(Calendar.MINUTE, 0)
         set(Calendar.SECOND, 0)
     }
@@ -2164,20 +2240,28 @@ fun scheduleWorker(context: Context) {
         dueDate.add(Calendar.HOUR_OF_DAY, 24)
     }
 
-    val timeDiff = dueDate.timeInMillis - currentDate.timeInMillis
+    val initialDelay = dueDate.timeInMillis - currentDate.timeInMillis
 
     val dailyWorkRequest = PeriodicWorkRequestBuilder<DailyVerseWorker>(24, TimeUnit.HOURS)
-        .setInitialDelay(timeDiff, TimeUnit.MILLISECONDS)
-        .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build())
+        .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
+        .setConstraints(Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.NOT_REQUIRED) // Works offline!
+            .build())
         .build()
 
-    WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+    workManager.enqueueUniquePeriodicWork(
         "DailyBibleWallpaper",
-        ExistingPeriodicWorkPolicy.CANCEL_AND_REENQUEUE,
+        ExistingPeriodicWorkPolicy.REPLACE, // Restarts timer with new hour
         dailyWorkRequest
     )
 }
 
+// Helper to keep your existing toggle code working
+fun scheduleWorker(context: Context) {
+    val prefs = context.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
+    val savedHour = prefs.getInt("daily_hour", 6)
+    scheduleDailyWallpaper(context, savedHour)
+}
 fun runOneTimeWorker(context: Context) {
     val req = OneTimeWorkRequestBuilder<DailyVerseWorker>()
         .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
