@@ -660,6 +660,19 @@ fun MainScreen(
             if (savedUri != null) imageUri = Uri.parse(savedUri)
         }
 
+        // --- Ulozit Nastavenia ---
+        textSizeMult = prefs.getFloat("text_size_mult", 1.0f)
+        textWidthMult = prefs.getFloat("text_width_mult", 1.0f)
+        verticalOffset = prefs.getFloat("vertical_offset", 0.0f)
+        textColor = prefs.getInt("text_color", AndroidColor.WHITE)
+        textAlpha = prefs.getFloat("text_alpha", 1.0f)
+        bgBlur = prefs.getFloat("bg_blur", 0f)
+        isBold = prefs.getBoolean("is_bold", true)
+        useShadow = prefs.getBoolean("use_shadow", true)
+        fontFamilyStr = prefs.getString("font_family", "sans-serif") ?: "sans-serif"
+        useHaptics = prefs.getBoolean("use_haptics", true)
+        // ----------------------------------------
+
         appLang = prefs.getString("app_lang", defaultSystemLang) ?: defaultSystemLang
         verseLang = prefs.getString("verse_lang", defaultSystemLang) ?: defaultSystemLang
 
