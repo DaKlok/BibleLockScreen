@@ -649,8 +649,6 @@ fun MainScreen(
 
     // --- LOAD SAVED ---
     LaunchedEffect(Unit) {
-        // No need to redeclare prefs here, we use the one defined in MainScreen
-
         val localFile = java.io.File(context.filesDir, "user_wallpaper.jpg")
         if (localFile.exists()) {
             val internalUri = Uri.fromFile(localFile).buildUpon()
@@ -748,7 +746,6 @@ fun MainScreen(
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-                    // Handle error (e.g., show snackbar)
                 }
             }
         }
