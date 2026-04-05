@@ -2673,7 +2673,7 @@ fun scheduleDailyWallpaper(context: Context, hour: Int) {
     val dailyWorkRequest = PeriodicWorkRequestBuilder<DailyVerseWorker>(24, TimeUnit.HOURS)
         .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
         .setConstraints(Constraints.Builder()
-            .setRequiredNetworkType(NetworkType.NOT_REQUIRED) // Works offline!
+            .setRequiredNetworkType(NetworkType.NOT_REQUIRED)
             .build())
         .build()
 
