@@ -15,7 +15,7 @@
 </p>
 
 <p align="center">
-  <img width="2000" alt="Screenshot_20260406-094105~2-right" src="https://github.com/user-attachments/assets/be02f9e4-9cc3-452c-8fff-5dc36f5beb33" />
+  <img width="2000" alt="Screenshot_20260406-094105~2-right" src=".github/images/Main.png" />
 </p>
 
 ---
