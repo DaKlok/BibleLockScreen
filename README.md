@@ -52,15 +52,15 @@ The app automatically detects your system language on first launch.
 
 ## 📸 Screenshots
 <p align="center">
-  <img width="160" style="vertical-align:top" alt="Main Setup Screen" src="https://github.com/user-attachments/assets/f2b09c4e-40bc-45e0-af9b-56b3b690df8e" />
+  <img width="140" style="vertical-align:top" alt="Main Setup Screen" src="https://github.com/user-attachments/assets/f2b09c4e-40bc-45e0-af9b-56b3b690df8e" />
   &nbsp;&nbsp;
-  <img width="160" style="vertical-align:top" alt="Main Screen" src="https://github.com/user-attachments/assets/8a757203-9304-4385-b10d-938d51275177" />
+  <img width="140" style="vertical-align:top" alt="Main Screen" src="https://github.com/user-attachments/assets/8a757203-9304-4385-b10d-938d51275177" />
   &nbsp;&nbsp;
-  <img width="160" style="vertical-align:top" alt="Layout Editor" src="https://github.com/user-attachments/assets/c8e82021-8893-49a3-8da0-4019b11ed3a7" />
+  <img width="140" style="vertical-align:top" alt="Layout Editor" src="https://github.com/user-attachments/assets/c8e82021-8893-49a3-8da0-4019b11ed3a7" />
   &nbsp;&nbsp;
-  <img width="160" style="vertical-align:top" alt="Settings" src="https://github.com/user-attachments/assets/0fddc0d4-e41e-437b-adce-f20405865a33" />
+  <img width="140" style="vertical-align:top" alt="Settings" src="https://github.com/user-attachments/assets/0fddc0d4-e41e-437b-adce-f20405865a33" />
   &nbsp;&nbsp;
-  <img width="160" style="vertical-align:top" alt="Wallpaper Preview" src="https://github.com/user-attachments/assets/ffcbb232-3739-45d0-b844-b8e478726941" />
+  <img width="140" style="vertical-align:top" alt="Wallpaper Preview" src="https://github.com/user-attachments/assets/ffcbb232-3739-45d0-b844-b8e478726941" />
 </p>
 
 ---
