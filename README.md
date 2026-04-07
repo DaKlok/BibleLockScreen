@@ -52,15 +52,15 @@ The app automatically detects your system language on first launch.
 
 ## 📸 Screenshots
 <p align="center">
-  <img width="140" style="vertical-align:top" alt="Main Setup Screen" src=".github/images/1.png" />
+  <img width="140" style="vertical-align:top" alt="Main Setup Screen" src=".github/images/phoneScreenshots/1.png" />
   &nbsp;&nbsp;
-  <img width="140" style="vertical-align:top" alt="Main Screen" src=".github/images/2.png" />
+  <img width="140" style="vertical-align:top" alt="Main Screen" src=".github/images/phoneScreenshots/2.png" />
   &nbsp;&nbsp;
-  <img width="140" style="vertical-align:top" alt="Layout Editor" src=".github/images/3.png" />
+  <img width="140" style="vertical-align:top" alt="Layout Editor" src=".github/images/phoneScreenshots/3.png" />
   &nbsp;&nbsp;
-  <img width="140" style="vertical-align:top" alt="Settings" src=".github/images/4.png" />
+  <img width="140" style="vertical-align:top" alt="Settings" src=".github/images/phoneScreenshots/4.png" />
   &nbsp;&nbsp;
-  <img width="140" style="vertical-align:top" alt="Wallpaper Preview" src=".github/images/5.png" />
+  <img width="140" style="vertical-align:top" alt="Wallpaper Preview" src=".github/images/phoneScreenshots/5.png" />
 </p>
 
 ---
