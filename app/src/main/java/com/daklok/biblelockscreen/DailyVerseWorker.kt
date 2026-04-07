@@ -34,14 +34,19 @@ class DailyVerseWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
         val isBold = prefs.getBoolean("is_bold", true)
         val useShadow = prefs.getBoolean("use_shadow", true)
         val fontFamilyStr = prefs.getString("font_family", "sans-serif") ?: "sans-serif"
-        
-        // Use YouVersionFetcher.getDefaultLanguage() if no language is saved in prefs
-        //val defaultLang = YouVersionFetcher.getDefaultLanguage()
-        val defaultLang = LocalBibleProvider.getDefaultLanguage()
-        val verseLang = prefs.getString("verse_lang", defaultLang) ?: defaultLang
 
-        //val verseData = YouVersionFetcher.getVerseOfTheDay(verseLang) ?: return Result.retry()
-        val verseData = LocalBibleProvider.getVerse(applicationContext, verseLang)
+        // Skontrolujeme, či užívateľ nemá nastavený vlastný text
+        val useCustomVerse = prefs.getBoolean("use_custom_verse", false)
+        val customVerseText = prefs.getString("custom_verse_text", null)
+        val customVerseRef = prefs.getString("custom_verse_ref", null)
+
+        val verseData = if (useCustomVerse && !customVerseText.isNullOrEmpty()) {
+            Pair(customVerseText, customVerseRef ?: "")
+        } else {
+            val defaultLang = LocalBibleProvider.getDefaultLanguage()
+            val verseLang = prefs.getString("verse_lang", defaultLang) ?: defaultLang
+            LocalBibleProvider.getVerse(applicationContext, verseLang)
+        }
 
         val finalBitmap = WallpaperUtils.createBitmapWithText(
             context = applicationContext,

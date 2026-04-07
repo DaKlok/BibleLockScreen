@@ -18,8 +18,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
-import androidx.compose.foundation.border
 import androidx.compose.foundation.gestures.detectDragGestures
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -58,6 +58,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
@@ -140,7 +141,13 @@ data class AppStrings(
     // Battery strings
     val batteryWarningTitle: String = "Upozornenie na batériu",
     val batteryWarningDesc: String = "Pre správne fungovanie automatickej zmeny tapety na pozadí, prosím, vypnite optimalizáciu batérie pre túto aplikáciu.",
-    val batteryWarningButton: String = "Vypnúť optimalizáciu"
+    val batteryWarningButton: String = "Vypnúť optimalizáciu",
+
+    // Custom Verse strings
+    val customVerseTitle: String = "Vlastný text",
+    val customVerseHint: String = "Text verša...",
+    val customRefHint: String = "Súradnice (napr. Ján 3:16)",
+    val applyCustom: String = "Použiť"
 )
 
 val skStrings = AppStrings()
@@ -160,7 +167,6 @@ val enStrings = AppStrings(
     textWidth = "Text Width",
     textAlpha = "Transparency",
     bgBlur = "Background Blur",
-
     anotherPhoto = "Change Photo",
     test = "Generate",
     selectPhotoFirst = "Select a photo first",
@@ -173,7 +179,6 @@ val enStrings = AppStrings(
     hapticsDesc = "Vibrations when editing the widget",
     support = "Support",
     supportDesc = "If you like the app and want to support its development, you can buy me a coffee ☕",
-
     donate = "Donate",
     close = "Close",
     dragHint = "Drag dots for size and width\nDrag the center to move",
@@ -194,7 +199,11 @@ val enStrings = AppStrings(
     fontCondensed = "Condensed",
     batteryWarningTitle = "Battery Warning",
     batteryWarningDesc = "For the automatic wallpaper change to work reliably in the background, please disable battery optimization for this app.",
-    batteryWarningButton = "Disable Optimization"
+    batteryWarningButton = "Disable Optimization",
+    customVerseTitle = "Custom Text",
+    customVerseHint = "Verse text...",
+    customRefHint = "Coordinates (e.g. John 3:16)",
+    applyCustom = "Apply"
 )
 
 val czStrings = AppStrings(
@@ -203,7 +212,6 @@ val czStrings = AppStrings(
     dailyWallpaper = "Denní změna tapety",
     active = "Aktivní (každý den v %s:00)",
     inactive = "Vypnuto",
-
     textCustomization = "Přizpůsobení textu",
     bold = "Tučné",
     shadow = "Stín",
@@ -219,7 +227,6 @@ val czStrings = AppStrings(
     light = "Světlý",
     dark = "Tmavý",
     dynamicColor = "Material You (Barvy systému)",
-
     haptics = "Haptická odezva",
     hapticsDesc = "Vibrace při úpravě widgetu",
     support = "Podpora",
@@ -246,13 +253,16 @@ val czStrings = AppStrings(
     tapToEdit = "Kliknutím upravíš polohu a velikost",
     batteryWarningTitle = "Upozornění na baterii",
     batteryWarningDesc = "Aby automatická změna tapety fungovala spolehlivě na pozadí, vypněte prosím optimalizaci baterie pro tuto aplikaci.",
-    batteryWarningButton = "Vypnout optimalizaci"
+    batteryWarningButton = "Vypnout optimalizaci",
+    customVerseTitle = "Vlastní text",
+    customVerseHint = "Text verše...",
+    customRefHint = "Souřadnice (např. Jan 3:16)",
+    applyCustom = "Použít"
 )
 
 val esStrings = AppStrings(
     updateTime = "Hora de actualización diaria",
     settings = "Ajustes de la App",
-
     dailyWallpaper = "Cambio diario de fondo",
     active = "Activo (todos los días a las %s:00)",
     inactive = "Desactivado",
@@ -297,13 +307,16 @@ val esStrings = AppStrings(
     tapToEdit = "Toca para editar la posición y el tamaño",
     batteryWarningTitle = "Advertencia de Batería",
     batteryWarningDesc = "Para que el cambio automático de fondo funcione de manera confiable, desactiva la optimización de batería para esta aplicación.",
-    batteryWarningButton = "Desactivar Optimización"
+    batteryWarningButton = "Desactivar Optimización",
+    customVerseTitle = "Texto Personalizado",
+    customVerseHint = "Texto del versículo...",
+    customRefHint = "Coordenadas (ej. Juan 3:16)",
+    applyCustom = "Aplicar"
 )
 
 val itStrings = AppStrings(
     updateTime = "Ora della modifica giornaliera",
     settings = "Impostazioni App",
-
     dailyWallpaper = "Sfondo giornaliero",
     active = "Attivo (ogni giorno alle %s:00)",
     inactive = "Inattivo",
@@ -330,7 +343,6 @@ val itStrings = AppStrings(
     close = "Chiudi",
     dragHint = "Trascina i punti per la dimensione e la larghezza\nTrascina al centro per spostare",
     cancel = "Annulla",
-
     done = "Fatto",
     clickToSelect = "Tocca per selezionare una foto",
     loading = "Caricamento versetto...",
@@ -349,7 +361,11 @@ val itStrings = AppStrings(
     tapToEdit = "Tocca per cambiare posizione e dimensione",
     batteryWarningTitle = "Avviso Batteria",
     batteryWarningDesc = "Affinché il cambio automatico dello sfondo funzioni in modo affidabile, disabilita l'ottimizzazione della batteria per questa app.",
-    batteryWarningButton = "Disabilita Ottimizzazione"
+    batteryWarningButton = "Disabilita Ottimizzazione",
+    customVerseTitle = "Testo Personalizzato",
+    customVerseHint = "Testo del versetto...",
+    customRefHint = "Coordinate (es. Giovanni 3:16)",
+    applyCustom = "Applica"
 )
 
 val frStrings = AppStrings(
@@ -369,7 +385,6 @@ val frStrings = AppStrings(
     test = "Générer",
     selectPhotoFirst = "Sélectionnez d'abord une photo",
     appearance = "Apparence",
-
     system = "Système",
     light = "Clair",
     dark = "Sombre",
@@ -400,13 +415,16 @@ val frStrings = AppStrings(
     tapToEdit = "Touchez pour modifier la position et la taille",
     batteryWarningTitle = "Avertissement de Batterie",
     batteryWarningDesc = "Pour que le changement automatique de fond d'écran fonctionne de manière fiable, veuillez désactiver l'optimisation de la batterie pour cette application.",
-    batteryWarningButton = "Désactiver l'Optimisation"
+    batteryWarningButton = "Désactiver l'Optimisation",
+    customVerseTitle = "Texte Personnalisé",
+    customVerseHint = "Texte du verset...",
+    customRefHint = "Coordonnées (ex. Jean 3:16)",
+    applyCustom = "Appliquer"
 )
 
 val deStrings = AppStrings(
     updateTime = "Zeitliche Aktualisierungszeit",
     settings = "App-Einstellungen",
-
     dailyWallpaper = "Tägliches Hintergrundbild",
     active = "Aktiv (jeden Tag bei %s:00)",
     inactive = "Inaktiv",
@@ -422,7 +440,6 @@ val deStrings = AppStrings(
     selectPhotoFirst = "Wähle zuerst ein Foto aus",
     appearance = "Erscheinungsbild",
     system = "System",
-
     light = "Hell",
     dark = "Dunkel",
     dynamicColor = "Material You (Systemfarben)",
@@ -434,7 +451,6 @@ val deStrings = AppStrings(
     close = "Schließen",
     dragHint = "Ziehe die Punkte für die Größe und Breite\nZiehe in die Mitte zum Bewegen",
     cancel = "Abbrechen",
-
     done = "Fertig",
     clickToSelect = "Tippe, um ein Foto auszuwählen",
     loading = "Lade Vers...",
@@ -453,7 +469,11 @@ val deStrings = AppStrings(
     tapToEdit = "Tippe, um die Position und Größe zu ändern",
     batteryWarningTitle = "Akku-Warnung",
     batteryWarningDesc = "Damit der automatische Hintergrundwechsel zuverlässig funktioniert, deaktivieren Sie bitte die Akku-Optimierung für diese App.",
-    batteryWarningButton = "Optimierung Deaktivieren"
+    batteryWarningButton = "Optimierung Deaktivieren",
+    customVerseTitle = "Eigener Text",
+    customVerseHint = "Verstext...",
+    customRefHint = "Koordinaten (z.B. Johannes 3:16)",
+    applyCustom = "Anwenden"
 )
 
 val huStrings = AppStrings(
@@ -503,14 +523,17 @@ val huStrings = AppStrings(
     tapToEdit = "Koppintson a pozíció és a méret módosításához.",
     batteryWarningTitle = "Akkumulátor Figyelmeztetés",
     batteryWarningDesc = "Annak érdekében, hogy az automatikus háttérkép-váltás megbízhatóan működjön, kérjük, tiltsa le az akkumulátor-optimalizálást ehhez az alkalmazáshoz.",
-    batteryWarningButton = "Optimalizálás Letiltása"
+    batteryWarningButton = "Optimalizálás Letiltása",
+    customVerseTitle = "Egyéni szöveg",
+    customVerseHint = "Ige szövege...",
+    customRefHint = "Koordináták (pl. János 3:16)",
+    applyCustom = "Alkalmaz"
 )
 
 val plStrings = AppStrings(
     updateTime = "Czas aktualizacji dziennie",
     generatingBtn = "generowanie...",
     settings = "Ustawienia aplikacji",
-
     dailyWallpaper = "Codzienna tapeta",
     active = "Aktywne (codziennie o %s:00)",
     inactive = "Nieaktywne",
@@ -526,7 +549,6 @@ val plStrings = AppStrings(
     selectPhotoFirst = "Najpierw wybierz zdjęcie",
     appearance = "Wygląd",
     system = "System",
-
     light = "Jasny",
     dark = "Ciemny",
     dynamicColor = "Material You (Kolory systemu)",
@@ -539,7 +561,6 @@ val plStrings = AppStrings(
     dragHint = "Przeciągnij kropki dla rozmiaru i szerokości\nPrzeciągnij środek, aby przesunąć",
     cancel = "Anuluj",
     done = "Gotowe",
-
     clickToSelect = "Dotknij, aby wybrać zdjęcie",
     loading = "Ładowanie wersetu...",
     appLanguage = "Język aplikacji",
@@ -556,14 +577,17 @@ val plStrings = AppStrings(
     tapToEdit = "Dotknij, aby zmienić położenie i wielkość",
     batteryWarningTitle = "Ostrzeżenie o Baterii",
     batteryWarningDesc = "Aby automatyczna zmiana tapety działała niezawodnie w tle, wyłącz optymalizację baterii dla tej aplikacji.",
-    batteryWarningButton = "Wyłącz Optymalizację"
+    batteryWarningButton = "Wyłącz Optymalizację",
+    customVerseTitle = "Własny tekst",
+    customVerseHint = "Tekst wersetu...",
+    customRefHint = "Współrzędne (np. Jan 3:16)",
+    applyCustom = "Zastosuj"
 )
 
 // Helper function to dynamically select system language or fallback to EN
 fun getDefaultAppLanguage(): String {
     val sysLang = Locale.getDefault().language.uppercase()
     return when (sysLang) {
-
         "CS" -> "CZ"
         "SK", "EN", "CZ", "ES", "IT", "FR", "DE", "HU", "PL" -> sysLang
         else -> "EN"
@@ -593,7 +617,6 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-
             val context = LocalContext.current
             val prefs = remember { context.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE) }
 
@@ -601,7 +624,6 @@ class MainActivity : ComponentActivity() {
             var useDynamicColor by remember { mutableStateOf(prefs.getBoolean("use_dynamic_color", true)) }
 
             val darkTheme = when (themeMode) {
-
                 1 -> false
                 2 -> true
                 else -> isSystemInDarkTheme()
@@ -609,17 +631,14 @@ class MainActivity : ComponentActivity() {
 
             BibleLockScreenTheme(darkTheme = darkTheme, dynamicColor = useDynamicColor) {
                 MainScreen(
-
                     themeMode = themeMode,
                     useDynamicColor = useDynamicColor,
                     onThemeChange = { newMode ->
                         themeMode = newMode
-
                         prefs.edit().putInt("theme_mode", newMode).apply()
                     },
                     onDynamicColorChange = { useDynamic ->
                         useDynamicColor = useDynamic
-
                         prefs.edit().putBoolean("use_dynamic_color", useDynamic).apply()
                     }
                 )
@@ -636,9 +655,9 @@ fun MainScreen(
     onThemeChange: (Int) -> Unit,
     onDynamicColorChange: (Boolean) -> Unit
 ) {
-
     val context = LocalContext.current
     val sysHaptic = LocalHapticFeedback.current
+    val focusManager = LocalFocusManager.current
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -750,7 +769,15 @@ fun MainScreen(
         appLang = prefs.getString("app_lang", defaultSystemLang) ?: defaultSystemLang
         verseLang = prefs.getString("verse_lang", defaultSystemLang) ?: defaultSystemLang
 
-        versePair = LocalBibleProvider.getVerse(context, verseLang)
+        val useCustomVerse = prefs.getBoolean("use_custom_verse", false)
+        val savedCustomVerse = prefs.getString("custom_verse_text", null)
+        val savedCustomRef = prefs.getString("custom_verse_ref", null)
+
+        if (useCustomVerse && !savedCustomVerse.isNullOrEmpty()) {
+            versePair = Pair(savedCustomVerse, savedCustomRef ?: "")
+        } else {
+            versePair = LocalBibleProvider.getVerse(context, verseLang)
+        }
 
         // Standard WorkManager observer
         WorkManager.getInstance(context)
@@ -768,7 +795,6 @@ fun MainScreen(
         prefs.edit()
             .putFloat("text_size_mult", textSizeMult)
             .putFloat("text_width_mult", textWidthMult)
-
             .putFloat("vertical_offset", verticalOffset)
             .putInt("text_color", textColor)
             .putFloat("text_alpha", textAlpha)
@@ -776,7 +802,6 @@ fun MainScreen(
             .putBoolean("is_bold", isBold)
             .putBoolean("use_shadow", useShadow)
             .putString("font_family", fontFamilyStr)
-
             .putBoolean("use_haptics", useHaptics)
             .apply()
     }
@@ -787,9 +812,12 @@ fun MainScreen(
         isDailyActive = enable
 
         if (enable) {
+            // Disable custom verse usage if user activates daily change
+            prefs.edit().putBoolean("use_custom_verse", false).apply()
+            versePair = LocalBibleProvider.getVerse(context, verseLang)
+
             // Use the function that accepts the custom hour
             scheduleDailyWallpaper(context, dailyHour)
-
             scope.launch { snackbarHostState.showSnackbar(
                 String.format(strings.dailyWorkerOn, String.format("%02d", dailyHour))
             )}
@@ -800,19 +828,16 @@ fun MainScreen(
     }
 
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-
         uri?.let { sourceUri ->
             scope.launch(Dispatchers.IO) {
                 try {
                     // 1. Create a unique file name in internal storage
                     val fileName = "user_wallpaper.jpg"
-
                     val destinationFile = java.io.File(context.filesDir, fileName)
 
                     // 2. Copy the content from the gallery URI to your app's internal folder
                     context.contentResolver.openInputStream(sourceUri)?.use { input ->
                         destinationFile.outputStream().use { output ->
-
                             input.copyTo(output)
                         }
                     }
@@ -822,17 +847,14 @@ fun MainScreen(
 
                     withContext(Dispatchers.Main) {
                         // 1. Create a "cache breaker" using the current time
-
                         val timestamp = System.currentTimeMillis()
                         val internalUriWithCacheBreaker = Uri.fromFile(destinationFile).buildUpon()
                             .appendQueryParameter("v", timestamp.toString())
                             .build()
 
-
                         // 2. Set the imageUri to null first, then the new URI
                         // This combined with the timestamp forces Coil to reload from disk
                         imageUri = null
-
                         imageUri = internalUriWithCacheBreaker
 
                         // 3. Save the base URI to prefs (without the timestamp, to keep it clean)
@@ -842,7 +864,6 @@ fun MainScreen(
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
-
                 }
             }
         }
@@ -861,12 +882,10 @@ fun MainScreen(
                     actions = {
                         IconButton(onClick = { showSettings = true }) {
                             Icon(Icons.Outlined.Settings, contentDescription = strings.settings)
-
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
                         containerColor = MaterialTheme.colorScheme.background,
-
                         titleContentColor = MaterialTheme.colorScheme.onBackground
                     )
                 )
@@ -874,44 +893,38 @@ fun MainScreen(
             snackbarHost = { SnackbarHost(snackbarHostState) },
             containerColor = MaterialTheme.colorScheme.background
         ) { padding ->
-
             Column(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
+                    .pointerInput(Unit) {
+                        detectTapGestures(onTap = { focusManager.clearFocus() })
+                    }
                     .verticalScroll(scrollState),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-
                 // 1. DYNAMICKÝ PREVIEW CARD (Parallax efekt)
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                         .graphicsLayer {
                             val scrollOffset = scrollState.value.toFloat()
-
                             val scale = (1f - (scrollOffset / 1500f)).coerceIn(0.6f, 1f)
                             val alphaVal = (1f - (scrollOffset / 900f)).coerceIn(0.5f, 1f)
-
                             scaleX = scale
-
                             scaleY = scale
                             alpha = alphaVal
                             translationY = scrollOffset * 0.5f
-
                         }
                 ) {
                     Pixel6LockScreenPreview(
                         uri = imageUri,
                         verseText = versePair?.first ?: strings.loading,
-
                         verseReference = versePair?.second ?: "",
                         textSizeMult = textSizeMult,
                         textWidthMult = textWidthMult,
                         verticalOffset = verticalOffset,
-
                         textColor = textColor,
                         textAlpha = textAlpha,
                         bgBlur = bgBlur,
@@ -919,27 +932,21 @@ fun MainScreen(
                         useShadow = useShadow,
                         fontFamilyStr = fontFamilyStr,
                         showEditHint = true, // Ukazuje obrys s ceruzkou
-
                         strings = strings,
                         showBubbleHint = imageUri != null && !hasSeenEditHint,
                         onClick = {
                             performHaptic(HapticFeedbackType.LongPress)
-
                             launcher.launch("image/*")
                         },
                         onEditClick = {
-
                             performHaptic(HapticFeedbackType.LongPress)
                             isEditing = true
-
                             if (!hasSeenEditHint) {
                                 hasSeenEditHint = true
-
                                 prefs.edit().putBoolean("has_seen_edit_hint", true).apply()
                             }
                         }
                     )
-
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -947,56 +954,51 @@ fun MainScreen(
                 // 2. OBLASŤ NASTAVENÍ
                 Column(
                     modifier = Modifier
-
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
                         .background(MaterialTheme.colorScheme.surface)
+                        .animateContentSize(animationSpec = tween(300, easing = FastOutSlowInEasing))
                         .padding(24.dp),
-
                     verticalArrangement = Arrangement.spacedBy(24.dp)
                 ) {
 
                     // HLAVNÝ PREPÍNAČ (SWITCH)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Column(modifier = Modifier.weight(1f)) {
-
                             Text(
                                 text = strings.dailyWallpaper,
                                 style = MaterialTheme.typography.titleLarge,
-
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-
                                 text = if (isDailyActive) {
                                     val formattedHour = String.format("%02d", dailyHour)
                                     String.format(strings.active, formattedHour)
-
                                 } else {
                                     strings.inactive
-
                                 },
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = if (isDailyActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
-
                             )
                         }
                         Switch(
                             checked = isDailyActive,
-
                             onCheckedChange = { toggleDailyWorker(it) }
                         )
                     }
 
                     // ----------------------------------------------------
-                    // BATERIOVE UPOZORNENIE
+                    // BATERIOVE UPOZORNENIE (Animated)
                     // ----------------------------------------------------
-                    if (isDailyActive && isBatteryOptimized) {
+                    AnimatedVisibility(
+                        visible = isDailyActive && isBatteryOptimized,
+                        enter = expandVertically(animationSpec = tween(300, easing = FastOutSlowInEasing)) + fadeIn(tween(300)),
+                        exit = shrinkVertically(animationSpec = tween(250, easing = FastOutSlowInEasing)) + fadeOut(tween(250))
+                    ) {
                         Card(
                             colors = CardDefaults.cardColors(
                                 containerColor = MaterialTheme.colorScheme.errorContainer
@@ -1004,7 +1006,7 @@ fun MainScreen(
                             shape = RoundedCornerShape(12.dp),
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(top = 16.dp)
+                                .padding(top = 8.dp)
                         ) {
                             Column(
                                 modifier = Modifier.padding(16.dp)
@@ -1055,200 +1057,219 @@ fun MainScreen(
                         }
                     }
 
+                    // ----------------------------------------------------
+                    // CUSTOM VERSE EDITOR (Animated)
+                    // ----------------------------------------------------
+                    AnimatedVisibility(
+                        visible = !isDailyActive,
+                        enter = expandVertically(animationSpec = tween(300, easing = FastOutSlowInEasing)) + fadeIn(tween(300)),
+                        exit = shrinkVertically(animationSpec = tween(250, easing = FastOutSlowInEasing)) + fadeOut(tween(250))
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(strings.customVerseTitle, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+
+                            var localVerse by remember(versePair) { mutableStateOf(versePair?.first ?: "") }
+                            var localRef by remember(versePair) { mutableStateOf(versePair?.second ?: "") }
+
+                            OutlinedTextField(
+                                value = localVerse,
+                                onValueChange = { localVerse = it },
+                                label = { Text(strings.customVerseHint) },
+                                modifier = Modifier.fillMaxWidth(),
+                                shape = RoundedCornerShape(16.dp),
+                                minLines = 2,
+                                maxLines = 4
+                            )
+
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                OutlinedTextField(
+                                    value = localRef,
+                                    onValueChange = { localRef = it },
+                                    label = { Text(strings.customRefHint) },
+                                    modifier = Modifier.weight(1f),
+                                    shape = RoundedCornerShape(16.dp),
+                                    singleLine = true
+                                )
+
+                                Button(
+                                    onClick = {
+                                        focusManager.clearFocus() // Remove cursor and keyboard
+                                        if (localVerse.isNotBlank()) {
+                                            versePair = Pair(localVerse, localRef)
+                                            prefs.edit()
+                                                .putString("custom_verse_text", localVerse)
+                                                .putString("custom_verse_ref", localRef)
+                                                .putBoolean("use_custom_verse", true)
+                                                .apply()
+                                            performHaptic(HapticFeedbackType.TextHandleMove)
+                                            scope.launch {
+                                                snackbarHostState.showSnackbar(strings.done)
+                                            }
+                                        }
+                                    },
+                                    shape = RoundedCornerShape(16.dp),
+                                    modifier = Modifier.height(56.dp)
+                                ) {
+                                    Icon(Icons.Outlined.Check, contentDescription = null)
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(strings.applyCustom)
+                                }
+                            }
+                        }
+                    }
 
                     HorizontalDivider()
 
                     // NASTAVENIA
-
                     if (imageUri != null) {
                         Text(strings.textCustomization, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
 
                         // Farba textu
                         ColorPickerRow(selectedColor = textColor) {
-                            textColor = it;
-                            performHaptic(HapticFeedbackType.TextHandleMove); saveSettings()
+                            textColor = it; performHaptic(HapticFeedbackType.TextHandleMove); saveSettings()
                         }
 
                         // Písmo (Font)
                         FontPickerRow(selectedFont = fontFamilyStr, strings = strings) {
-                            fontFamilyStr = it;
-                            performHaptic(HapticFeedbackType.TextHandleMove); saveSettings()
+                            fontFamilyStr = it; performHaptic(HapticFeedbackType.TextHandleMove); saveSettings()
                         }
 
                         // Štýly
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-
                             FilterChip(
                                 selected = isBold,
                                 onClick = { isBold = !isBold; performHaptic(HapticFeedbackType.TextHandleMove); saveSettings() },
-
                                 label = { Text(strings.bold) },
                                 leadingIcon = { Icon(Icons.Outlined.FormatBold, null) },
                                 modifier = Modifier.weight(1f)
-
                             )
                             FilterChip(
                                 selected = useShadow,
-
                                 onClick = { useShadow = !useShadow; performHaptic(HapticFeedbackType.TextHandleMove); saveSettings() },
                                 label = { Text(strings.shadow) },
                                 leadingIcon = { Icon(Icons.Default.Hd, null) },
-
                                 modifier = Modifier.weight(1f)
                             )
                         }
-
 
                         // Slidery (Pozícia bola odstránená, upravuje sa len v editore)
                         EnhancedSlider(
                             label = strings.bgBlur,
                             value = bgBlur,
                             range = 0f..25f,
-
                             defaultVal = 0f,
                             steps = 24,
                             icon = Icons.Outlined.BlurOn,
-
-                            onValueChange = { bgBlur = it;
-                                saveSettings() }
+                            onValueChange = { bgBlur = it; saveSettings() }
                         )
 
                         EnhancedSlider(
-
                             label = strings.textSize,
                             value = textSizeMult,
                             range = 0.5f..2.0f,
-
                             defaultVal = 1.0f,
                             steps = 14,
                             icon = Icons.Default.TextFormat,
                             onValueChange = { textSizeMult = it; saveSettings() }
-
                         )
 
                         EnhancedSlider(
                             label = strings.textWidth,
-
                             value = textWidthMult,
                             range = 0.5f..1.2f,
                             defaultVal = 1.0f,
-
                             steps = 7,
                             icon = Icons.Default.FormatAlignJustify,
-                            onValueChange = { textWidthMult = it;
-                                saveSettings() }
+                            onValueChange = { textWidthMult = it; saveSettings() }
                         )
 
                         EnhancedSlider(
                             label = strings.textAlpha,
-
                             value = textAlpha,
                             range = 0.2f..1.0f,
                             defaultVal = 1.0f,
                             steps = 7,
-
                             icon = Icons.Default.Opacity,
                             onValueChange = { textAlpha = it; saveSettings() }
                         )
 
-
                         Spacer(modifier = Modifier.height(12.dp))
 
                         // Akčné tlačidlá
-                        // Find your "Akčné tlačidlá" Row
                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-
                             OutlinedButton(
                                 onClick = { launcher.launch("image/*") },
                                 modifier = Modifier.weight(1f),
-
                                 shape = RoundedCornerShape(12.dp)
                             ) {
                                 Icon(Icons.Default.Image, null)
-
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(strings.anotherPhoto)
                             }
 
-
                             Button(
                                 // 1. Disable the button if generating OR if there is no image
                                 enabled = generationStatus == "idle" && imageUri != null,
-
                                 onClick = {
                                     if (imageUri != null) {
-
                                         // 2. Initial Haptic
                                         performHaptic(HapticFeedbackType.LongPress)
-
                                         scope.launch {
-
                                             generationStatus = "generating"
-
                                             // Run your existing worker logic
-
                                             runOneTimeWorker(context)
-
                                             // Simulated delay for the "Done" state
-
                                             kotlinx.coroutines.delay(2000)
-
                                             // 3. Success Haptic (Changed from Reject to indicate success)
-
                                             performHaptic(HapticFeedbackType.TextHandleMove)
                                             generationStatus = "Done"
 
-
                                             // Auto-hide the popup after a short while
                                             kotlinx.coroutines.delay(2000)
-
                                             generationStatus = "idle"
                                         }
                                     }
-
                                 },
                                 modifier = Modifier.weight(1f),
                                 shape = RoundedCornerShape(12.dp)
-
                             ) {
                                 Icon(Icons.Default.AutoAwesome, null)
                                 Spacer(Modifier.width(8.dp))
-
                                 // Optional: Change text based on state
                                 Text(
                                     text = if (generationStatus == "generating") {
-
                                         strings.generatingBtn
                                     } else {
-
                                         strings.test
                                     }
                                 )
-
                             }
                         }
                     } else {
                         Box(
-
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(100.dp)
-
                                 .border(1.dp, Color.Gray, RoundedCornerShape(12.dp))
                                 .clickable { launcher.launch("image/*") },
                             contentAlignment = Alignment.Center
                         ) {
-
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 Icon(Icons.Default.AddPhotoAlternate, null, tint = MaterialTheme.colorScheme.primary)
                                 Text(strings.selectPhotoFirst, color = MaterialTheme.colorScheme.primary)
-
                             }
                         }
                     }
-
                     Spacer(modifier = Modifier.height(80.dp))
-
                 }
             }
         }
@@ -1257,112 +1278,87 @@ fun MainScreen(
         if (showSettings) {
             AlertDialog(
                 onDismissRequest = { showSettings = false },
-                title = {
-                    Text(strings.settings, fontWeight = FontWeight.Bold) },
+                title = { Text(strings.settings, fontWeight = FontWeight.Bold) },
                 text = {
                     Column(
                         verticalArrangement = Arrangement.spacedBy(24.dp),
                         modifier = Modifier.verticalScroll(rememberScrollState())
-
                     ) {
-
                         // Jazyk aplikacie
                         LanguageDropdown(
-
                             label = strings.appLanguage,
                             selectedCode = appLang,
                             options = availableLanguages,
-
                             onSelect = {
                                 appLang = it
                                 context.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
-
                                     .edit().putString("app_lang", it).apply()
                             }
                         )
-
 
                         HorizontalDivider()
 
                         // Jazyk versov
                         LanguageDropdown(
-
                             label = strings.verseLanguage,
                             selectedCode = verseLang,
                             options = availableLanguages,
-
                             onSelect = {
                                 if (verseLang != it) {
                                     verseLang = it
-
                                     context.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
                                         .edit().putString("verse_lang", it).apply()
                                     versePair = null
                                     // Zobrazenie načítania
                                     scope.launch {
                                         versePair = LocalBibleProvider.getVerse(context, it)
-
                                     }
                                 }
                             }
-
                         )
 
                         HorizontalDivider()
 
                         // Téma
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-
                             Text(strings.appearance, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                             val options = listOf(strings.system, strings.light, strings.dark)
                             SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-
                                 options.forEachIndexed { index, label ->
                                     SegmentedButton(
                                         selected = themeMode == index,
-
                                         onClick = { onThemeChange(index) },
                                         shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size)
-
                                     ) {
                                         Text(label, maxLines = 1)
                                     }
-
                                 }
                             }
                             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
                                     verticalAlignment = Alignment.CenterVertically,
-
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-
                                     Text(strings.dynamicColor)
                                     Switch(checked = useDynamicColor, onCheckedChange = { onDynamicColorChange(it) })
                                 }
-
                             }
                         }
 
                         HorizontalDivider()
 
                         // Vibrácie
-
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
-
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(strings.haptics, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-
                                 Text(strings.hapticsDesc, style = MaterialTheme.typography.bodySmall)
                             }
                             Switch(
-
                                 checked = useHaptics,
                                 onCheckedChange = {
                                     useHaptics = it;
@@ -1370,124 +1366,95 @@ fun MainScreen(
                                     if(it) sysHaptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                 }
                             )
-
                         }
 
                         HorizontalDivider()
 
-
                         // Denna zmena tapety - zmena času
-
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-
                                 .padding(vertical = 8.dp)
                         ) {
                             Text(
-
                                 text = strings.dailyWallpaper,
                                 style = MaterialTheme.typography.titleMedium
                             )
                             Text(
-
                                 text = if (isDailyActive) {
                                     // First format the hour (e.g., 6 -> "06")
-
                                     val formattedHour = String.format("%02d", dailyHour)
                                     // Then inject that into the translation string
                                     String.format(strings.active, formattedHour)
-
                                 } else {
                                     strings.inactive
                                 },
-
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
 
-
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier.fillMaxWidth()
-
                             ) {
                                 Slider(
                                     value = dailyHour.toFloat(),
-
                                     onValueChange = {
                                         dailyHour = it.roundToInt()
-
                                         // Trigger haptic feedback here, whenever the value changes
                                         if (useHaptics) {
-
                                             performHaptic(HapticFeedbackType.TextHandleMove)
                                         }
                                     },
-
                                     valueRange = 0f..23f,
                                     steps = 22, // Correct: 22 steps between 0 and 23 creates 24 distinct points
-
                                     modifier = Modifier.weight(1f)
                                 )
                                 Text(
-
                                     text = String.format("%02d:00", dailyHour),
                                     modifier = Modifier.padding(start = 12.dp),
                                     style = MaterialTheme.typography.bodyLarge,
-
                                     fontWeight = FontWeight.Bold
                                 )
                             }
 
-
                             // Re-schedule worker whenever the hour changes
                             LaunchedEffect(dailyHour) {
                                 prefs.edit().putInt("daily_hour", dailyHour).apply()
-
                                 // Check if worker is currently supposed to be active
                                 if (isDailyActive) {
                                     scheduleDailyWallpaper(context, dailyHour)
-
                                 }
                             }
                         }
 
                         HorizontalDivider()
 
-
                         // Podpora
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-
                             Text(strings.support, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
                             Text(strings.supportDesc, style = MaterialTheme.typography.bodySmall)
                             OutlinedButton(
-
                                 onClick = {
                                     val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ko-fi.com/daklok"))
                                     context.startActivity(intent)
-
                                 },
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-
                                 Icon(Icons.Outlined.Favorite, contentDescription = null, tint = Color.Red)
                                 Spacer(modifier = Modifier.width(8.dp))
                                 Text(strings.donate)
-
                             }
                         }
                     }
                 },
                 confirmButton = {
-
                     TextButton(onClick = { showSettings = false }) {
                         Text(strings.close)
                     }
                 }
             )
         }
-
 
         // Expressive Full-Screen Editor s animáciou
         AnimatedVisibility(
@@ -1496,39 +1463,33 @@ fun MainScreen(
                 initialScale = 0.8f,
                 animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessLow)
             ) + fadeIn(animationSpec = tween(300)),
-
             exit = scaleOut(
                 targetScale = 0.8f,
                 animationSpec = tween(durationMillis = 250, easing = FastOutLinearInEasing)
             ) + fadeOut(animationSpec = tween(250))
         ) {
             FullScreenEditor(
-
                 uri = imageUri,
                 verseText = versePair?.first ?: strings.loading,
                 verseReference = versePair?.second ?: "",
                 initialTextSizeMult = textSizeMult,
                 initialTextWidthMult = textWidthMult,
-
                 initialVerticalOffset = verticalOffset,
                 textColor = textColor,
                 textAlpha = textAlpha,
                 bgBlur = bgBlur,
                 isBold = isBold,
                 useShadow = useShadow,
-
                 fontFamilyStr = fontFamilyStr,
                 strings = strings,
                 onSave = { newSize, newWidth, newOffset ->
                     textSizeMult = newSize
                     textWidthMult = newWidth
-
                     verticalOffset = newOffset
                     saveSettings()
                     isEditing = false
                 },
                 onDismiss = {
-
                     isEditing = false
                 },
                 performHaptic = performHaptic
@@ -1544,7 +1505,6 @@ fun MainScreen(
         ) {
             AnimatedVisibility(
                 visible = generationStatus != "idle",
-
                 enter = fadeIn() + slideInVertically(initialOffsetY = { it / 2 }) + scaleIn(initialScale = 0.9f),
                 exit = fadeOut() + slideOutVertically(targetOffsetY = { it / 2 }) + scaleOut(targetScale = 0.9f)
             ) {
@@ -1554,34 +1514,27 @@ fun MainScreen(
                     tonalElevation = 6.dp,
                     shadowElevation = 4.dp
                 ) {
-
                     Row(
                         modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
-
                     ) {
                         if (generationStatus == "generating") {
                             CircularProgressIndicator(
                                 modifier = Modifier.size(20.dp),
-
                                 strokeWidth = 2.dp,
                                 color = MaterialTheme.colorScheme.onSecondaryContainer
                             )
-
                             Text(strings.generating, style = MaterialTheme.typography.labelLarge)
                         } else {
                             Icon(
-
                                 Icons.Outlined.Check,
                                 contentDescription = null,
                                 tint = Color(0xFF4CAF50),
-
                                 modifier = Modifier.size(20.dp)
                             )
                             Text(strings.done, style = MaterialTheme.typography.labelLarge)
                         }
-
                     }
                 }
             }
@@ -1607,7 +1560,6 @@ fun LanguageDropdown(
             OutlinedButton(
                 onClick = { expanded = true },
                 modifier = Modifier.fillMaxWidth()
-
             ) {
                 Text(selectedLabel)
                 Spacer(modifier = Modifier.weight(1f))
@@ -1615,13 +1567,11 @@ fun LanguageDropdown(
             }
             DropdownMenu(
                 expanded = expanded,
-
                 onDismissRequest = { expanded = false },
                 modifier = Modifier.fillMaxWidth(0.7f)
             ) {
                 options.forEach { (code, name) ->
                     DropdownMenuItem(
-
                         text = { Text(name) },
                         onClick = {
                             onSelect(code)
@@ -1638,7 +1588,6 @@ fun LanguageDropdown(
 fun FullScreenEditor(
     uri: Uri?,
     verseText: String,
-
     verseReference: String,
     initialTextSizeMult: Float,
     initialTextWidthMult: Float,
@@ -1658,7 +1607,6 @@ fun FullScreenEditor(
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
 
     // Lokálny stav
-
     var localSizeMult by remember { mutableFloatStateOf(initialTextSizeMult) }
     var rawSizeMult by remember { mutableFloatStateOf(initialTextSizeMult) }
     var isSizeSnapped by remember { mutableStateOf(kotlin.math.abs(initialTextSizeMult - 1.0f) < 0.05f) }
@@ -1679,7 +1627,6 @@ fun FullScreenEditor(
         val snapZone = 0.05f
         val newSnapped = if (kotlin.math.abs(rawWidthMult - 1.0f) < snapZone) 1.0f else rawWidthMult
         if (newSnapped == 1.0f && !isWidthSnapped) {
-
             performHaptic(HapticFeedbackType.LongPress)
             isWidthSnapped = true
         } else if (newSnapped != 1.0f && isWidthSnapped) {
@@ -1690,7 +1637,6 @@ fun FullScreenEditor(
 
     val updateSize = { delta: Float ->
         rawSizeMult = (rawSizeMult + delta).coerceIn(0.5f, 3.0f)
-
         val snapZone = 0.08f
         val newSnapped = if (kotlin.math.abs(rawSizeMult - 1.0f) < snapZone) 1.0f else rawSizeMult
         if (newSnapped == 1.0f && !isSizeSnapped) {
@@ -1698,7 +1644,6 @@ fun FullScreenEditor(
             isSizeSnapped = true
         } else if (newSnapped != 1.0f && isSizeSnapped) {
             isSizeSnapped = false
-
         }
         localSizeMult = newSnapped
     }
@@ -1717,7 +1662,6 @@ fun FullScreenEditor(
         // Výpočet veľkosti písma
         var baseSize = maxWidth.value * 0.055f
         if (verseText.length > 150) baseSize = maxWidth.value * 0.045f
-
         val fontScale = density.fontScale
         val fontSize = (baseSize * localSizeMult / fontScale).sp
         val composeFontFamily = getComposeFontFamily(fontFamilyStr)
@@ -1729,31 +1673,26 @@ fun FullScreenEditor(
         val totalOffset = defaultOffset + variableOffset
 
         // 1. Pozadie
-
         if (uri != null) {
             Image(
                 painter = rememberAsyncImagePainter(uri),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-
                     .fillMaxSize()
                     .then(
                         if (bgBlur > 0f) Modifier.blur((bgBlur * 0.7f).dp) else Modifier
                     )
             )
-
             Box(modifier = Modifier
                 .fillMaxSize()
                 .background(
                     Brush.verticalGradient(
                         colors = listOf(
-
                             Color.Black.copy(alpha = 0.2f),
                             Color.Transparent,
                             Color.Black.copy(alpha = 0.4f)
                         )
-
                     )
                 )
             )
@@ -1762,7 +1701,6 @@ fun FullScreenEditor(
         // 2. FAKE STATUS BAR & CLOCK
         Column(
             modifier = Modifier
-
                 .fillMaxSize()
                 .padding(top = 60.dp, start = 24.dp, end = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally
@@ -1781,7 +1719,6 @@ fun FullScreenEditor(
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Normal
             )
-
         }
 
         // 3. EDITOVATEĽNÝ TEXT BOX
@@ -1790,34 +1727,28 @@ fun FullScreenEditor(
                 .fillMaxSize()
                 .pointerInput(Unit) {
                     detectDragGestures { change, dragAmount ->
-
                         change.consume()
                         val panYDp = dragAmount.y / density.density
                         val panOffsetChange = panYDp * moveFactor
-
 
                         rawVerticalOffset =
                             (rawVerticalOffset + panOffsetChange).coerceIn(-1.0f, 1.0f)
 
                         val snapZone = 0.04f
                         val newSnappedOffset = if (kotlin.math.abs(rawVerticalOffset) < snapZone) {
-
                             0.0f
                         } else {
                             rawVerticalOffset
                         }
 
-
                         if (newSnappedOffset == 0.0f && !isPositionSnapped) {
                             performHaptic(HapticFeedbackType.LongPress)
                             isPositionSnapped = true
-
                         } else if (newSnappedOffset != 0.0f && isPositionSnapped) {
                             isPositionSnapped = false
                         }
 
                         localVerticalOffset = newSnappedOffset
-
                     }
                 },
             contentAlignment = Alignment.Center
@@ -1829,7 +1760,6 @@ fun FullScreenEditor(
                     .width(maxWidth * 0.80f * localWidthMult)
             ) {
                 // Vnútorne ohraničený box s textom a pozadím
-
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -1838,43 +1768,37 @@ fun FullScreenEditor(
                             color = if (isPositionSnapped) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary,
                             shape = RoundedCornerShape(16.dp)
                         )
-
                         .background(Color.Black.copy(alpha = 0.35f), RoundedCornerShape(16.dp))
                         .padding(horizontal = maxWidth * 0.025f, vertical = 16.dp)
                 ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
                         Text(
                             text = verseText,
                             color = Color(textColor).copy(alpha = textAlpha),
-
                             fontSize = fontSize,
                             fontFamily = composeFontFamily,
                             lineHeight = fontSize * 1.25f,
-
                             fontWeight = composeFontWeight,
                             textAlign = TextAlign.Center,
                             style = if (useShadow) TextStyleWithShadow else LocalTextStyle.current
                         )
 
-
                         Spacer(modifier = Modifier.height((fontSize.value * 0.5).dp))
 
                         Text(
-
                             text = verseReference,
                             color = Color(textColor).copy(alpha = textAlpha * 0.8f),
                             fontSize = fontSize * 0.75f,
-
                             fontFamily = composeFontFamily,
                             fontWeight = getComposeFontWeight(fontFamilyStr, false),
                             textAlign = TextAlign.Center,
-
                             style = if (useShadow) TextStyleWithShadow else LocalTextStyle.current
                         )
                     }
                 }
-
 
                 // DRAG HANDLES
                 val handleSize = 48.dp
@@ -1882,12 +1806,10 @@ fun FullScreenEditor(
 
                 // Pravá strana (Šírka)
                 Box(
-
                     modifier = Modifier
                         .align(Alignment.CenterEnd)
                         .offset(x = 24.dp)
                         .size(handleSize)
-
                         .pointerInput(Unit) {
                             detectDragGestures { change, dragAmount ->
                                 change.consume()
@@ -1895,75 +1817,54 @@ fun FullScreenEditor(
                                 updateWidth(widthChangeMult * 2)
                             }
                         },
-
                     contentAlignment = Alignment.Center
-                ) { Box(Modifier
-                    .size(dotSize)
-                    .background(Color.White, CircleShape)) }
-
+                ) { Box(Modifier.size(dotSize).background(Color.White, CircleShape)) }
 
                 // Ľavá strana (Šírka)
                 Box(
                     modifier = Modifier
                         .align(Alignment.CenterStart)
                         .offset(x = -24.dp)
-
                         .size(handleSize)
                         .pointerInput(Unit) {
                             detectDragGestures { change, dragAmount ->
-
                                 change.consume()
                                 val widthChangeMult = -dragAmount.x / baseWidthPx
                                 updateWidth(widthChangeMult * 2)
-
                             }
                         },
                     contentAlignment = Alignment.Center
-                ) { Box(Modifier
-                    .size(dotSize)
-
-                    .background(Color.White, CircleShape)) }
+                ) { Box(Modifier.size(dotSize).background(Color.White, CircleShape)) }
 
                 // Dolná strana (Veľkosť)
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
-
                         .offset(y = 24.dp)
                         .size(handleSize)
                         .pointerInput(Unit) {
                             detectDragGestures { change, dragAmount ->
-
                                 change.consume()
                                 updateSize(dragAmount.y / (200f * density.density))
                             }
-
                         },
                     contentAlignment = Alignment.Center
-                ) { Box(Modifier
-                    .size(dotSize)
-                    .background(Color.White, CircleShape)) }
+                ) { Box(Modifier.size(dotSize).background(Color.White, CircleShape)) }
 
                 // Horná strana (Veľkosť)
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopCenter)
-
                         .offset(y = -24.dp)
                         .size(handleSize)
                         .pointerInput(Unit) {
                             detectDragGestures { change, dragAmount ->
-
                                 change.consume()
                                 updateSize(-dragAmount.y / (200f * density.density))
                             }
-
                         },
                     contentAlignment = Alignment.Center
-                ) { Box(Modifier
-                    .size(dotSize)
-                    .background(Color.White, CircleShape)) }
-
+                ) { Box(Modifier.size(dotSize).background(Color.White, CircleShape)) }
             }
         }
 
@@ -1973,13 +1874,11 @@ fun FullScreenEditor(
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
                 .padding(horizontal = 24.dp, vertical = 40.dp)
-
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = strings.dragHint,
                     style = MaterialTheme.typography.labelMedium.copy(
-
                         shadow = androidx.compose.ui.graphics.Shadow(Color.Black, blurRadius = 12f)
                     ),
                     color = Color.White.copy(alpha = 0.9f),
@@ -1990,51 +1889,41 @@ fun FullScreenEditor(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-
                     FilledTonalButton(
                         onClick = {
                             performHaptic(HapticFeedbackType.LongPress)
                             onDismiss()
-
                         },
                         modifier = Modifier
                             .weight(1f)
-
                             .height(56.dp),
                         colors = ButtonDefaults.filledTonalButtonColors(
                             containerColor = Color.DarkGray.copy(alpha = 0.8f),
                             contentColor = Color.White
-
                         )
                     ) {
                         Icon(Icons.Outlined.Close, contentDescription = strings.cancel)
                         Spacer(modifier = Modifier.width(8.dp))
-
                         Text(strings.cancel, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                     }
 
                     Button(
                         onClick = {
-
                             performHaptic(HapticFeedbackType.LongPress)
                             onSave(localSizeMult, localWidthMult, localVerticalOffset)
                         },
                         modifier = Modifier
-
                             .weight(1f)
                             .height(56.dp),
                         colors = ButtonDefaults.buttonColors(
-
                             containerColor = MaterialTheme.colorScheme.primary,
                             contentColor = MaterialTheme.colorScheme.onPrimary
                         )
                     ) {
-
                         Icon(Icons.Outlined.Check, contentDescription = strings.done)
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(strings.done, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                     }
-
                 }
             }
         }
@@ -2060,7 +1949,6 @@ fun EditHintBubble(text: String, modifier: Modifier = Modifier) {
     ) {
         Surface(
             shape = RoundedCornerShape(16.dp),
-
             color = MaterialTheme.colorScheme.secondaryContainer,
             contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
             shadowElevation = 8.dp
@@ -2068,7 +1956,6 @@ fun EditHintBubble(text: String, modifier: Modifier = Modifier) {
             Row(
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically
-
             ) {
                 Icon(Icons.Outlined.TouchApp, contentDescription = null)
                 Spacer(Modifier.width(8.dp))
@@ -2076,7 +1963,6 @@ fun EditHintBubble(text: String, modifier: Modifier = Modifier) {
             }
         }
         // Triangle pointing down at the verse
-
         Icon(
             Icons.Default.ArrowDropDown,
             contentDescription = null,
@@ -2118,7 +2004,6 @@ fun Pixel6LockScreenPreview(
             .fillMaxWidth()
             .wrapContentWidth(Alignment.CenterHorizontally)
             .height(previewHeight)
-
             .aspectRatio(9f / 20f)
             .border(2.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(32.dp))
             .clickable { onClick() },
@@ -2128,14 +2013,12 @@ fun Pixel6LockScreenPreview(
             val maxWidth = maxWidth
             val maxHeight = maxHeight
 
-
             // Výpočet veľkosti písma
             var baseSize = maxWidth.value * 0.055f
             if (verseText.length > 150) baseSize = maxWidth.value * 0.045f
             val fontSize = (baseSize * textSizeMult / density.fontScale).sp
             val composeFontFamily = getComposeFontFamily(fontFamilyStr)
             val composeFontWeight = getComposeFontWeight(fontFamilyStr, isBold)
-
 
             // Výpočet Y pozície
             val defaultOffset = maxHeight * 0.05f
@@ -2148,233 +2031,185 @@ fun Pixel6LockScreenPreview(
                     painter = rememberAsyncImagePainter(uri),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
-
                     modifier = Modifier
                         .fillMaxSize()
                         .then(
                             if (bgBlur > 0f) Modifier.blur(bgBlur.dp) else Modifier
-
                         )
                 )
                 Box(modifier = Modifier
                     .fillMaxSize()
                     .background(
-
                         Brush.verticalGradient(
                             colors = listOf(
                                 Color.Black.copy(alpha = 0.2f),
-
                                 Color.Transparent,
                                 Color.Black.copy(alpha = 0.4f)
                             )
                         )
-
                     )
                 )
             } else {
                 Box(modifier = Modifier
                     .fillMaxSize()
-
                     .background(Color(0xFF212121)), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Icon(Icons.Default.AddPhotoAlternate, contentDescription = null, tint = Color.White.copy(alpha = 0.7f), modifier = Modifier
                             .size(48.dp)
-
                             .padding(bottom = 8.dp))
                         Text(strings.clickToSelect, color = Color.White.copy(alpha = 0.7f))
                     }
                 }
             }
 
-
             if (uri != null) {
                 // FAKE STATUS BAR & CLOCK (Pixel Style)
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
-
                         .padding(top = 60.dp, start = 24.dp, end = 24.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     // Clock
-
                     Text(
                         text = "09:41",
                         color = Color(0xFFEEEEEE),
                         fontSize = 72.sp,
-
                         fontWeight = FontWeight.Light,
                         letterSpacing = 2.sp
                     )
                     // Date
-
                     val date = SimpleDateFormat("EEE, d. MMM", Locale.getDefault()).format(Date())
                     Text(
                         text = date,
                         color = Color(0xFFEEEEEE),
-
                         fontSize = 20.sp,
                         fontWeight = FontWeight.Normal
                     )
                 }
 
                 // --- NÁHĽAD VERŠA ---
-
                 // CenterBox pre náhľad a obal
                 Box(
                     modifier = Modifier.fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
-
                     // Vonkajší Box definuje presné rozmery celého orámovaného bloku textu aj na výšku vďaka intrinsic Content
                     Box(
                         modifier = Modifier
                             .offset(y = totalOffset)
-
                             .width(maxWidth * 0.80f * textWidthMult)
                             .clickable { onEditClick() }
                             .then(
-
                                 if (showEditHint) Modifier.drawBehind {
                                     drawRoundRect(
                                         color = Color.White.copy(alpha = 0.6f),
                                         style = Stroke(
                                             width = 1.5.dp.toPx(),
-
                                             pathEffect = PathEffect.dashPathEffect(
                                                 floatArrayOf(
-
                                                     15f,
                                                     15f
-
                                                 ), 0f
                                             )
-
                                         ),
                                         cornerRadius = CornerRadius(16.dp.toPx())
-
                                     )
                                 } else Modifier
                             )
                     ) {
-
                         // Padded vnútorný obsah s textom - určuje výšku predchádzajúceho boxu
                         Box(modifier = Modifier.padding(horizontal = maxWidth * 0.025f, vertical = 16.dp)) {
                             Column(
-
                                 horizontalAlignment = Alignment.CenterHorizontally,
                                 modifier = Modifier.fillMaxWidth()
                             ) {
-
                                 Text(
                                     text = verseText,
                                     color = Color(textColor).copy(alpha = textAlpha),
-
                                     fontSize = fontSize,
                                     fontFamily = composeFontFamily,
                                     lineHeight = fontSize * 1.25f,
                                     fontWeight = composeFontWeight,
                                     textAlign = TextAlign.Center,
-
                                     style = if (useShadow) TextStyleWithShadow else LocalTextStyle.current
                                 )
-
 
                                 Spacer(modifier = Modifier.height((fontSize.value * 0.5).dp))
 
                                 Text(
-
                                     text = verseReference,
                                     color = Color(textColor).copy(alpha = textAlpha * 0.8f),
                                     fontSize = fontSize * 0.75f,
                                     fontFamily = composeFontFamily,
                                     fontWeight = getComposeFontWeight(fontFamilyStr, false),
-
                                     textAlign = TextAlign.Center,
                                     style = if (useShadow) TextStyleWithShadow else LocalTextStyle.current
                                 )
-
                             }
                         }
-
 
                         // --- PRIDANÁ BUBLINA ---
                         androidx.compose.animation.AnimatedVisibility( // Using explicit package to avoid receiver ambiguity
                             visible = showBubbleHint,
                             enter = fadeIn(tween(400)) + scaleIn(initialScale = 0.5f, animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)),
-
                             exit = fadeOut(tween(300)) + scaleOut(targetScale = 0.8f),
                             modifier = Modifier
                                 .align(Alignment.TopCenter)
-
                                 // Posunieme bublinu presne nad rámček s textom
                                 .offset(y = (-70).dp)
                         ) {
                             EditHintBubble(text = strings.tapToEdit)
-
                         }
 
                         // Ikonka ceruzky - posunutá presne na stred pravej hornej hranice
                         if (showEditHint) {
-
                             Box(
                                 modifier = Modifier
                                     .align(Alignment.TopEnd)
-
                                     // Box je veľký 32.dp. Posunom o 16.dp ho vycentrujeme presne na roh.
                                     .offset(x = 16.dp, y = (-16).dp)
                                     .size(32.dp)
                                     .background(Color.Black.copy(alpha = 0.4f), CircleShape)
-
                                     .border(1.5.dp, Color.White.copy(alpha = 0.6f), CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
-
                                 Icon(
                                     imageVector = Icons.Outlined.Edit,
                                     contentDescription = "Editovať",
-
                                     tint = Color.White.copy(alpha = 0.9f),
                                     modifier = Modifier.size(16.dp)
-
                                 )
                             }
                         }
                     }
                 }
 
-
                 // --- FINGERPRINT & BOTTOM ICONS ---
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-
                         .padding(bottom = 32.dp, start = 32.dp, end = 32.dp),
                     contentAlignment = Alignment.BottomCenter
                 ) {
                     // Senzor odtlačku
                     Box(
-
                         modifier = Modifier
                             .padding(bottom = 100.dp)
                             .size(64.dp)
-
                             .background(Color(0x33FFFFFF), CircleShape)
                             .border(1.dp, Color(0x66FFFFFF), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-
                         Icon(Icons.Outlined.Fingerprint, null, tint = Color.White, modifier = Modifier.size(32.dp))
                     }
 
                     // Ikony na krajoch
                     Icon(Icons.Default.PhotoCamera, null, tint = Color.White, modifier = Modifier
-
                         .align(Alignment.BottomEnd)
                         .padding(bottom = 16.dp))
                     Icon(Icons.Default.AccountBalanceWallet, null, tint = Color.White, modifier = Modifier
                         .align(Alignment.BottomStart)
-
                         .padding(bottom = 16.dp))
                 }
             }
@@ -2388,7 +2223,6 @@ fun FontPickerRow(selectedFont: String, strings: AppStrings, onFontSelected: (St
         "sans-serif" to strings.fontModern,
         "sans-serif-light" to strings.fontLight,
         "sans-serif-condensed" to strings.fontCondensed,
-
         "serif" to strings.fontBook,
         "monospace" to strings.fontMono,
         "cursive" to strings.fontCursive
@@ -2401,13 +2235,11 @@ fun FontPickerRow(selectedFont: String, strings: AppStrings, onFontSelected: (St
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         fonts.forEach { (fontId, fontName) ->
-
             FilterChip(
                 selected = selectedFont == fontId,
                 onClick = { onFontSelected(fontId) },
                 label = { Text(fontName, fontFamily = getComposeFontFamily(fontId), fontWeight = getComposeFontWeight(fontId, false)) },
                 leadingIcon = if (selectedFont == fontId) {
-
                     { Icon(Icons.Default.Check, null) }
                 } else null
             )
@@ -2454,14 +2286,12 @@ fun ColorPickerRow(selectedColor: Int, onColorSelected: (Int) -> Unit) {
     )
 
     if (showDialog) {
-
         AlertDialog(
             onDismissRequest = { showDialog = false },
             title = { Text("Vyberte farbu") },
             text = {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     HsvColorPicker(
-
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(300.dp),
@@ -2470,26 +2300,22 @@ fun ColorPickerRow(selectedColor: Int, onColorSelected: (Int) -> Unit) {
                     Spacer(modifier = Modifier.height(16.dp))
                     BrightnessSlider(
                         modifier = Modifier
-
                             .fillMaxWidth()
                             .height(32.dp),
                         controller = controller
                     )
-
                 }
             },
             confirmButton = {
                 TextButton(onClick = {
                     onColorSelected(controller.selectedColor.value.toArgb())
                     showDialog = false
-
                 }) {
                     Text("OK")
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDialog = false }) {
-
                     Text("Zrušiť")
                 }
             }
@@ -2500,7 +2326,6 @@ fun ColorPickerRow(selectedColor: Int, onColorSelected: (Int) -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState()),
-
         horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         colors.forEach { color ->
@@ -2508,23 +2333,19 @@ fun ColorPickerRow(selectedColor: Int, onColorSelected: (Int) -> Unit) {
                 modifier = Modifier
                     .size(48.dp)
                     .clip(CircleShape)
-
                     .background(Color(color))
                     .border(
                         width = if (selectedColor == color) 3.dp else 1.dp,
                         color = if (selectedColor == color) MaterialTheme.colorScheme.primary else Color.Gray,
-
                         shape = CircleShape
                     )
                     .clickable { onColorSelected(color) },
                 contentAlignment = Alignment.Center
             ) {
-
                 if (selectedColor == color) {
                     Icon(
                         Icons.Default.Check,
                         contentDescription = null,
-
                         tint = if (color == AndroidColor.WHITE || color == AndroidColor.parseColor("#FFFFE0")) Color.Black else Color.White
                     )
                 }
@@ -2533,29 +2354,24 @@ fun ColorPickerRow(selectedColor: Int, onColorSelected: (Int) -> Unit) {
         // Tlačidlo pre otvorenie Color Wheel
         Box(
             modifier = Modifier
-
                 .size(48.dp)
                 .clip(CircleShape)
                 .background(
                     brush = Brush.sweepGradient(
                         listOf(
-
                             Color.Red,
                             Color.Magenta,
                             Color.Blue,
-
                             Color.Cyan,
                             Color.Green,
                             Color.Yellow,
                             Color.Red
-
                         )
                     )
                 )
                 .clickable { showDialog = true },
             contentAlignment = Alignment.Center
         ) {
-
             Icon(Icons.Default.ColorLens, "Custom Color", tint = Color.White)
         }
     }
@@ -2577,7 +2393,6 @@ fun EnhancedSlider(
         .fillMaxWidth()
         .padding(vertical = 0.dp)){
         Row(
-
             modifier = Modifier
                 .fillMaxWidth()
                 .height(40.dp),
@@ -2585,7 +2400,6 @@ fun EnhancedSlider(
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-
                 Icon(icon, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
@@ -2598,31 +2412,25 @@ fun EnhancedSlider(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-
                 AnimatedVisibility(
                     visible = (value != defaultVal),
                     // This creates the "slide left" effect for the text
                     // and "fade/expand" effect for the button
-
                     enter = fadeIn() + expandHorizontally(expandFrom = Alignment.Start),
                     exit = fadeOut() + shrinkHorizontally(shrinkTowards = Alignment.Start)
                 ) {
                     IconButton(
-
                         onClick = {
                             haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                             onValueChange(defaultVal)
                         },
-
                         // Fixed size ensures the button doesn't stretch the row vertically
                         modifier = Modifier.size(32.dp)
                     ) {
                         Icon(
-
                             imageVector = Icons.Outlined.RestartAlt,
                             contentDescription = "Reset",
                             modifier = Modifier.size(18.dp),
-
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
@@ -2636,7 +2444,6 @@ fun EnhancedSlider(
                 // Rounding to nearest 0.1
                 val rounded = (it * 10).roundToInt() / 10f
                 if (rounded != value) {
-
                     onValueChange(rounded)
                     haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                 }
@@ -2658,7 +2465,6 @@ fun scheduleDailyWallpaper(context: Context, hour: Int) {
 
     val currentDate = Calendar.getInstance()
     val dueDate = Calendar.getInstance().apply {
-
         set(Calendar.HOUR_OF_DAY, hour)
         set(Calendar.MINUTE, 0)
         set(Calendar.SECOND, 0)
@@ -2694,7 +2500,6 @@ fun scheduleWorker(context: Context) {
 fun runOneTimeWorker(context: Context) {
     val req = OneTimeWorkRequestBuilder<DailyVerseWorker>()
         .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
-
         .build()
     WorkManager.getInstance(context).enqueue(req)
 }
