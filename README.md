@@ -9,9 +9,15 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/endpoint?url=https://apt.izzysoft.de/fdroid/api/v1/shield/com.daklok.biblelockscreen&label=IzzyOnDroid&style=for-the-badge" alt="IzzyOnDroid Version"/>
-  <img src="https://img.shields.io/badge/dynamic/json?url=https://dlstats.izzyondroid.org/iod-stats-collector/stats/basic/yearly/rolling.json&query=$.['com.daklok.biblelockscreen']&label=IzzyOnDroid%20yearly%20downloads&style=for-the-badge" alt="Yearly Downloads"/>
-  <img src="https://shields.rbtlog.dev/simple/com.daklok.biblelockscreen?style=for-the-badge" alt="RB Status"/>
+  <a href="https://apt.izzysoft.de/packages/com.daklok.biblelockscreen">
+    <img src="https://img.shields.io/endpoint?url=https://apt.izzysoft.de/fdroid/api/v1/shield/com.daklok.biblelockscreen&label=IzzyOnDroid&style=for-the-badge" alt="IzzyOnDroid Version"/>
+  </a>
+  <a href="https://apt.izzysoft.de/packages/com.daklok.biblelockscreen">
+    <img src="https://img.shields.io/badge/dynamic/json?url=https://dlstats.izzyondroid.org/iod-stats-collector/stats/basic/yearly/rolling.json&query=$.['com.daklok.biblelockscreen']&label=IzzyOnDroid%20yearly%20downloads&style=for-the-badge" alt="Yearly Downloads"/>
+  </a>
+  <a href="https://apt.izzysoft.de/packages/com.daklok.biblelockscreen">
+    <img src="https://shields.rbtlog.dev/simple/com.daklok.biblelockscreen?style=for-the-badge" alt="RB Status"/>
+  </a>
 </p>
 
 <p align="center">
@@ -23,6 +29,7 @@
 ## ✨ Features
 
 - **Daily Bible verse** — a new verse automatically appears on your lock screen every day at a time you choose
+- **Add your own verse** - apply custom verse text and references instead of using the "Verse of the Day."
 - **Fully customizable text** — adjust font size, width, color, transparency, boldness, shadow, and font style
 - **Background blur** — apply a blur effect to your chosen photo for a cleaner look
 - **Live wallpaper preview** — drag and resize the text widget directly in the app before applying

@@ -13,6 +13,7 @@ KEY FEATURES
 - Automatic Daily Updates: Get a fresh Verse of the Day without lifting a finger.
 - Personalized Backgrounds: Use your own pictures for a truly custom experience.
 - Full screen widget adjuster: An intuitive, full-screen editor lets you drag to adjust size, width, and vertical position.
+- Add your own verse - apply custom verse text and references instead of using the "Verse of the Day."
 - Deep Customization: Fine-tune every detail, including:
     * Font Style: Modern, Book, Cursive, and more.
     * Color: Presets and a full color wheel.
