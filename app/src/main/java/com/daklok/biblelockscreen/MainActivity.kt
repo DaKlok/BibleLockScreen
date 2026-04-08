@@ -86,7 +86,7 @@ import kotlin.math.roundToInt
 
 // --- TRANSLATIONS ---
 data class AppStrings(
-    val test: String = "Generovať", //tlacitko
+    val test: String = "Generovať",
     val generatingBtn: String = "Generuje sa...",
     val generating: String = "Tapeta sa generuje...",
     val done: String = "Hotovo",
@@ -99,6 +99,7 @@ data class AppStrings(
     val dailyWallpaper: String = "Denná zmena tapety",
     val active: String = "Aktívne (každý deň o %s:00)",
     val inactive: String = "Vypnuté",
+
     val textCustomization: String = "Prispôsobenie textu",
     val bold: String = "Tučné",
     val shadow: String = "Tieň",
@@ -126,10 +127,12 @@ data class AppStrings(
     val loading: String = "Načítavam verš...",
     val appLanguage: String = "Jazyk aplikácie",
     val verseLanguage: String = "Jazyk veršov",
+    val language: String = "Jazyk",
     val dailyWorkerOn: String = "Zapnuté!\nTapeta sa zmení zajtra o %s:00.",
     val dailyWorkerOff: String = "Denná zmena bola vypnutá.",
     val fontModern: String = "Moderný",
     val fontBook: String = "Knižný",
+
     val fontMono: String = "Strojový",
     val fontCursive: String = "Písaný",
     val fontLight: String = "Tenký",
@@ -164,6 +167,7 @@ val enStrings = AppStrings(
     bold = "Bold",
     shadow = "Shadow",
     textSize = "Text Size",
+
     textWidth = "Text Width",
     textAlpha = "Transparency",
     bgBlur = "Background Blur",
@@ -178,6 +182,7 @@ val enStrings = AppStrings(
     haptics = "Haptic Feedback",
     hapticsDesc = "Vibrations when editing the widget",
     support = "Support",
+
     supportDesc = "If you like the app and want to support its development, you can buy me a coffee ☕",
     donate = "Donate",
     close = "Close",
@@ -188,6 +193,7 @@ val enStrings = AppStrings(
     loading = "Loading verse...",
     appLanguage = "App Language",
     verseLanguage = "Verse Language",
+    language = "Language",
     dailyWorkerOn = "Enabled!\nWallpaper will change tomorrow at %s:00.",
     dailyWorkerOff = "Daily change disabled.",
     generating = "Generating wallpaper...",
@@ -232,6 +238,7 @@ val czStrings = AppStrings(
     support = "Podpora",
     supportDesc = "Pokud se ti aplikace líbí a chceš podpořit její vývoj, můžeš mi koupit kávu ☕",
     donate = "Přispět",
+
     close = "Zavřít",
     dragHint = "Potažením bodů změň velikost\nTahem ve středu widget přesuň",
     cancel = "Zrušit",
@@ -240,10 +247,12 @@ val czStrings = AppStrings(
     loading = "Načítám verš...",
     appLanguage = "Jazyk aplikace",
     verseLanguage = "Jazyk veršů",
+    language = "Jazyk",
     dailyWorkerOn = "Zapnuto!\nTapeta se změní zítra v %s:00.",
     dailyWorkerOff = "Denní změna byla vypnuta.",
     generating = "Tapeta se generuje...",
     fontModern = "Moderní",
+
     fontBook = "Knižní",
     fontMono = "Strojový",
     fontCursive = "Psaný",
@@ -272,6 +281,7 @@ val esStrings = AppStrings(
     textSize = "Tamaño del texto",
     textWidth = "Ancho del texto",
     textAlpha = "Transparencia",
+
     bgBlur = "Desenfocar fondo",
     anotherPhoto = "Cambiar foto",
     test = "Generar",
@@ -294,7 +304,9 @@ val esStrings = AppStrings(
     loading = "Cargando versículo...",
     appLanguage = "Idioma de la aplicación",
     verseLanguage = "Idioma del versículo",
+    language = "Idioma",
     dailyWorkerOn = "¡Activado!\nEl fondo cambiará mañana a las %s:00.",
+
     dailyWorkerOff = "Cambio diario desactivado.",
     generating = "Generando fondo...",
     fontModern = "Moderno",
@@ -340,6 +352,7 @@ val itStrings = AppStrings(
     support = "Supporto",
     supportDesc = "Se ti piace l'app e vuoi supportarne lo sviluppo, puoi offrirmi un caffè ☕",
     donate = "Dona",
+
     close = "Chiudi",
     dragHint = "Trascina i punti per la dimensione e la larghezza\nTrascina al centro per spostare",
     cancel = "Annulla",
@@ -348,9 +361,11 @@ val itStrings = AppStrings(
     loading = "Caricamento versetto...",
     appLanguage = "Lingua dell'app",
     verseLanguage = "Lingua del versetto",
+    language = "Lingua",
     dailyWorkerOn = "Attivato!\nLo sfondo cambierà domani alle %s:00.",
     dailyWorkerOff = "Cambio giornaliero disattivato.",
     generating = "Generazione sfondo...",
+
     fontModern = "Moderno",
     fontBook = "Libro",
     fontMono = "Macchina da scrivere",
@@ -363,6 +378,7 @@ val itStrings = AppStrings(
     batteryWarningDesc = "Affinché il cambio automatico dello sfondo funzioni in modo affidabile, disabilita l'ottimizzazione della batteria per questa app.",
     batteryWarningButton = "Disabilita Ottimizzazione",
     customVerseTitle = "Testo Personalizzato",
+
     customVerseHint = "Testo del versetto...",
     customRefHint = "Coordinate (es. Giovanni 3:16)",
     applyCustom = "Applica"
@@ -393,6 +409,7 @@ val frStrings = AppStrings(
     hapticsDesc = "Vibrations lors de l'édition",
     support = "Soutien",
     supportDesc = "Si vous aimez l'application et souhaitez soutenir son développement, vous pouvez m'offrir un café ☕",
+
     donate = "Faire un don",
     close = "Fermer",
     dragHint = "Faites glisser les points pour la taille et la largeur\nFaites glisser au centre pour déplacer",
@@ -402,7 +419,9 @@ val frStrings = AppStrings(
     loading = "Chargement du verset...",
     appLanguage = "Langue de l'app",
     verseLanguage = "Langue du verset",
+    language = "Langue",
     dailyWorkerOn = "Activé !\nLe fond d'écran changera demain à %s:00.",
+
     dailyWorkerOff = "Changement quotidien désactivé.",
     generating = "Génération du fond d'écran...",
     fontModern = "Moderne",
@@ -449,6 +468,7 @@ val deStrings = AppStrings(
     supportDesc = "Wenn dir die App gefällt und du ihre Entwicklung unterstützen möchtest, kannst du mir einen Kaffee spendieren ☕",
     donate = "Spenden",
     close = "Schließen",
+
     dragHint = "Ziehe die Punkte für die Größe und Breite\nZiehe in die Mitte zum Bewegen",
     cancel = "Abbrechen",
     done = "Fertig",
@@ -456,10 +476,12 @@ val deStrings = AppStrings(
     loading = "Lade Vers...",
     appLanguage = "App-Sprache",
     verseLanguage = "Vers-Sprache",
+    language = "Sprache",
     dailyWorkerOn = "Aktiviert!\nHintergrundbild ändert sich morgen um %s:00.",
     dailyWorkerOff = "Tägliche Änderung deaktiviert.",
     generating = "Hintergrundbild wird generiert...",
     fontModern = "Modern",
+
     fontBook = "Buch",
     fontMono = "Schreibmaschine",
     fontCursive = "Kursiv",
@@ -490,6 +512,7 @@ val huStrings = AppStrings(
     textAlpha = "Átlátszóság",
     bgBlur = "Háttér elmosása",
     anotherPhoto = "Másik fotó",
+
     test = "Generálni",
     selectPhotoFirst = "Először válassz egy fotót",
     appearance = "Megjelenés",
@@ -503,6 +526,7 @@ val huStrings = AppStrings(
     supportDesc = "Ha tetszik az alkalmazás és szeretnéd támogatni a fejlesztését, meghívhatsz egy kávéra ☕",
     donate = "Adomány",
     close = "Bezárás",
+
     dragHint = "Húzd a pontokat a méretért és szélességért\nHúzd a közepén a mozgatáshoz",
     cancel = "Mégse",
     done = "Kész",
@@ -510,11 +534,13 @@ val huStrings = AppStrings(
     loading = "Ige betöltése...",
     appLanguage = "Alkalmazás nyelve",
     verseLanguage = "Ige nyelve",
+    language = "Nyelv",
     dailyWorkerOn = "Bekapcsolva!\nA háttérkép holnap %s:00-kor változik.",
     dailyWorkerOff = "Napi módosítás kikapcsolva.",
     generating = "Háttérkép generálása...",
     fontModern = "Modern",
     fontBook = "Könyv",
+
     fontMono = "Írógép",
     fontCursive = "Dőlt",
     fontLight = "Vékony",
@@ -544,6 +570,7 @@ val plStrings = AppStrings(
     textWidth = "Szerokość tekstu",
     textAlpha = "Przezroczystość",
     bgBlur = "Rozmycie tła",
+
     anotherPhoto = "Zmień zdjęcie",
     test = "Stwarzać",
     selectPhotoFirst = "Najpierw wybierz zdjęcie",
@@ -557,6 +584,7 @@ val plStrings = AppStrings(
     support = "Wsparcie",
     supportDesc = "Jeśli podoba Ci się aplikacja i chcesz wesprzeć jej rozwój, możesz postawić mi kawę ☕",
     donate = "Wesprzyj",
+
     close = "Zamknij",
     dragHint = "Przeciągnij kropki dla rozmiaru i szerokości\nPrzeciągnij środek, aby przesunąć",
     cancel = "Anuluj",
@@ -565,10 +593,12 @@ val plStrings = AppStrings(
     loading = "Ładowanie wersetu...",
     appLanguage = "Język aplikacji",
     verseLanguage = "Język wersetu",
+    language = "Język",
     dailyWorkerOn = "Włączone!\nTapeta zmieni się jutro o %s:00.",
     dailyWorkerOff = "Codzienna zmiana wyłączona.",
     generating = "Generowanie tapety...",
     fontModern = "Nowoczesny",
+
     fontBook = "Książka",
     fontMono = "Maszyna do pisania",
     fontCursive = "Kursywa",
@@ -598,12 +628,22 @@ val availableLanguages = listOf(
     "EN" to "English",
     "SK" to "Slovenčina",
     "CZ" to "Čeština",
+
     "ES" to "Español",
     "IT" to "Italiano",
     "FR" to "Français",
     "DE" to "Deutsch",
     "HU" to "Magyar",
     "PL" to "Polski"
+)
+
+// --- CUSTOM IN-APP NOTIFICATION ---
+enum class NotificationType { SUCCESS, INFO, ERROR }
+
+data class AppNotification(
+    val message: String,
+    val type: NotificationType = NotificationType.SUCCESS,
+    val id: Long = System.currentTimeMillis()
 )
 
 class MainActivity : ComponentActivity() {
@@ -620,27 +660,32 @@ class MainActivity : ComponentActivity() {
             val context = LocalContext.current
             val prefs = remember { context.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE) }
 
+
             var themeMode by remember { mutableIntStateOf(prefs.getInt("theme_mode", 0)) } // 0=System, 1=Light, 2=Dark
             var useDynamicColor by remember { mutableStateOf(prefs.getBoolean("use_dynamic_color", true)) }
 
             val darkTheme = when (themeMode) {
                 1 -> false
                 2 -> true
+
                 else -> isSystemInDarkTheme()
             }
 
             BibleLockScreenTheme(darkTheme = darkTheme, dynamicColor = useDynamicColor) {
                 MainScreen(
                     themeMode = themeMode,
+
                     useDynamicColor = useDynamicColor,
                     onThemeChange = { newMode ->
                         themeMode = newMode
                         prefs.edit().putInt("theme_mode", newMode).apply()
                     },
+
                     onDynamicColorChange = { useDynamic ->
                         useDynamicColor = useDynamic
                         prefs.edit().putBoolean("use_dynamic_color", useDynamic).apply()
                     }
+
                 )
             }
         }
@@ -659,58 +704,38 @@ fun MainScreen(
     val sysHaptic = LocalHapticFeedback.current
     val focusManager = LocalFocusManager.current
     val scope = rememberCoroutineScope()
-    val snackbarHostState = remember { SnackbarHostState() }
+    var activeNotification by remember { mutableStateOf<AppNotification?>(null) }
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    // PowerManager pre overenie optimalizácie batérie
     val powerManager = remember { context.getSystemService(Context.POWER_SERVICE) as PowerManager }
     var isBatteryOptimized by remember { mutableStateOf(!powerManager.isIgnoringBatteryOptimizations(context.packageName)) }
 
-    // Obnovíme stav optimalizácie vždy, keď sa užívateľ vráti do aplikácie
-    DisposableEffect(lifecycleOwner) {
-        val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_RESUME) {
-                isBatteryOptimized = !powerManager.isIgnoringBatteryOptimizations(context.packageName)
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-        }
-    }
-
-    // Scroll state pre animáciu náhľadu
     val scrollState = rememberScrollState()
 
-    // --- STATES ---
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     var versePair by remember { mutableStateOf<Pair<String, String>?>(null) }
 
     val prefs = remember { context.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE) }
-    var hasSeenEditHint by remember {
-        mutableStateOf(prefs.getBoolean("has_seen_edit_hint", false))
-    }
+    val defaultSystemLang = remember { getDefaultAppLanguage() }
 
+    // --- STATES ---
+    var hasSeenEditHint by remember { mutableStateOf(prefs.getBoolean("has_seen_edit_hint", false)) }
     var dailyHour by remember { mutableIntStateOf(prefs.getInt("daily_hour", 6)) }
-
-    // Status of the generation: "idle", "generating", or "done"
     var generationStatus by remember { mutableStateOf("idle") }
 
-    // Nastavenia
-    var textSizeMult by remember { mutableFloatStateOf(1.0f) }
-    var textWidthMult by remember { mutableFloatStateOf(1.0f) }
-    var verticalOffset by remember { mutableFloatStateOf(0.0f) }
-    var textColor by remember { mutableIntStateOf(AndroidColor.WHITE) }
-    var textAlpha by remember { mutableFloatStateOf(1.0f) }
-    var bgBlur by remember { mutableFloatStateOf(0f) }
-    var isBold by remember { mutableStateOf(true) }
-    var useShadow by remember { mutableStateOf(true) }
-    var fontFamilyStr by remember { mutableStateOf("sans-serif") }
-    var useHaptics by remember { mutableStateOf(true) }
+    var textSizeMult by remember { mutableFloatStateOf(prefs.getFloat("text_size_mult", 1.0f)) }
+    var textWidthMult by remember { mutableFloatStateOf(prefs.getFloat("text_width_mult", 1.0f)) }
+    var verticalOffset by remember { mutableFloatStateOf(prefs.getFloat("vertical_offset", 0.0f)) }
+    var textColor by remember { mutableIntStateOf(prefs.getInt("text_color", AndroidColor.WHITE)) }
+    var textAlpha by remember { mutableFloatStateOf(prefs.getFloat("text_alpha", 1.0f)) }
+    var bgBlur by remember { mutableFloatStateOf(prefs.getFloat("bg_blur", 0f)) }
+    var isBold by remember { mutableStateOf(prefs.getBoolean("is_bold", true)) }
+    var useShadow by remember { mutableStateOf(prefs.getBoolean("use_shadow", true)) }
+    var fontFamilyStr by remember { mutableStateOf(prefs.getString("font_family", "sans-serif") ?: "sans-serif") }
+    var useHaptics by remember { mutableStateOf(prefs.getBoolean("use_haptics", true)) }
 
-    val defaultSystemLang = remember { getDefaultAppLanguage() }
-    var appLang by remember { mutableStateOf(defaultSystemLang) }
-    var verseLang by remember { mutableStateOf(defaultSystemLang) }
+    var appLang by remember { mutableStateOf(prefs.getString("app_lang", defaultSystemLang) ?: defaultSystemLang) }
+    var verseLang by remember { mutableStateOf(prefs.getString("verse_lang", defaultSystemLang) ?: defaultSystemLang) }
 
     // Strings
     val strings = when (appLang) {
@@ -728,8 +753,6 @@ fun MainScreen(
     // Edit Mode a Settings
     var isEditing by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
-
-    // Stav Workera
     var isDailyActive by remember { mutableStateOf(false) }
 
     // Custom Haptic Helper
@@ -739,8 +762,29 @@ fun MainScreen(
         }
     }
 
-    // --- LOAD SAVED ---
-    LaunchedEffect(Unit) {
+    // Custom Notification Helper
+    val showNotification = { message: String, type: NotificationType ->
+        activeNotification = AppNotification(message = message, type = type)
+        scope.launch {
+            kotlinx.coroutines.delay(3000)
+            activeNotification = null
+        }
+    }
+
+    // Function to reload data so it catches background changes (like new verse or worker wallpaper change)
+    val reloadPreviewData = {
+        val useCustomVerse = prefs.getBoolean("use_custom_verse", false)
+        val savedCustomVerse = prefs.getString("custom_verse_text", null)
+        val savedCustomRef = prefs.getString("custom_verse_ref", null)
+
+        if (useCustomVerse && !savedCustomVerse.isNullOrEmpty()) {
+            versePair = Pair(savedCustomVerse, savedCustomRef ?: "")
+        } else {
+            scope.launch {
+                versePair = LocalBibleProvider.getVerse(context, verseLang)
+            }
+        }
+
         val localFile = java.io.File(context.filesDir, "user_wallpaper.jpg")
         if (localFile.exists()) {
             val internalUri = Uri.fromFile(localFile).buildUpon()
@@ -751,35 +795,26 @@ fun MainScreen(
             val savedUri = prefs.getString("bg_uri", null)
             if (savedUri != null) imageUri = Uri.parse(savedUri)
         }
+    }
 
-        // --- Ulozit Nastavenia ---
-        textSizeMult = prefs.getFloat("text_size_mult", 1.0f)
-        textWidthMult = prefs.getFloat("text_width_mult", 1.0f)
-        verticalOffset = prefs.getFloat("vertical_offset", 0.0f)
-        textColor = prefs.getInt("text_color", AndroidColor.WHITE)
-        textAlpha = prefs.getFloat("text_alpha", 1.0f)
-
-        bgBlur = prefs.getFloat("bg_blur", 0f)
-        isBold = prefs.getBoolean("is_bold", true)
-        useShadow = prefs.getBoolean("use_shadow", true)
-        fontFamilyStr = prefs.getString("font_family", "sans-serif") ?: "sans-serif"
-        useHaptics = prefs.getBoolean("use_haptics", true)
-        // ----------------------------------------
-
-        appLang = prefs.getString("app_lang", defaultSystemLang) ?: defaultSystemLang
-        verseLang = prefs.getString("verse_lang", defaultSystemLang) ?: defaultSystemLang
-
-        val useCustomVerse = prefs.getBoolean("use_custom_verse", false)
-        val savedCustomVerse = prefs.getString("custom_verse_text", null)
-        val savedCustomRef = prefs.getString("custom_verse_ref", null)
-
-        if (useCustomVerse && !savedCustomVerse.isNullOrEmpty()) {
-            versePair = Pair(savedCustomVerse, savedCustomRef ?: "")
-        } else {
-            versePair = LocalBibleProvider.getVerse(context, verseLang)
+    // Obnovíme stav optimalizácie a preview dáta vždy, keď sa užívateľ vráti do aplikácie
+    DisposableEffect(lifecycleOwner, verseLang) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_RESUME) {
+                isBatteryOptimized = !powerManager.isIgnoringBatteryOptimizations(context.packageName)
+                reloadPreviewData() // Update UI in case midnight has passed while app was backgrounded
+            }
         }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
+    }
 
-        // Standard WorkManager observer
+    LaunchedEffect(Unit) {
+        // Initial setup and background worker observer check
+        reloadPreviewData()
+
         WorkManager.getInstance(context)
             .getWorkInfosForUniqueWorkLiveData("DailyBibleWallpaper")
             .observeForever { infos ->
@@ -791,7 +826,6 @@ fun MainScreen(
 
     // --- SAVE & ACTIONS ---
     fun saveSettings() {
-        val prefs = context.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
         prefs.edit()
             .putFloat("text_size_mult", textSizeMult)
             .putFloat("text_width_mult", textWidthMult)
@@ -812,18 +846,17 @@ fun MainScreen(
         isDailyActive = enable
 
         if (enable) {
-            // Disable custom verse usage if user activates daily change
             prefs.edit().putBoolean("use_custom_verse", false).apply()
             versePair = LocalBibleProvider.getVerse(context, verseLang)
 
-            // Use the function that accepts the custom hour
             scheduleDailyWallpaper(context, dailyHour)
-            scope.launch { snackbarHostState.showSnackbar(
-                String.format(strings.dailyWorkerOn, String.format("%02d", dailyHour))
-            )}
+            showNotification(
+                String.format(strings.dailyWorkerOn, String.format("%02d", dailyHour)),
+                NotificationType.SUCCESS
+            )
         } else {
             WorkManager.getInstance(context).cancelUniqueWork("DailyBibleWallpaper")
-            scope.launch { snackbarHostState.showSnackbar(strings.dailyWorkerOff) }
+            showNotification(strings.dailyWorkerOff, NotificationType.INFO)
         }
     }
 
@@ -831,36 +864,26 @@ fun MainScreen(
         uri?.let { sourceUri ->
             scope.launch(Dispatchers.IO) {
                 try {
-                    // 1. Create a unique file name in internal storage
                     val fileName = "user_wallpaper.jpg"
                     val destinationFile = java.io.File(context.filesDir, fileName)
 
-                    // 2. Copy the content from the gallery URI to your app's internal folder
                     context.contentResolver.openInputStream(sourceUri)?.use { input ->
                         destinationFile.outputStream().use { output ->
                             input.copyTo(output)
                         }
                     }
 
-                    // 3. Save the internal FILE URI instead of the system Gallery URI
-                    val internalUri = Uri.fromFile(destinationFile).toString()
-
                     withContext(Dispatchers.Main) {
-                        // 1. Create a "cache breaker" using the current time
                         val timestamp = System.currentTimeMillis()
                         val internalUriWithCacheBreaker = Uri.fromFile(destinationFile).buildUpon()
                             .appendQueryParameter("v", timestamp.toString())
                             .build()
 
-                        // 2. Set the imageUri to null first, then the new URI
-                        // This combined with the timestamp forces Coil to reload from disk
                         imageUri = null
                         imageUri = internalUriWithCacheBreaker
 
-                        // 3. Save the base URI to prefs (without the timestamp, to keep it clean)
                         val baseInternalUri = Uri.fromFile(destinationFile).toString()
-                        context.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
-                            .edit().putString("bg_uri", baseInternalUri).apply()
+                        prefs.edit().putString("bg_uri", baseInternalUri).apply()
                     }
                 } catch (e: Exception) {
                     e.printStackTrace()
@@ -869,9 +892,14 @@ fun MainScreen(
         }
     }
 
+    val settingsSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
     BackHandler(enabled = isEditing || showSettings) {
         if (isEditing) isEditing = false
-        if (showSettings) showSettings = false
+        else if (showSettings) scope.launch {
+            settingsSheetState.hide()
+            showSettings = false
+        }
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
@@ -890,7 +918,7 @@ fun MainScreen(
                     )
                 )
             },
-            snackbarHost = { SnackbarHost(snackbarHostState) },
+            snackbarHost = { },
             containerColor = MaterialTheme.colorScheme.background
         ) { padding ->
             Column(
@@ -991,9 +1019,8 @@ fun MainScreen(
                         )
                     }
 
-                    // ----------------------------------------------------
-                    // BATERIOVE UPOZORNENIE (Animated)
-                    // ----------------------------------------------------
+
+                    // BATERIOVE UPOZORNENIE
                     AnimatedVisibility(
                         visible = isDailyActive && isBatteryOptimized,
                         enter = expandVertically(animationSpec = tween(300, easing = FastOutSlowInEasing)) + fadeIn(tween(300)),
@@ -1035,13 +1062,11 @@ fun MainScreen(
                                 Button(
                                     onClick = {
                                         try {
-                                            // Request direct intent (requires Manifest permission)
                                             val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
                                                 data = Uri.parse("package:${context.packageName}")
                                             }
                                             context.startActivity(intent)
                                         } catch (e: Exception) {
-                                            // Safe fallback
                                             val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
                                             context.startActivity(intent)
                                         }
@@ -1057,9 +1082,7 @@ fun MainScreen(
                         }
                     }
 
-                    // ----------------------------------------------------
-                    // CUSTOM VERSE EDITOR (Animated)
-                    // ----------------------------------------------------
+                    // CUSTOM VERSE EDITOR
                     AnimatedVisibility(
                         visible = !isDailyActive,
                         enter = expandVertically(animationSpec = tween(300, easing = FastOutSlowInEasing)) + fadeIn(tween(300)),
@@ -1102,7 +1125,7 @@ fun MainScreen(
 
                                 Button(
                                     onClick = {
-                                        focusManager.clearFocus() // Remove cursor and keyboard
+                                        focusManager.clearFocus()
                                         if (localVerse.isNotBlank()) {
                                             versePair = Pair(localVerse, localRef)
                                             prefs.edit()
@@ -1111,9 +1134,7 @@ fun MainScreen(
                                                 .putBoolean("use_custom_verse", true)
                                                 .apply()
                                             performHaptic(HapticFeedbackType.TextHandleMove)
-                                            scope.launch {
-                                                snackbarHostState.showSnackbar(strings.done)
-                                            }
+                                            showNotification(strings.done, NotificationType.SUCCESS)
                                         }
                                     },
                                     shape = RoundedCornerShape(16.dp),
@@ -1135,12 +1156,14 @@ fun MainScreen(
 
                         // Farba textu
                         ColorPickerRow(selectedColor = textColor) {
-                            textColor = it; performHaptic(HapticFeedbackType.TextHandleMove); saveSettings()
+                            textColor = it; performHaptic(HapticFeedbackType.TextHandleMove);
+                            saveSettings()
                         }
 
                         // Písmo (Font)
                         FontPickerRow(selectedFont = fontFamilyStr, strings = strings) {
-                            fontFamilyStr = it; performHaptic(HapticFeedbackType.TextHandleMove); saveSettings()
+                            fontFamilyStr = it; performHaptic(HapticFeedbackType.TextHandleMove);
+                            saveSettings()
                         }
 
                         // Štýly
@@ -1161,7 +1184,7 @@ fun MainScreen(
                             )
                         }
 
-                        // Slidery (Pozícia bola odstránená, upravuje sa len v editore)
+                        // Slidery
                         EnhancedSlider(
                             label = strings.bgBlur,
                             value = bgBlur,
@@ -1169,7 +1192,9 @@ fun MainScreen(
                             defaultVal = 0f,
                             steps = 24,
                             icon = Icons.Outlined.BlurOn,
-                            onValueChange = { bgBlur = it; saveSettings() }
+                            performHaptic = performHaptic,
+                            onValueChange = { bgBlur = it;
+                                saveSettings() }
                         )
 
                         EnhancedSlider(
@@ -1179,6 +1204,7 @@ fun MainScreen(
                             defaultVal = 1.0f,
                             steps = 14,
                             icon = Icons.Default.TextFormat,
+                            performHaptic = performHaptic,
                             onValueChange = { textSizeMult = it; saveSettings() }
                         )
 
@@ -1189,6 +1215,7 @@ fun MainScreen(
                             defaultVal = 1.0f,
                             steps = 7,
                             icon = Icons.Default.FormatAlignJustify,
+                            performHaptic = performHaptic,
                             onValueChange = { textWidthMult = it; saveSettings() }
                         )
 
@@ -1199,7 +1226,9 @@ fun MainScreen(
                             defaultVal = 1.0f,
                             steps = 7,
                             icon = Icons.Default.Opacity,
-                            onValueChange = { textAlpha = it; saveSettings() }
+                            performHaptic = performHaptic,
+                            onValueChange = { textAlpha = it;
+                                saveSettings() }
                         )
 
                         Spacer(modifier = Modifier.height(12.dp))
@@ -1217,23 +1246,18 @@ fun MainScreen(
                             }
 
                             Button(
-                                // 1. Disable the button if generating OR if there is no image
                                 enabled = generationStatus == "idle" && imageUri != null,
                                 onClick = {
                                     if (imageUri != null) {
-                                        // 2. Initial Haptic
                                         performHaptic(HapticFeedbackType.LongPress)
+
                                         scope.launch {
                                             generationStatus = "generating"
-                                            // Run your existing worker logic
                                             runOneTimeWorker(context)
-                                            // Simulated delay for the "Done" state
                                             kotlinx.coroutines.delay(2000)
-                                            // 3. Success Haptic (Changed from Reject to indicate success)
                                             performHaptic(HapticFeedbackType.TextHandleMove)
                                             generationStatus = "Done"
 
-                                            // Auto-hide the popup after a short while
                                             kotlinx.coroutines.delay(2000)
                                             generationStatus = "idle"
                                         }
@@ -1244,7 +1268,6 @@ fun MainScreen(
                             ) {
                                 Icon(Icons.Default.AutoAwesome, null)
                                 Spacer(Modifier.width(8.dp))
-                                // Optional: Change text based on state
                                 Text(
                                     text = if (generationStatus == "generating") {
                                         strings.generatingBtn
@@ -1276,184 +1299,245 @@ fun MainScreen(
 
         // Nastavenia Aplikácie
         if (showSettings) {
-            AlertDialog(
+            ModalBottomSheet(
                 onDismissRequest = { showSettings = false },
-                title = { Text(strings.settings, fontWeight = FontWeight.Bold) },
-                text = {
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(24.dp),
-                        modifier = Modifier.verticalScroll(rememberScrollState())
-                    ) {
-                        // Jazyk aplikacie
+                sheetState = settingsSheetState,
+                dragHandle = {
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                            BottomSheetDefaults.DragHandle()
+                        }
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 24.dp, end = 8.dp, bottom = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Text(
+                                text = strings.settings,
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                            IconButton(
+                                onClick = {
+                                    scope.launch {
+                                        settingsSheetState.hide()
+                                        showSettings = false
+                                    }
+                                }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Outlined.Close,
+                                    contentDescription = strings.close,
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                },
+                shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(0.dp),
+                    modifier = Modifier
+                        .fillMaxHeight(0.92f)
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 24.dp)
+                        .padding(bottom = 40.dp)
+                ) {
+
+                    // --- LANGUAGE SECTION ---
+                    SettingsSectionHeader(
+                        icon = Icons.Default.Language,
+                        title = strings.language
+                    )
+                    SettingsCard {
                         LanguageDropdown(
                             label = strings.appLanguage,
                             selectedCode = appLang,
                             options = availableLanguages,
+                            showLabel = true,
                             onSelect = {
                                 appLang = it
-                                context.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
-                                    .edit().putString("app_lang", it).apply()
+                                prefs.edit().putString("app_lang", it).apply()
                             }
                         )
-
-                        HorizontalDivider()
-
-                        // Jazyk versov
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
                         LanguageDropdown(
                             label = strings.verseLanguage,
                             selectedCode = verseLang,
                             options = availableLanguages,
+                            showLabel = true,
                             onSelect = {
                                 if (verseLang != it) {
                                     verseLang = it
-                                    context.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
-                                        .edit().putString("verse_lang", it).apply()
+                                    prefs.edit().putString("verse_lang", it).apply()
                                     versePair = null
-                                    // Zobrazenie načítania
                                     scope.launch {
                                         versePair = LocalBibleProvider.getVerse(context, it)
                                     }
                                 }
                             }
                         )
+                    }
 
-                        HorizontalDivider()
+                    Spacer(Modifier.height(24.dp))
 
-                        // Téma
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(strings.appearance, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                            val options = listOf(strings.system, strings.light, strings.dark)
-                            SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
-                                options.forEachIndexed { index, label ->
-                                    SegmentedButton(
-                                        selected = themeMode == index,
-                                        onClick = { onThemeChange(index) },
-                                        shape = SegmentedButtonDefaults.itemShape(index = index, count = options.size)
-                                    ) {
-                                        Text(label, maxLines = 1)
-                                    }
-                                }
-                            }
-                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween
+                    // --- APPEARANCE SECTION ---
+                    SettingsSectionHeader(
+                        icon = Icons.Default.Palette,
+                        title = strings.appearance
+                    )
+                    SettingsCard {
+                        val themeOptions = listOf(strings.system, strings.light, strings.dark)
+                        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                            themeOptions.forEachIndexed { index, label ->
+                                SegmentedButton(
+                                    selected = themeMode == index,
+                                    onClick = { onThemeChange(index) },
+                                    shape = SegmentedButtonDefaults.itemShape(index = index, count = themeOptions.size)
                                 ) {
-                                    Text(strings.dynamicColor)
-                                    Switch(checked = useDynamicColor, onCheckedChange = { onDynamicColorChange(it) })
+                                    Text(label, maxLines = 1)
                                 }
                             }
                         }
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                            HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                    modifier = Modifier.weight(1f)
+                                ) {
+                                    Icon(
+                                        Icons.Default.ColorLens,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary,
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                    Text(strings.dynamicColor, style = MaterialTheme.typography.bodyMedium)
+                                }
+                                Switch(checked = useDynamicColor, onCheckedChange = { onDynamicColorChange(it) })
+                            }
+                        }
+                    }
 
-                        HorizontalDivider()
+                    Spacer(Modifier.height(24.dp))
 
-                        // Vibrácie
+                    // --- HAPTICS SECTION ---
+                    SettingsSectionHeader(
+                        icon = Icons.Outlined.Fingerprint,
+                        title = strings.haptics
+                    )
+                    SettingsCard {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.SpaceBetween
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
-                                Text(strings.haptics, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                                Text(strings.hapticsDesc, style = MaterialTheme.typography.bodySmall)
+                                Text(strings.haptics, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                                Text(strings.hapticsDesc, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                             }
                             Switch(
                                 checked = useHaptics,
                                 onCheckedChange = {
-                                    useHaptics = it;
+                                    useHaptics = it
                                     saveSettings()
-                                    if(it) sysHaptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    if (it) sysHaptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                 }
                             )
                         }
+                    }
 
-                        HorizontalDivider()
+                    Spacer(Modifier.height(24.dp))
 
-                        // Denna zmena tapety - zmena času
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 8.dp)
+                    // --- DAILY WALLPAPER SECTION ---
+                    SettingsSectionHeader(
+                        icon = Icons.Default.Schedule,
+                        title = strings.dailyWallpaper
+                    )
+                    SettingsCard {
+                        Text(
+                            text = if (isDailyActive) {
+                                val formattedHour = String.format("%02d", dailyHour)
+                                String.format(strings.active, formattedHour)
+                            } else {
+                                strings.inactive
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = if (isDailyActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(Modifier.height(8.dp))
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(
-                                text = strings.dailyWallpaper,
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            Text(
-                                text = if (isDailyActive) {
-                                    // First format the hour (e.g., 6 -> "06")
-                                    val formattedHour = String.format("%02d", dailyHour)
-                                    // Then inject that into the translation string
-                                    String.format(strings.active, formattedHour)
-                                } else {
-                                    strings.inactive
+                            Slider(
+                                value = dailyHour.toFloat(),
+                                onValueChange = {
+                                    dailyHour = it.roundToInt()
+                                    if (useHaptics) performHaptic(HapticFeedbackType.TextHandleMove)
                                 },
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                valueRange = 0f..23f,
+                                steps = 22,
+                                modifier = Modifier.weight(1f)
                             )
-
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Slider(
-                                    value = dailyHour.toFloat(),
-                                    onValueChange = {
-                                        dailyHour = it.roundToInt()
-                                        // Trigger haptic feedback here, whenever the value changes
-                                        if (useHaptics) {
-                                            performHaptic(HapticFeedbackType.TextHandleMove)
-                                        }
-                                    },
-                                    valueRange = 0f..23f,
-                                    steps = 22, // Correct: 22 steps between 0 and 23 creates 24 distinct points
-                                    modifier = Modifier.weight(1f)
-                                )
-                                Text(
-                                    text = String.format("%02d:00", dailyHour),
-                                    modifier = Modifier.padding(start = 12.dp),
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-
-                            // Re-schedule worker whenever the hour changes
-                            LaunchedEffect(dailyHour) {
-                                prefs.edit().putInt("daily_hour", dailyHour).apply()
-                                // Check if worker is currently supposed to be active
-                                if (isDailyActive) {
-                                    scheduleDailyWallpaper(context, dailyHour)
-                                }
-                            }
+                            Text(
+                                text = String.format("%02d:00", dailyHour),
+                                modifier = Modifier.padding(start = 12.dp),
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
-
-                        HorizontalDivider()
-
-                        // Podpora
-                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text(strings.support, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-                            Text(strings.supportDesc, style = MaterialTheme.typography.bodySmall)
-                            OutlinedButton(
-                                onClick = {
-                                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ko-fi.com/daklok"))
-                                    context.startActivity(intent)
-                                },
-                                modifier = Modifier.fillMaxWidth()
-                            ) {
-                                Icon(Icons.Outlined.Favorite, contentDescription = null, tint = Color.Red)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(strings.donate)
+                        LaunchedEffect(dailyHour) {
+                            prefs.edit().putInt("daily_hour", dailyHour).apply()
+                            if (isDailyActive) {
+                                scheduleDailyWallpaper(context, dailyHour)
                             }
                         }
                     }
-                },
-                confirmButton = {
-                    TextButton(onClick = { showSettings = false }) {
-                        Text(strings.close)
+
+                    Spacer(Modifier.height(24.dp))
+
+                    // --- SUPPORT SECTION ---
+                    SettingsSectionHeader(
+                        icon = Icons.Outlined.Favorite,
+                        title = strings.support
+                    )
+                    SettingsCard {
+                        Text(
+                            strings.supportDesc,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        Button(
+                            onClick = {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://ko-fi.com/daklok"))
+                                context.startActivity(intent)
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Color(0xFFFF5E5B),
+                                contentColor = Color.White
+                            ),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Icon(Icons.Outlined.Favorite, contentDescription = null)
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(strings.donate, fontWeight = FontWeight.Bold)
+                        }
                     }
+
+                    Spacer(Modifier.height(8.dp))
                 }
-            )
+            }
         }
 
         // Expressive Full-Screen Editor s animáciou
@@ -1539,6 +1623,71 @@ fun MainScreen(
                 }
             }
         }
+
+        // Custom In-App Notification Overlay
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(bottom = 80.dp),
+            contentAlignment = Alignment.BottomCenter
+        ) {
+            val rememberedNotification = remember { mutableStateOf<AppNotification?>(null) }
+            if (activeNotification != null) rememberedNotification.value = activeNotification
+
+            AnimatedVisibility(
+                visible = activeNotification != null,
+                enter = fadeIn(tween(300)) + slideInVertically(
+                    initialOffsetY = { it / 2 },
+                    animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium)
+                ) + scaleIn(initialScale = 0.9f, animationSpec = tween(300)),
+                exit = fadeOut(tween(350)) + slideOutVertically(
+                    targetOffsetY = { it / 2 },
+                    animationSpec = tween(350, easing = FastOutLinearInEasing)
+                ) + scaleOut(targetScale = 0.9f, animationSpec = tween(350))
+            ) {
+                rememberedNotification.value?.let { notification ->
+                    val containerColor = when (notification.type) {
+                        NotificationType.SUCCESS -> MaterialTheme.colorScheme.primaryContainer
+                        NotificationType.INFO -> MaterialTheme.colorScheme.secondaryContainer
+                        NotificationType.ERROR -> MaterialTheme.colorScheme.errorContainer
+                    }
+                    val contentColor = when (notification.type) {
+                        NotificationType.SUCCESS -> MaterialTheme.colorScheme.onPrimaryContainer
+                        NotificationType.INFO -> MaterialTheme.colorScheme.onSecondaryContainer
+                        NotificationType.ERROR -> MaterialTheme.colorScheme.onErrorContainer
+                    }
+                    val notifIcon = when (notification.type) {
+                        NotificationType.SUCCESS -> Icons.Outlined.Check
+                        NotificationType.INFO -> Icons.Default.Info
+                        NotificationType.ERROR -> Icons.Default.Warning
+                    }
+                    Surface(
+                        shape = RoundedCornerShape(24.dp),
+                        color = containerColor,
+                        tonalElevation = 6.dp,
+                        shadowElevation = 8.dp
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 20.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(
+                                imageVector = notifIcon,
+                                contentDescription = null,
+                                tint = contentColor,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(
+                                text = notification.message,
+                                style = MaterialTheme.typography.labelLarge,
+                                color = contentColor
+                            )
+                        }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -1549,13 +1698,16 @@ fun LanguageDropdown(
     label: String,
     selectedCode: String,
     options: List<Pair<String, String>>,
+    showLabel: Boolean = true,
     onSelect: (String) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
     val selectedLabel = options.find { it.first == selectedCode }?.second ?: selectedCode
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        Text(label, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+        if (showLabel) {
+            Text(label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+        }
         Box {
             OutlinedButton(
                 onClick = { expanded = true },
@@ -1581,6 +1733,44 @@ fun LanguageDropdown(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun SettingsSectionHeader(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        modifier = Modifier.padding(bottom = 8.dp, top = 4.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(18.dp)
+        )
+        Text(
+            text = title,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.primary,
+            fontWeight = FontWeight.Bold
+        )
+    }
+}
+
+@Composable
+fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
+    Card(
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant
+        ),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            content = content
+        )
     }
 }
 
@@ -1664,6 +1854,7 @@ fun FullScreenEditor(
         if (verseText.length > 150) baseSize = maxWidth.value * 0.045f
         val fontScale = density.fontScale
         val fontSize = (baseSize * localSizeMult / fontScale).sp
+
         val composeFontFamily = getComposeFontFamily(fontFamilyStr)
         val composeFontWeight = getComposeFontWeight(fontFamilyStr, isBold)
 
@@ -1674,6 +1865,7 @@ fun FullScreenEditor(
 
         // 1. Pozadie
         if (uri != null) {
+
             Image(
                 painter = rememberAsyncImagePainter(uri),
                 contentDescription = null,
@@ -2118,6 +2310,7 @@ fun Pixel6LockScreenPreview(
                                 } else Modifier
                             )
                     ) {
+
                         // Padded vnútorný obsah s textom - určuje výšku predchádzajúceho boxu
                         Box(modifier = Modifier.padding(horizontal = maxWidth * 0.025f, vertical = 16.dp)) {
                             Column(
@@ -2150,7 +2343,7 @@ fun Pixel6LockScreenPreview(
                         }
 
                         // --- PRIDANÁ BUBLINA ---
-                        androidx.compose.animation.AnimatedVisibility( // Using explicit package to avoid receiver ambiguity
+                        androidx.compose.animation.AnimatedVisibility(
                             visible = showBubbleHint,
                             enter = fadeIn(tween(400)) + scaleIn(initialScale = 0.5f, animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy)),
                             exit = fadeOut(tween(300)) + scaleOut(targetScale = 0.8f),
@@ -2162,7 +2355,7 @@ fun Pixel6LockScreenPreview(
                             EditHintBubble(text = strings.tapToEdit)
                         }
 
-                        // Ikonka ceruzky - posunutá presne na stred pravej hornej hranice
+                        // Ikonka ceruzky
                         if (showEditHint) {
                             Box(
                                 modifier = Modifier
@@ -2385,10 +2578,9 @@ fun EnhancedSlider(
     defaultVal: Float,
     steps: Int = 0,
     icon: ImageVector,
+    performHaptic: (HapticFeedbackType) -> Unit,
     onValueChange: (Float) -> Unit
 ) {
-    val haptic = LocalHapticFeedback.current
-
     Column(modifier = Modifier
         .fillMaxWidth()
         .padding(vertical = 0.dp)){
@@ -2412,6 +2604,7 @@ fun EnhancedSlider(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+
                 AnimatedVisibility(
                     visible = (value != defaultVal),
                     // This creates the "slide left" effect for the text
@@ -2421,7 +2614,7 @@ fun EnhancedSlider(
                 ) {
                     IconButton(
                         onClick = {
-                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            performHaptic(HapticFeedbackType.LongPress)
                             onValueChange(defaultVal)
                         },
                         // Fixed size ensures the button doesn't stretch the row vertically
@@ -2445,7 +2638,7 @@ fun EnhancedSlider(
                 val rounded = (it * 10).roundToInt() / 10f
                 if (rounded != value) {
                     onValueChange(rounded)
-                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    performHaptic(HapticFeedbackType.TextHandleMove)
                 }
             },
             valueRange = range,
