@@ -18,6 +18,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
@@ -72,6 +73,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.work.*
 import coil.compose.rememberAsyncImagePainter
+import coil.memory.MemoryCache
 import com.daklok.biblelockscreen.ui.theme.BibleLockScreenTheme
 import com.github.skydoves.colorpicker.compose.BrightnessSlider
 import com.github.skydoves.colorpicker.compose.HsvColorPicker
@@ -105,6 +107,7 @@ data class AppStrings(
     val shadow: String = "Tieň",
     val textSize: String = "Veľkosť písma",
     val textWidth: String = "Šírka textu",
+    val textHeight: String = "Výška textu",
     val textAlpha: String = "Priehľadnosť",
     val bgBlur: String = "Rozmazanie pozadia",
     val anotherPhoto: String = "Iná fotka",
@@ -169,6 +172,7 @@ val enStrings = AppStrings(
     textSize = "Text Size",
 
     textWidth = "Text Width",
+    textHeight = "Text Position",
     textAlpha = "Transparency",
     bgBlur = "Background Blur",
     anotherPhoto = "Change Photo",
@@ -223,6 +227,7 @@ val czStrings = AppStrings(
     shadow = "Stín",
     textSize = "Velikost písma",
     textWidth = "Šířka textu",
+    textHeight = "Výška textu",
     textAlpha = "Průhlednost",
     bgBlur = "Rozmazání pozadí",
     anotherPhoto = "Jiná fotka",
@@ -280,6 +285,7 @@ val esStrings = AppStrings(
     shadow = "Sombra",
     textSize = "Tamaño del texto",
     textWidth = "Ancho del texto",
+    textHeight = "Altura del texto",
     textAlpha = "Transparencia",
 
     bgBlur = "Desenfocar fondo",
@@ -337,6 +343,7 @@ val itStrings = AppStrings(
     shadow = "Ombra",
     textSize = "Dimensione testo",
     textWidth = "Larghezza testo",
+    textHeight = "Altezza testo",
     textAlpha = "Trasparenza",
     bgBlur = "Sfocatura sfondo",
     anotherPhoto = "Cambia foto",
@@ -395,6 +402,7 @@ val frStrings = AppStrings(
     shadow = "Ombre",
     textSize = "Taille du texte",
     textWidth = "Largeur du texte",
+    textHeight = "Hauteur du texte",
     textAlpha = "Transparence",
     bgBlur = "Flou d'arrière-plan",
     anotherPhoto = "Changer de photo",
@@ -452,6 +460,7 @@ val deStrings = AppStrings(
     shadow = "Schatten",
     textSize = "Textgröße",
     textWidth = "Textbreite",
+    textHeight = "Texthöhe",
     textAlpha = "Transparenz",
     bgBlur = "Hintergrundunschärfe",
     anotherPhoto = "Anderes Foto",
@@ -509,6 +518,7 @@ val huStrings = AppStrings(
     shadow = "Árnyék",
     textSize = "Szövegméret",
     textWidth = "Szöveg szélessége",
+    textHeight = "Szöveg magassága",
     textAlpha = "Átlátszóság",
     bgBlur = "Háttér elmosása",
     anotherPhoto = "Másik fotó",
@@ -568,6 +578,7 @@ val plStrings = AppStrings(
     shadow = "Cień",
     textSize = "Rozmiar tekstu",
     textWidth = "Szerokość tekstu",
+    textHeight = "Wysokość tekstu",
     textAlpha = "Przezroczystość",
     bgBlur = "Rozmycie tła",
 
@@ -906,10 +917,38 @@ fun MainScreen(
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text(strings.appName, fontWeight = FontWeight.Bold) },
+                    title = {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Box(
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .background(
+                                        MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f),
+                                        RoundedCornerShape(10.dp)
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    Icons.Default.AutoAwesome,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                            }
+                            Spacer(Modifier.width(10.dp))
+                            Text(strings.appName, fontWeight = FontWeight.Bold)
+                        }
+                    },
                     actions = {
-                        IconButton(onClick = { showSettings = true }) {
-                            Icon(Icons.Outlined.Settings, contentDescription = strings.settings)
+                        FilledIconButton(
+                            onClick = { showSettings = true },
+                            modifier = Modifier.padding(end = 8.dp).size(40.dp),
+                            colors = IconButtonDefaults.filledIconButtonColors(
+                                containerColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f),
+                                contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                            )
+                        ) {
+                            Icon(Icons.Outlined.Settings, contentDescription = strings.settings, modifier = Modifier.size(20.dp))
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
@@ -983,40 +1022,91 @@ fun MainScreen(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clip(RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp))
+                        .clip(RoundedCornerShape(topStart = 36.dp, topEnd = 36.dp))
                         .background(MaterialTheme.colorScheme.surface)
-                        .animateContentSize(animationSpec = tween(300, easing = FastOutSlowInEasing))
-                        .padding(24.dp),
-                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                        .animateContentSize(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow))
+                        .padding(horizontal = 20.dp)
+                        .padding(top = 8.dp, bottom = 0.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
+                    // Pill drag handle
+                    Box(
+                        modifier = Modifier
+                            .padding(vertical = 8.dp)
+                            .align(Alignment.CenterHorizontally)
+                            .width(40.dp)
+                            .height(4.dp)
+                            .background(
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                                RoundedCornerShape(2.dp)
+                            )
+                    )
 
                     // HLAVNÝ PREPÍNAČ (SWITCH)
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
+                    Card(
+                        shape = RoundedCornerShape(24.dp),
+                        colors = CardDefaults.cardColors(
+                            containerColor = if (isDailyActive)
+                                MaterialTheme.colorScheme.surfaceVariant //keby chcem zmenit neskor
+                            else
+                                MaterialTheme.colorScheme.surfaceVariant
+                        ),
+                        modifier = Modifier.fillMaxWidth()
                     ) {
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text(
-                                text = strings.dailyWallpaper,
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = if (isDailyActive) {
-                                    val formattedHour = String.format("%02d", dailyHour)
-                                    String.format(strings.active, formattedHour)
-                                } else {
-                                    strings.inactive
-                                },
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = if (isDailyActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 20.dp, vertical = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier.weight(1f),
+                                horizontalArrangement = Arrangement.spacedBy(14.dp)
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .size(46.dp)
+                                        .background(
+                                            color = if (isDailyActive) MaterialTheme.colorScheme.primary
+                                            else MaterialTheme.colorScheme.outline.copy(alpha = 0.25f),
+                                            shape = RoundedCornerShape(14.dp)
+                                        ),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        Icons.Default.Schedule,
+                                        contentDescription = null,
+                                        tint = if (isDailyActive) MaterialTheme.colorScheme.onPrimary
+                                        else MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                }
+                                Column {
+                                    Text(
+                                        text = strings.dailyWallpaper,
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    Text(
+                                        text = if (isDailyActive) {
+                                            val formattedHour = String.format("%02d", dailyHour)
+                                            String.format(strings.active, formattedHour)
+                                        } else {
+                                            strings.inactive
+                                        },
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = if (isDailyActive) MaterialTheme.colorScheme.primary
+                                        else MaterialTheme.colorScheme.outline
+                                    )
+                                }
+                            }
+                            Switch(
+                                checked = isDailyActive,
+                                onCheckedChange = { toggleDailyWorker(it) }
                             )
                         }
-                        Switch(
-                            checked = isDailyActive,
-                            onCheckedChange = { toggleDailyWorker(it) }
-                        )
                     }
 
 
@@ -1085,16 +1175,20 @@ fun MainScreen(
                     // CUSTOM VERSE EDITOR
                     AnimatedVisibility(
                         visible = !isDailyActive,
-                        enter = expandVertically(animationSpec = tween(300, easing = FastOutSlowInEasing)) + fadeIn(tween(300)),
-                        exit = shrinkVertically(animationSpec = tween(250, easing = FastOutSlowInEasing)) + fadeOut(tween(250))
+                        enter = expandVertically(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow)) + fadeIn(tween(280)),
+                        exit = shrinkVertically(animationSpec = tween(220, easing = FastOutSlowInEasing)) + fadeOut(tween(220))
                     ) {
                         Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 8.dp),
+                            modifier = Modifier.fillMaxWidth(),
                             verticalArrangement = Arrangement.spacedBy(12.dp)
                         ) {
-                            Text(strings.customVerseTitle, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(Icons.Outlined.Edit, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+                                Text(strings.customVerseTitle, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                            }
 
                             var localVerse by remember(versePair) { mutableStateOf(versePair?.first ?: "") }
                             var localRef by remember(versePair) { mutableStateOf(versePair?.second ?: "") }
@@ -1148,11 +1242,17 @@ fun MainScreen(
                         }
                     }
 
-                    HorizontalDivider()
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
 
                     // NASTAVENIA
                     if (imageUri != null) {
-                        Text(strings.textCustomization, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Icon(Icons.Default.TextFormat, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
+                            Text(strings.textCustomization, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold)
+                        }
 
                         // Farba textu
                         ColorPickerRow(selectedColor = textColor) {
@@ -1185,64 +1285,84 @@ fun MainScreen(
                         }
 
                         // Slidery
-                        EnhancedSlider(
-                            label = strings.bgBlur,
-                            value = bgBlur,
-                            range = 0f..25f,
-                            defaultVal = 0f,
-                            steps = 24,
-                            icon = Icons.Outlined.BlurOn,
-                            performHaptic = performHaptic,
-                            onValueChange = { bgBlur = it;
-                                saveSettings() }
-                        )
+                        Card(
+                            shape = RoundedCornerShape(20.dp),
+                            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(0.dp)) {
+                                EnhancedSlider(
+                                    label = strings.bgBlur,
+                                    value = bgBlur,
+                                    range = 0f..25f,
+                                    defaultVal = 0f,
+                                    steps = 24,
+                                    icon = Icons.Outlined.BlurOn,
+                                    performHaptic = performHaptic,
+                                    onValueChange = { bgBlur = it;
+                                        saveSettings() }
+                                )
+                                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f))
+                                EnhancedSlider(
+                                    label = strings.textSize,
+                                    value = textSizeMult,
+                                    range = 0.5f..2.0f,
+                                    defaultVal = 1.0f,
+                                    steps = 14,
+                                    icon = Icons.Default.TextFormat,
+                                    performHaptic = performHaptic,
+                                    onValueChange = { textSizeMult = it; saveSettings() }
+                                )
+                                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f))
+                                EnhancedSlider(
+                                    label = strings.textWidth,
+                                    value = textWidthMult,
+                                    range = 0.5f..1.2f,
+                                    defaultVal = 1.0f,
+                                    steps = 6,
+                                    icon = Icons.Default.FormatAlignJustify,
+                                    performHaptic = performHaptic,
+                                    onValueChange = { textWidthMult = it; saveSettings() }
+                                )
+                                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f))
+                                EnhancedSlider(
+                                    label = strings.textHeight,
+                                    value = verticalOffset,
+                                    range = -1.0f..1.0f,
+                                    defaultVal = 0.0f,
+                                    steps = 19,
+                                    icon = Icons.Default.SwapVert,
+                                    performHaptic = performHaptic,
+                                    onValueChange = { verticalOffset = it; saveSettings() }
+                                )
+                                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f))
+                                EnhancedSlider(
+                                    label = strings.textAlpha,
+                                    value = textAlpha,
+                                    range = 0.2f..1.0f,
+                                    defaultVal = 1.0f,
+                                    steps = 7,
+                                    icon = Icons.Default.Opacity,
+                                    performHaptic = performHaptic,
+                                    onValueChange = { textAlpha = it;
+                                        saveSettings() }
+                                )
+                            }
+                        }
 
-                        EnhancedSlider(
-                            label = strings.textSize,
-                            value = textSizeMult,
-                            range = 0.5f..2.0f,
-                            defaultVal = 1.0f,
-                            steps = 14,
-                            icon = Icons.Default.TextFormat,
-                            performHaptic = performHaptic,
-                            onValueChange = { textSizeMult = it; saveSettings() }
-                        )
-
-                        EnhancedSlider(
-                            label = strings.textWidth,
-                            value = textWidthMult,
-                            range = 0.5f..1.2f,
-                            defaultVal = 1.0f,
-                            steps = 7,
-                            icon = Icons.Default.FormatAlignJustify,
-                            performHaptic = performHaptic,
-                            onValueChange = { textWidthMult = it; saveSettings() }
-                        )
-
-                        EnhancedSlider(
-                            label = strings.textAlpha,
-                            value = textAlpha,
-                            range = 0.2f..1.0f,
-                            defaultVal = 1.0f,
-                            steps = 7,
-                            icon = Icons.Default.Opacity,
-                            performHaptic = performHaptic,
-                            onValueChange = { textAlpha = it;
-                                saveSettings() }
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
+                        Spacer(modifier = Modifier.height(4.dp))
 
                         // Akčné tlačidlá
-                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                             OutlinedButton(
                                 onClick = { launcher.launch("image/*") },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(12.dp)
+                                modifier = Modifier.weight(1f).height(52.dp),
+                                shape = RoundedCornerShape(16.dp),
+                                border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
                             ) {
-                                Icon(Icons.Default.Image, null)
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(strings.anotherPhoto)
+                                Icon(Icons.Default.Image, null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(6.dp))
+                                Text(strings.anotherPhoto, style = MaterialTheme.typography.labelLarge)
                             }
 
                             Button(
@@ -1250,45 +1370,53 @@ fun MainScreen(
                                 onClick = {
                                     if (imageUri != null) {
                                         performHaptic(HapticFeedbackType.LongPress)
-
                                         scope.launch {
                                             generationStatus = "generating"
                                             runOneTimeWorker(context)
                                             kotlinx.coroutines.delay(2000)
                                             performHaptic(HapticFeedbackType.TextHandleMove)
                                             generationStatus = "Done"
-
                                             kotlinx.coroutines.delay(2000)
                                             generationStatus = "idle"
                                         }
                                     }
                                 },
-                                modifier = Modifier.weight(1f),
-                                shape = RoundedCornerShape(12.dp)
+                                modifier = Modifier.weight(1f).height(52.dp),
+                                shape = RoundedCornerShape(16.dp)
                             ) {
-                                Icon(Icons.Default.AutoAwesome, null)
-                                Spacer(Modifier.width(8.dp))
-                                Text(
-                                    text = if (generationStatus == "generating") {
-                                        strings.generatingBtn
-                                    } else {
-                                        strings.test
+                                AnimatedContent(
+                                    targetState = generationStatus == "generating",
+                                    transitionSpec = { fadeIn(tween(180)) togetherWith fadeOut(tween(180)) },
+                                    label = "gen_btn"
+                                ) { isGenerating ->
+                                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                                        if (isGenerating) {
+                                            CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp, color = MaterialTheme.colorScheme.onPrimary)
+                                        } else {
+                                            Icon(Icons.Default.AutoAwesome, null, modifier = Modifier.size(18.dp))
+                                        }
+                                        Text(if (isGenerating) strings.generatingBtn else strings.test, style = MaterialTheme.typography.labelLarge)
                                     }
-                                )
+                                }
                             }
                         }
                     } else {
-                        Box(
+                        Card(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(100.dp)
-                                .border(1.dp, Color.Gray, RoundedCornerShape(12.dp))
+                                .height(110.dp)
                                 .clickable { launcher.launch("image/*") },
-                            contentAlignment = Alignment.Center
+                            shape = RoundedCornerShape(20.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
+                            ),
+                            border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.35f))
                         ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Icon(Icons.Default.AddPhotoAlternate, null, tint = MaterialTheme.colorScheme.primary)
-                                Text(strings.selectPhotoFirst, color = MaterialTheme.colorScheme.primary)
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Icon(Icons.Default.AddPhotoAlternate, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(30.dp))
+                                    Text(strings.selectPhotoFirst, color = MaterialTheme.colorScheme.primary, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                                }
                             }
                         }
                     }
@@ -1647,7 +1775,7 @@ fun MainScreen(
             ) {
                 rememberedNotification.value?.let { notification ->
                     val containerColor = when (notification.type) {
-                        NotificationType.SUCCESS -> MaterialTheme.colorScheme.primaryContainer
+                        NotificationType.SUCCESS -> MaterialTheme.colorScheme.secondaryContainer
                         NotificationType.INFO -> MaterialTheme.colorScheme.secondaryContainer
                         NotificationType.ERROR -> MaterialTheme.colorScheme.errorContainer
                     }
@@ -1993,8 +2121,8 @@ fun FullScreenEditor(
                 }
 
                 // DRAG HANDLES
-                val handleSize = 48.dp
-                val dotSize = 10.dp
+                val handleSize = 52.dp
+                val dotSize = 12.dp
 
                 // Pravá strana (Šírka)
                 Box(
@@ -2010,7 +2138,7 @@ fun FullScreenEditor(
                             }
                         },
                     contentAlignment = Alignment.Center
-                ) { Box(Modifier.size(dotSize).background(Color.White, CircleShape)) }
+                ) { Box(Modifier.size(dotSize).border(1.5.dp, Color.White.copy(alpha = 0.4f), CircleShape).background(Color.White, CircleShape)) }
 
                 // Ľavá strana (Šírka)
                 Box(
@@ -2026,7 +2154,7 @@ fun FullScreenEditor(
                             }
                         },
                     contentAlignment = Alignment.Center
-                ) { Box(Modifier.size(dotSize).background(Color.White, CircleShape)) }
+                ) { Box(Modifier.size(dotSize).border(1.5.dp, Color.White.copy(alpha = 0.4f), CircleShape).background(Color.White, CircleShape)) }
 
                 // Dolná strana (Veľkosť)
                 Box(
@@ -2041,7 +2169,7 @@ fun FullScreenEditor(
                             }
                         },
                     contentAlignment = Alignment.Center
-                ) { Box(Modifier.size(dotSize).background(Color.White, CircleShape)) }
+                ) { Box(Modifier.size(dotSize).border(1.5.dp, Color.White.copy(alpha = 0.4f), CircleShape).background(Color.White, CircleShape)) }
 
                 // Horná strana (Veľkosť)
                 Box(
@@ -2056,7 +2184,7 @@ fun FullScreenEditor(
                             }
                         },
                     contentAlignment = Alignment.Center
-                ) { Box(Modifier.size(dotSize).background(Color.White, CircleShape)) }
+                ) { Box(Modifier.size(dotSize).border(1.5.dp, Color.White.copy(alpha = 0.4f), CircleShape).background(Color.White, CircleShape)) }
             }
         }
 
@@ -2065,38 +2193,43 @@ fun FullScreenEditor(
             modifier = Modifier
                 .fillMaxWidth()
                 .align(Alignment.BottomCenter)
+                .background(
+                    Brush.verticalGradient(
+                        colors = listOf(Color.Transparent, Color.Black.copy(alpha = 0.6f)),
+                        startY = 0f
+                    )
+                )
                 .padding(horizontal = 24.dp, vertical = 40.dp)
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     text = strings.dragHint,
                     style = MaterialTheme.typography.labelMedium.copy(
-                        shadow = androidx.compose.ui.graphics.Shadow(Color.Black, blurRadius = 12f)
+                        shadow = androidx.compose.ui.graphics.Shadow(Color.Black, blurRadius = 16f)
                     ),
-                    color = Color.White.copy(alpha = 0.9f),
+                    color = Color.White.copy(alpha = 0.85f),
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(bottom = 24.dp)
+                    modifier = Modifier.padding(bottom = 20.dp)
                 )
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     FilledTonalButton(
                         onClick = {
                             performHaptic(HapticFeedbackType.LongPress)
                             onDismiss()
                         },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(56.dp),
+                        modifier = Modifier.weight(1f).height(56.dp),
+                        shape = RoundedCornerShape(18.dp),
                         colors = ButtonDefaults.filledTonalButtonColors(
-                            containerColor = Color.DarkGray.copy(alpha = 0.8f),
+                            containerColor = Color.White.copy(alpha = 0.15f),
                             contentColor = Color.White
                         )
                     ) {
-                        Icon(Icons.Outlined.Close, contentDescription = strings.cancel)
+                        Icon(Icons.Outlined.Close, contentDescription = strings.cancel, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(strings.cancel, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        Text(strings.cancel, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                     }
 
                     Button(
@@ -2104,17 +2237,16 @@ fun FullScreenEditor(
                             performHaptic(HapticFeedbackType.LongPress)
                             onSave(localSizeMult, localWidthMult, localVerticalOffset)
                         },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(56.dp),
+                        modifier = Modifier.weight(1f).height(56.dp),
+                        shape = RoundedCornerShape(18.dp),
                         colors = ButtonDefaults.buttonColors(
                             containerColor = MaterialTheme.colorScheme.primary,
                             contentColor = MaterialTheme.colorScheme.onPrimary
                         )
                     ) {
-                        Icon(Icons.Outlined.Check, contentDescription = strings.done)
+                        Icon(Icons.Outlined.Check, contentDescription = strings.done, modifier = Modifier.size(18.dp))
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(strings.done, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                        Text(strings.done, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
                     }
                 }
             }
@@ -2244,12 +2376,22 @@ fun Pixel6LockScreenPreview(
             } else {
                 Box(modifier = Modifier
                     .fillMaxSize()
-                    .background(Color(0xFF212121)), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Icon(Icons.Default.AddPhotoAlternate, contentDescription = null, tint = Color.White.copy(alpha = 0.7f), modifier = Modifier
-                            .size(48.dp)
-                            .padding(bottom = 8.dp))
-                        Text(strings.clickToSelect, color = Color.White.copy(alpha = 0.7f))
+                    .background(
+                        Brush.verticalGradient(
+                            listOf(Color(0xFF212122), Color(0xFF212121))
+                        )
+                    ), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Box(
+                            modifier = Modifier
+                                .size(64.dp)
+                                .background(Color.White.copy(alpha = 0.08f), RoundedCornerShape(20.dp))
+                                .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(20.dp)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(Icons.Default.AddPhotoAlternate, contentDescription = null, tint = Color.White.copy(alpha = 0.8f), modifier = Modifier.size(32.dp))
+                        }
+                        Text(strings.clickToSelect, color = Color.White.copy(alpha = 0.7f), style = MaterialTheme.typography.bodySmall)
                     }
                 }
             }
@@ -2519,26 +2661,30 @@ fun ColorPickerRow(selectedColor: Int, onColorSelected: (Int) -> Unit) {
         modifier = Modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.spacedBy(16.dp)
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
         colors.forEach { color ->
+            val isSelected = selectedColor == color
+            val ringSize by animateDpAsState(
+                targetValue = if (isSelected) 3.dp else 0.dp,
+                animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
+                label = "ring"
+            )
             Box(
                 modifier = Modifier
-                    .size(48.dp)
+                    .size(44.dp)
                     .clip(CircleShape)
                     .background(Color(color))
-                    .border(
-                        width = if (selectedColor == color) 3.dp else 1.dp,
-                        color = if (selectedColor == color) MaterialTheme.colorScheme.primary else Color.Gray,
-                        shape = CircleShape
-                    )
+                    .border(ringSize, if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent, CircleShape)
+                    .border(1.dp, Color.Gray.copy(alpha = 0.3f), CircleShape)
                     .clickable { onColorSelected(color) },
                 contentAlignment = Alignment.Center
             ) {
-                if (selectedColor == color) {
+                if (isSelected) {
                     Icon(
                         Icons.Default.Check,
                         contentDescription = null,
+                        modifier = Modifier.size(18.dp),
                         tint = if (color == AndroidColor.WHITE || color == AndroidColor.parseColor("#FFFFE0")) Color.Black else Color.White
                     )
                 }
@@ -2547,25 +2693,17 @@ fun ColorPickerRow(selectedColor: Int, onColorSelected: (Int) -> Unit) {
         // Tlačidlo pre otvorenie Color Wheel
         Box(
             modifier = Modifier
-                .size(48.dp)
+                .size(44.dp)
                 .clip(CircleShape)
                 .background(
                     brush = Brush.sweepGradient(
-                        listOf(
-                            Color.Red,
-                            Color.Magenta,
-                            Color.Blue,
-                            Color.Cyan,
-                            Color.Green,
-                            Color.Yellow,
-                            Color.Red
-                        )
+                        listOf(Color.Red, Color.Magenta, Color.Blue, Color.Cyan, Color.Green, Color.Yellow, Color.Red)
                     )
                 )
                 .clickable { showDialog = true },
             contentAlignment = Alignment.Center
         ) {
-            Icon(Icons.Default.ColorLens, "Custom Color", tint = Color.White)
+            Icon(Icons.Default.ColorLens, "Custom Color", tint = Color.White, modifier = Modifier.size(20.dp))
         }
     }
 }
@@ -2581,34 +2719,25 @@ fun EnhancedSlider(
     performHaptic: (HapticFeedbackType) -> Unit,
     onValueChange: (Float) -> Unit
 ) {
-    Column(modifier = Modifier
-        .fillMaxWidth()
-        .padding(vertical = 0.dp)){
+    Column(modifier = Modifier.fillMaxWidth()) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(40.dp),
+            modifier = Modifier.fillMaxWidth().height(40.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(icon, null, Modifier.size(20.dp), tint = MaterialTheme.colorScheme.primary)
+                Icon(icon, null, Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
             }
-
-            // Value + Reset
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
                     text = String.format("%.1f", value),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-
                 AnimatedVisibility(
                     visible = (value != defaultVal),
-                    // This creates the "slide left" effect for the text
-                    // and "fade/expand" effect for the button
                     enter = fadeIn() + expandHorizontally(expandFrom = Alignment.Start),
                     exit = fadeOut() + shrinkHorizontally(shrinkTowards = Alignment.Start)
                 ) {
@@ -2617,24 +2746,21 @@ fun EnhancedSlider(
                             performHaptic(HapticFeedbackType.LongPress)
                             onValueChange(defaultVal)
                         },
-                        // Fixed size ensures the button doesn't stretch the row vertically
                         modifier = Modifier.size(32.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Outlined.RestartAlt,
                             contentDescription = "Reset",
-                            modifier = Modifier.size(18.dp),
+                            modifier = Modifier.size(16.dp),
                             tint = MaterialTheme.colorScheme.primary
                         )
                     }
                 }
             }
         }
-
         Slider(
             value = value,
             onValueChange = {
-                // Rounding to nearest 0.1
                 val rounded = (it * 10).roundToInt() / 10f
                 if (rounded != value) {
                     onValueChange(rounded)
@@ -2646,7 +2772,8 @@ fun EnhancedSlider(
             colors = SliderDefaults.colors(
                 thumbColor = MaterialTheme.colorScheme.primary,
                 activeTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.8f)
-            )
+            ),
+            modifier = Modifier.padding(top = 0.dp)
         )
     }
 }
