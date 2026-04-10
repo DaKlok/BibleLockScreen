@@ -26,7 +26,8 @@ object WallpaperUtils {
         isBold: Boolean = true,
         useShadow: Boolean = true,
         fontFamilyStr: String = "sans-serif",
-        bgBlurRadius: Float = 0f
+        bgBlurRadius: Float = 0f,
+        bgDarkness: Float = 0.23f
     ): Bitmap? {
         try {
             // 1. Získanie rozmerov obrazovky
@@ -71,7 +72,7 @@ object WallpaperUtils {
             // 5. Vignette
             val paintScrim = Paint().apply {
                 color = Color.BLACK
-                alpha = (60 + (1.0f - textAlpha) * 40).toInt().coerceIn(0, 150)
+                alpha = (bgDarkness * 255).toInt().coerceIn(0, 255)
             }
             canvas.drawRect(0f, 0f, screenW.toFloat(), screenH.toFloat(), paintScrim)
 

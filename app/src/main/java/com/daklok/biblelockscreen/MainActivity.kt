@@ -110,6 +110,7 @@ data class AppStrings(
     val textHeight: String = "Výška textu",
     val textAlpha: String = "Priehľadnosť",
     val bgBlur: String = "Rozmazanie pozadia",
+    val bgDarknessLabel: String = "Stmavenie pozadia",
     val anotherPhoto: String = "Iná fotka",
     val selectPhotoFirst: String = "Najskôr vyber fotku",
     val appearance: String = "Vzhľad",
@@ -175,6 +176,7 @@ val enStrings = AppStrings(
     textHeight = "Text Position",
     textAlpha = "Transparency",
     bgBlur = "Background Blur",
+    bgDarknessLabel = "Background Darkness",
     anotherPhoto = "Change Photo",
     test = "Generate",
     selectPhotoFirst = "Select a photo first",
@@ -230,6 +232,7 @@ val czStrings = AppStrings(
     textHeight = "Výška textu",
     textAlpha = "Průhlednost",
     bgBlur = "Rozmazání pozadí",
+    bgDarknessLabel = "Ztmavení pozadí",
     anotherPhoto = "Jiná fotka",
     test = "Generovat",
     selectPhotoFirst = "Nejdříve vyber fotku",
@@ -289,6 +292,7 @@ val esStrings = AppStrings(
     textAlpha = "Transparencia",
 
     bgBlur = "Desenfocar fondo",
+    bgDarknessLabel = "Oscurecer el fondo",
     anotherPhoto = "Cambiar foto",
     test = "Generar",
     selectPhotoFirst = "Selecciona una foto primero",
@@ -346,6 +350,7 @@ val itStrings = AppStrings(
     textHeight = "Altezza testo",
     textAlpha = "Trasparenza",
     bgBlur = "Sfocatura sfondo",
+    bgDarknessLabel = "Oscuramento dello sfondo",
     anotherPhoto = "Cambia foto",
     test = "Generare",
     selectPhotoFirst = "Seleziona prima una foto",
@@ -405,6 +410,7 @@ val frStrings = AppStrings(
     textHeight = "Hauteur du texte",
     textAlpha = "Transparence",
     bgBlur = "Flou d'arrière-plan",
+    bgDarknessLabel = "Assombrir l'arrière-plan",
     anotherPhoto = "Changer de photo",
     test = "Générer",
     selectPhotoFirst = "Sélectionnez d'abord une photo",
@@ -463,6 +469,7 @@ val deStrings = AppStrings(
     textHeight = "Texthöhe",
     textAlpha = "Transparenz",
     bgBlur = "Hintergrundunschärfe",
+    bgDarknessLabel = "Hintergrund abdunkeln",
     anotherPhoto = "Anderes Foto",
     test = "Erzeugen",
     selectPhotoFirst = "Wähle zuerst ein Foto aus",
@@ -521,6 +528,7 @@ val huStrings = AppStrings(
     textHeight = "Szöveg magassága",
     textAlpha = "Átlátszóság",
     bgBlur = "Háttér elmosása",
+    bgDarknessLabel = "A háttér sötétítése",
     anotherPhoto = "Másik fotó",
 
     test = "Generálni",
@@ -581,6 +589,7 @@ val plStrings = AppStrings(
     textHeight = "Wysokość tekstu",
     textAlpha = "Przezroczystość",
     bgBlur = "Rozmycie tła",
+    bgDarknessLabel = "Przyciemnianie tła",
 
     anotherPhoto = "Zmień zdjęcie",
     test = "Stwarzać",
@@ -729,6 +738,8 @@ fun MainScreen(
     val prefs = remember { context.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE) }
     val defaultSystemLang = remember { getDefaultAppLanguage() }
 
+    var bgDarkness by remember { mutableFloatStateOf(prefs.getFloat("bg_darkness", 0.23f)) }
+
     // --- STATES ---
     var hasSeenEditHint by remember { mutableStateOf(prefs.getBoolean("has_seen_edit_hint", false)) }
     var dailyHour by remember { mutableIntStateOf(prefs.getInt("daily_hour", 6)) }
@@ -848,6 +859,7 @@ fun MainScreen(
             .putBoolean("use_shadow", useShadow)
             .putString("font_family", fontFamilyStr)
             .putBoolean("use_haptics", useHaptics)
+            .putFloat("bg_darkness", bgDarkness)
             .apply()
     }
 
@@ -995,6 +1007,7 @@ fun MainScreen(
                         textColor = textColor,
                         textAlpha = textAlpha,
                         bgBlur = bgBlur,
+                        bgDarkness = bgDarkness,
                         isBold = isBold,
                         useShadow = useShadow,
                         fontFamilyStr = fontFamilyStr,
@@ -1347,6 +1360,20 @@ fun MainScreen(
                                     onValueChange = { textAlpha = it;
                                         saveSettings() }
                                 )
+                                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f))
+                                EnhancedSlider(
+                                    label = strings.bgDarknessLabel,
+                                    value = bgDarkness,
+                                    range = 0f..0.8f,
+                                    defaultVal = 0.2f, //0.23 je default
+                                    steps = 7,
+                                    icon = Icons.Default.BrightnessMedium,
+                                    performHaptic = performHaptic,
+                                    onValueChange = {
+                                        bgDarkness = it
+                                        saveSettings()
+                                    }
+                                )
                             }
                         }
 
@@ -1690,6 +1717,7 @@ fun MainScreen(
                 textColor = textColor,
                 textAlpha = textAlpha,
                 bgBlur = bgBlur,
+                bgDarkness = bgDarkness,
                 isBold = isBold,
                 useShadow = useShadow,
                 fontFamilyStr = fontFamilyStr,
@@ -1913,6 +1941,7 @@ fun FullScreenEditor(
     textColor: Int,
     textAlpha: Float,
     bgBlur: Float,
+    bgDarkness: Float,
     isBold: Boolean,
     useShadow: Boolean,
     fontFamilyStr: String,
@@ -2003,6 +2032,11 @@ fun FullScreenEditor(
                     .then(
                         if (bgBlur > 0f) Modifier.blur((bgBlur * 0.7f).dp) else Modifier
                     )
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = bgDarkness))
             )
             Box(modifier = Modifier
                 .fillMaxSize()
@@ -2309,6 +2343,7 @@ fun Pixel6LockScreenPreview(
     textColor: Int,
     textAlpha: Float,
     bgBlur: Float,
+    bgDarkness: Float,
     isBold: Boolean,
     useShadow: Boolean,
     fontFamilyStr: String,
@@ -2360,6 +2395,11 @@ fun Pixel6LockScreenPreview(
                         .then(
                             if (bgBlur > 0f) Modifier.blur(bgBlur.dp) else Modifier
                         )
+                )
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color.Black.copy(alpha = bgDarkness))
                 )
                 Box(modifier = Modifier
                     .fillMaxSize()

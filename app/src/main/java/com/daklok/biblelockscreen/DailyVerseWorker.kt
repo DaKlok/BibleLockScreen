@@ -34,6 +34,7 @@ class DailyVerseWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
         val isBold = prefs.getBoolean("is_bold", true)
         val useShadow = prefs.getBoolean("use_shadow", true)
         val fontFamilyStr = prefs.getString("font_family", "sans-serif") ?: "sans-serif"
+        val bgDarkness = prefs.getFloat("bg_darkness", 0.23f)
 
         // Skontrolujeme, či užívateľ nemá nastavený vlastný text
         val useCustomVerse = prefs.getBoolean("use_custom_verse", false)
@@ -61,7 +62,8 @@ class DailyVerseWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
             isBold = isBold,
             useShadow = useShadow,
             fontFamilyStr = fontFamilyStr,
-            bgBlurRadius = bgBlurRadius
+            bgBlurRadius = bgBlurRadius,
+            bgDarkness = bgDarkness
         )
 
         if (finalBitmap != null) {
