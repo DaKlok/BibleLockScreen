@@ -3,6 +3,7 @@ package com.daklok.biblelockscreen
 import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.graphics.Color as AndroidColor
 import android.net.Uri
@@ -68,6 +69,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
@@ -154,7 +156,28 @@ data class AppStrings(
     val customVerseTitle: String = "Vlastný text",
     val customVerseHint: String = "Text verša...",
     val customRefHint: String = "Súradnice (napr. Ján 3:16)",
-    val applyCustom: String = "Použiť"
+    val applyCustom: String = "Použiť",
+
+    // Automatic Wallpaper Change strings
+    val autoWallpaper: String = "Automatická zmena tapety",
+    val autoWallpaperIntervalLabel: String = "Interval zmeny",
+    val autoWallpaperEvery1h: String = "Každú hodinu",
+    val autoWallpaperEvery2h: String = "Každé 2 hodiny",
+    val autoWallpaperEvery3h: String = "Každé 3 hodiny",
+    val autoWallpaperEvery6h: String = "Každých 6 hodín",
+    val autoWallpaperEvery12h: String = "Každých 12 hodín",
+    val autoWallpaperEvery24h: String = "Každých 24 hodín (denne)",
+    val autoWallpaperOnScreenOff: String = "Pri vypnutí obrazovky",
+    val autoWallpaperOnScreenOffDesc: String = "Verš sa zmení pri každom zamknutí telefónu",
+    val autoWallpaperTimeLabel: String = "Čas dennej zmeny",
+    val autoWallpaperActiveHourly: String = "Aktívne (každých %sh)",
+    val autoWallpaperActiveDaily: String = "Aktívne (denne o %s:00)",
+    val autoWallpaperActiveScreenOff: String = "Aktívne (pri zamknutí)",
+    val autoWorkerOn: String = "Zapnuté! Tapeta sa zmení podľa nastaveného intervalu.",
+    val autoWorkerOff: String = "Automatická zmena bola vypnutá.",
+
+    // Color picker
+    val colorPickerTitle: String = "Vybrať farbu"
 )
 
 val skStrings = AppStrings()
@@ -215,7 +238,24 @@ val enStrings = AppStrings(
     customVerseTitle = "Custom Text",
     customVerseHint = "Verse text...",
     customRefHint = "Coordinates (e.g. John 3:16)",
-    applyCustom = "Apply"
+    applyCustom = "Apply",
+    autoWallpaper = "Automatic Wallpaper Change",
+    autoWallpaperIntervalLabel = "Change interval",
+    autoWallpaperEvery1h = "Every hour",
+    autoWallpaperEvery2h = "Every 2 hours",
+    autoWallpaperEvery3h = "Every 3 hours",
+    autoWallpaperEvery6h = "Every 6 hours",
+    autoWallpaperEvery12h = "Every 12 hours",
+    autoWallpaperEvery24h = "Every 24 hours (daily)",
+    autoWallpaperOnScreenOff = "On screen off",
+    autoWallpaperOnScreenOffDesc = "Verse changes every time you lock the phone",
+    autoWallpaperTimeLabel = "Daily change time",
+    autoWallpaperActiveHourly = "Active (every %sh)",
+    autoWallpaperActiveDaily = "Active (daily at %s:00)",
+    autoWallpaperActiveScreenOff = "Active (on lock)",
+    autoWorkerOn = "Enabled! Wallpaper will change based on your interval.",
+    autoWorkerOff = "Automatic change disabled.",
+    colorPickerTitle = "Select color"
 )
 
 val czStrings = AppStrings(
@@ -274,7 +314,24 @@ val czStrings = AppStrings(
     customVerseTitle = "Vlastní text",
     customVerseHint = "Text verše...",
     customRefHint = "Souřadnice (např. Jan 3:16)",
-    applyCustom = "Použít"
+    applyCustom = "Použít",
+    autoWallpaper = "Automatická změna tapety",
+    autoWallpaperIntervalLabel = "Interval změny",
+    autoWallpaperEvery1h = "Každou hodinu",
+    autoWallpaperEvery2h = "Každé 2 hodiny",
+    autoWallpaperEvery3h = "Každé 3 hodiny",
+    autoWallpaperEvery6h = "Každých 6 hodin",
+    autoWallpaperEvery12h = "Každých 12 hodin",
+    autoWallpaperEvery24h = "Každých 24 hodin (denně)",
+    autoWallpaperOnScreenOff = "Při vypnutí obrazovky",
+    autoWallpaperOnScreenOffDesc = "Verš se změní při každém zamknutí telefonu",
+    autoWallpaperTimeLabel = "Čas denní změny",
+    autoWallpaperActiveHourly = "Aktivní (každých %sh)",
+    autoWallpaperActiveDaily = "Aktivní (denně v %s:00)",
+    autoWallpaperActiveScreenOff = "Aktivní (při zamknutí)",
+    autoWorkerOn = "Zapnuto! Tapeta se změní dle nastaveného intervalu.",
+    autoWorkerOff = "Automatická změna byla vypnuta.",
+    colorPickerTitle = "Vybrat barvu"
 )
 
 val esStrings = AppStrings(
@@ -333,7 +390,24 @@ val esStrings = AppStrings(
     customVerseTitle = "Texto Personalizado",
     customVerseHint = "Texto del versículo...",
     customRefHint = "Coordenadas (ej. Juan 3:16)",
-    applyCustom = "Aplicar"
+    applyCustom = "Aplicar",
+    autoWallpaper = "Cambio automático de fondo",
+    autoWallpaperIntervalLabel = "Intervalo de cambio",
+    autoWallpaperEvery1h = "Cada hora",
+    autoWallpaperEvery2h = "Cada 2 horas",
+    autoWallpaperEvery3h = "Cada 3 horas",
+    autoWallpaperEvery6h = "Cada 6 horas",
+    autoWallpaperEvery12h = "Cada 12 horas",
+    autoWallpaperEvery24h = "Cada 24 horas (diario)",
+    autoWallpaperOnScreenOff = "Al apagar la pantalla",
+    autoWallpaperOnScreenOffDesc = "El versículo cambia cada vez que bloqueas el teléfono",
+    autoWallpaperTimeLabel = "Hora del cambio diario",
+    autoWallpaperActiveHourly = "Activo (cada %sh)",
+    autoWallpaperActiveDaily = "Activo (diario a las %s:00)",
+    autoWallpaperActiveScreenOff = "Activo (al bloquear)",
+    autoWorkerOn = "¡Activado! El fondo cambiará según el intervalo configurado.",
+    autoWorkerOff = "Cambio automático desactivado.",
+    colorPickerTitle = "Seleccionar color"
 )
 
 val itStrings = AppStrings(
@@ -390,10 +464,26 @@ val itStrings = AppStrings(
     batteryWarningDesc = "Affinché il cambio automatico dello sfondo funzioni in modo affidabile, disabilita l'ottimizzazione della batteria per questa app.",
     batteryWarningButton = "Disabilita Ottimizzazione",
     customVerseTitle = "Testo Personalizzato",
-
     customVerseHint = "Testo del versetto...",
     customRefHint = "Coordinate (es. Giovanni 3:16)",
-    applyCustom = "Applica"
+    applyCustom = "Applica",
+    autoWallpaper = "Cambio automatico sfondo",
+    autoWallpaperIntervalLabel = "Intervallo di cambio",
+    autoWallpaperEvery1h = "Ogni ora",
+    autoWallpaperEvery2h = "Ogni 2 ore",
+    autoWallpaperEvery3h = "Ogni 3 ore",
+    autoWallpaperEvery6h = "Ogni 6 ore",
+    autoWallpaperEvery12h = "Ogni 12 ore",
+    autoWallpaperEvery24h = "Ogni 24 ore (giornaliero)",
+    autoWallpaperOnScreenOff = "Allo spegnimento schermo",
+    autoWallpaperOnScreenOffDesc = "Il versetto cambia ogni volta che blocchi il telefono",
+    autoWallpaperTimeLabel = "Orario cambio giornaliero",
+    autoWallpaperActiveHourly = "Attivo (ogni %sh)",
+    autoWallpaperActiveDaily = "Attivo (giornaliero alle %s:00)",
+    autoWallpaperActiveScreenOff = "Attivo (al blocco)",
+    autoWorkerOn = "Attivato! Lo sfondo cambierà in base all'intervallo impostato.",
+    autoWorkerOff = "Cambio automatico disattivato.",
+    colorPickerTitle = "Seleziona colore"
 )
 
 val frStrings = AppStrings(
@@ -452,7 +542,24 @@ val frStrings = AppStrings(
     customVerseTitle = "Texte Personnalisé",
     customVerseHint = "Texte du verset...",
     customRefHint = "Coordonnées (ex. Jean 3:16)",
-    applyCustom = "Appliquer"
+    applyCustom = "Appliquer",
+    autoWallpaper = "Changement automatique du fond",
+    autoWallpaperIntervalLabel = "Intervalle de changement",
+    autoWallpaperEvery1h = "Chaque heure",
+    autoWallpaperEvery2h = "Toutes les 2 heures",
+    autoWallpaperEvery3h = "Toutes les 3 heures",
+    autoWallpaperEvery6h = "Toutes les 6 heures",
+    autoWallpaperEvery12h = "Toutes les 12 heures",
+    autoWallpaperEvery24h = "Toutes les 24 heures (quotidien)",
+    autoWallpaperOnScreenOff = "À l'extinction de l'écran",
+    autoWallpaperOnScreenOffDesc = "Le verset change à chaque verrouillage du téléphone",
+    autoWallpaperTimeLabel = "Heure du changement quotidien",
+    autoWallpaperActiveHourly = "Actif (toutes les %sh)",
+    autoWallpaperActiveDaily = "Actif (quotidien à %s:00)",
+    autoWallpaperActiveScreenOff = "Actif (au verrouillage)",
+    autoWorkerOn = "Activé ! Le fond changera selon l'intervalle configuré.",
+    autoWorkerOff = "Changement automatique désactivé.",
+    colorPickerTitle = "Choisir une couleur"
 )
 
 val deStrings = AppStrings(
@@ -511,7 +618,24 @@ val deStrings = AppStrings(
     customVerseTitle = "Eigener Text",
     customVerseHint = "Verstext...",
     customRefHint = "Koordinaten (z.B. Johannes 3:16)",
-    applyCustom = "Anwenden"
+    applyCustom = "Anwenden",
+    autoWallpaper = "Automatischer Hintergrundwechsel",
+    autoWallpaperIntervalLabel = "Wechselintervall",
+    autoWallpaperEvery1h = "Jede Stunde",
+    autoWallpaperEvery2h = "Alle 2 Stunden",
+    autoWallpaperEvery3h = "Alle 3 Stunden",
+    autoWallpaperEvery6h = "Alle 6 Stunden",
+    autoWallpaperEvery12h = "Alle 12 Stunden",
+    autoWallpaperEvery24h = "Alle 24 Stunden (täglich)",
+    autoWallpaperOnScreenOff = "Beim Ausschalten des Bildschirms",
+    autoWallpaperOnScreenOffDesc = "Der Vers ändert sich bei jeder Sperrung",
+    autoWallpaperTimeLabel = "Uhrzeit des täglichen Wechsels",
+    autoWallpaperActiveHourly = "Aktiv (alle %sh)",
+    autoWallpaperActiveDaily = "Aktiv (täglich um %s:00)",
+    autoWallpaperActiveScreenOff = "Aktiv (bei Sperrung)",
+    autoWorkerOn = "Aktiviert! Das Hintergrundbild wechselt nach dem eingestellten Intervall.",
+    autoWorkerOff = "Automatischer Wechsel deaktiviert.",
+    colorPickerTitle = "Farbe auswählen"
 )
 
 val huStrings = AppStrings(
@@ -571,7 +695,24 @@ val huStrings = AppStrings(
     customVerseTitle = "Egyéni szöveg",
     customVerseHint = "Ige szövege...",
     customRefHint = "Koordináták (pl. János 3:16)",
-    applyCustom = "Alkalmaz"
+    applyCustom = "Alkalmaz",
+    autoWallpaper = "Automatikus háttérkép-csere",
+    autoWallpaperIntervalLabel = "Csere időköze",
+    autoWallpaperEvery1h = "Minden órában",
+    autoWallpaperEvery2h = "Minden 2 órában",
+    autoWallpaperEvery3h = "Minden 3 órában",
+    autoWallpaperEvery6h = "Minden 6 órában",
+    autoWallpaperEvery12h = "Minden 12 órában",
+    autoWallpaperEvery24h = "Minden 24 órában (naponta)",
+    autoWallpaperOnScreenOff = "Képernyő kikapcsolásakor",
+    autoWallpaperOnScreenOffDesc = "Az ige minden zárolásnál változik",
+    autoWallpaperTimeLabel = "Napi csere időpontja",
+    autoWallpaperActiveHourly = "Aktív (minden %sh)",
+    autoWallpaperActiveDaily = "Aktív (naponta %s:00-kor)",
+    autoWallpaperActiveScreenOff = "Aktív (zárolásnál)",
+    autoWorkerOn = "Bekapcsolva! A háttérkép a beállított időközönként változik.",
+    autoWorkerOff = "Automatikus csere kikapcsolva.",
+    colorPickerTitle = "Szín kiválasztása"
 )
 
 val plStrings = AppStrings(
@@ -631,7 +772,24 @@ val plStrings = AppStrings(
     customVerseTitle = "Własny tekst",
     customVerseHint = "Tekst wersetu...",
     customRefHint = "Współrzędne (np. Jan 3:16)",
-    applyCustom = "Zastosuj"
+    applyCustom = "Zastosuj",
+    autoWallpaper = "Automatyczna zmiana tapety",
+    autoWallpaperIntervalLabel = "Interwał zmiany",
+    autoWallpaperEvery1h = "Co godzinę",
+    autoWallpaperEvery2h = "Co 2 godziny",
+    autoWallpaperEvery3h = "Co 3 godziny",
+    autoWallpaperEvery6h = "Co 6 godzin",
+    autoWallpaperEvery12h = "Co 12 godzin",
+    autoWallpaperEvery24h = "Co 24 godziny (codziennie)",
+    autoWallpaperOnScreenOff = "Po wyłączeniu ekranu",
+    autoWallpaperOnScreenOffDesc = "Werset zmienia się przy każdym zablokowaniu telefonu",
+    autoWallpaperTimeLabel = "Czas codziennej zmiany",
+    autoWallpaperActiveHourly = "Aktywne (co %sh)",
+    autoWallpaperActiveDaily = "Aktywne (codziennie o %s:00)",
+    autoWallpaperActiveScreenOff = "Aktywne (przy blokowaniu)",
+    autoWorkerOn = "Włączone! Tapeta zmieni się zgodnie z ustawionym interwałem.",
+    autoWorkerOff = "Automatyczna zmiana wyłączona.",
+    colorPickerTitle = "Wybierz kolor"
 )
 
 // Helper function to dynamically select system language or fallback to EN
@@ -667,8 +825,14 @@ data class AppNotification(
 )
 
 class MainActivity : ComponentActivity() {
+    private lateinit var screenOffReceiver: ScreenOffReceiver
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Register screen-off receiver dynamically (required for ACTION_SCREEN_OFF on API 26+)
+        screenOffReceiver = ScreenOffReceiver()
+        registerReceiver(screenOffReceiver, IntentFilter(Intent.ACTION_SCREEN_OFF))
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
@@ -682,7 +846,7 @@ class MainActivity : ComponentActivity() {
 
 
             var themeMode by remember { mutableIntStateOf(prefs.getInt("theme_mode", 0)) } // 0=System, 1=Light, 2=Dark
-            var useDynamicColor by remember { mutableStateOf(prefs.getBoolean("use_dynamic_color", true)) }
+            var useDynamicColor by remember { mutableStateOf(prefs.getBoolean("use_dynamic_color", false)) }
 
             val darkTheme = when (themeMode) {
                 1 -> false
@@ -709,6 +873,11 @@ class MainActivity : ComponentActivity() {
                 )
             }
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        try { unregisterReceiver(screenOffReceiver) } catch (e: Exception) { /* already unregistered */ }
     }
 }
 
@@ -742,6 +911,14 @@ fun MainScreen(
 
     // --- STATES ---
     var hasSeenEditHint by remember { mutableStateOf(prefs.getBoolean("has_seen_edit_hint", false)) }
+    var hasSeenSwipeHint by remember { mutableStateOf(prefs.getBoolean("has_seen_swipe_hint", false)) }
+
+    LaunchedEffect(scrollState.value) {
+        if (scrollState.value > 20 && !hasSeenSwipeHint) {
+            hasSeenSwipeHint = true
+            prefs.edit().putBoolean("has_seen_swipe_hint", true).apply()
+        }
+    }
     var dailyHour by remember { mutableIntStateOf(prefs.getInt("daily_hour", 6)) }
     var generationStatus by remember { mutableStateOf("idle") }
 
@@ -775,7 +952,9 @@ fun MainScreen(
     // Edit Mode a Settings
     var isEditing by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
-    var isDailyActive by remember { mutableStateOf(false) }
+    var isDailyActive by remember { mutableStateOf(prefs.getBoolean("auto_wallpaper_active", false)) }
+    var autoIntervalHours by remember { mutableIntStateOf(prefs.getInt("auto_interval_hours", 24)) }
+    var changeOnScreenOff by remember { mutableStateOf(prefs.getBoolean("change_on_screen_off", false)) }
 
     // Custom Haptic Helper
     val performHaptic = { type: HapticFeedbackType ->
@@ -803,7 +982,7 @@ fun MainScreen(
             versePair = Pair(savedCustomVerse, savedCustomRef ?: "")
         } else {
             scope.launch {
-                versePair = LocalBibleProvider.getVerse(context, verseLang)
+                versePair = LocalBibleProvider.getVerseForInterval(context, verseLang, autoIntervalHours)
             }
         }
 
@@ -836,14 +1015,6 @@ fun MainScreen(
     LaunchedEffect(Unit) {
         // Initial setup and background worker observer check
         reloadPreviewData()
-
-        WorkManager.getInstance(context)
-            .getWorkInfosForUniqueWorkLiveData("DailyBibleWallpaper")
-            .observeForever { infos ->
-                isDailyActive = infos?.any {
-                    it.state == WorkInfo.State.ENQUEUED || it.state == WorkInfo.State.RUNNING
-                } ?: false
-            }
     }
 
     // --- SAVE & ACTIONS ---
@@ -863,23 +1034,23 @@ fun MainScreen(
             .apply()
     }
 
-    fun toggleDailyWorker(enable: Boolean) {
+    fun toggleAutoWorker(enable: Boolean) {
         performHaptic(HapticFeedbackType.LongPress)
         saveSettings()
         isDailyActive = enable
+        // Save master active state so ScreenOffReceiver can check it
+        prefs.edit().putBoolean("auto_wallpaper_active", enable).apply()
 
         if (enable) {
             prefs.edit().putBoolean("use_custom_verse", false).apply()
-            versePair = LocalBibleProvider.getVerse(context, verseLang)
-
-            scheduleDailyWallpaper(context, dailyHour)
-            showNotification(
-                String.format(strings.dailyWorkerOn, String.format("%02d", dailyHour)),
-                NotificationType.SUCCESS
-            )
+            versePair = LocalBibleProvider.getVerseForInterval(context, verseLang, autoIntervalHours)
+            if (!changeOnScreenOff) {
+                scheduleAutoWallpaper(context, autoIntervalHours, dailyHour)
+            }
+            showNotification(strings.autoWorkerOn, NotificationType.SUCCESS)
         } else {
             WorkManager.getInstance(context).cancelUniqueWork("DailyBibleWallpaper")
-            showNotification(strings.dailyWorkerOff, NotificationType.INFO)
+            showNotification(strings.autoWorkerOff, NotificationType.INFO)
         }
     }
 
@@ -1042,27 +1213,54 @@ fun MainScreen(
                         .padding(top = 8.dp, bottom = 0.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    // Pill drag handle
+                    // Pill drag handle — bounces while user hasn't scrolled yet
+                    val showSwipeHint = imageUri != null && !hasSeenSwipeHint && !isEditing
+                    val infiniteTransition = rememberInfiniteTransition(label = "pill_bounce")
+                    val pillOffsetY by infiniteTransition.animateFloat(
+                        initialValue = 0f,
+                        targetValue = if (showSwipeHint) -8f else 0f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(600, easing = FastOutSlowInEasing),
+                            repeatMode = RepeatMode.Reverse
+                        ),
+                        label = "pillOffsetY"
+                    )
+                    val pillWidth by infiniteTransition.animateFloat(
+                        initialValue = 40f,
+                        targetValue = if (showSwipeHint) 56f else 40f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(600, easing = FastOutSlowInEasing),
+                            repeatMode = RepeatMode.Reverse
+                        ),
+                        label = "pillWidth"
+                    )
+                    val pillAlpha by infiniteTransition.animateFloat(
+                        initialValue = 0.12f,
+                        targetValue = if (showSwipeHint) 0.5f else 0.12f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(600, easing = FastOutSlowInEasing),
+                            repeatMode = RepeatMode.Reverse
+                        ),
+                        label = "pillAlpha"
+                    )
                     Box(
                         modifier = Modifier
                             .padding(vertical = 8.dp)
                             .align(Alignment.CenterHorizontally)
-                            .width(40.dp)
+                            .width(pillWidth.dp)
                             .height(4.dp)
+                            .offset(y = pillOffsetY.dp)
                             .background(
-                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f),
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = pillAlpha),
                                 RoundedCornerShape(2.dp)
                             )
                     )
 
-                    // HLAVNÝ PREPÍNAČ (SWITCH)
+                    // AUTOMATIC WALLPAPER CHANGE — MAIN TOGGLE CARD
                     Card(
                         shape = RoundedCornerShape(24.dp),
                         colors = CardDefaults.cardColors(
-                            containerColor = if (isDailyActive)
-                                MaterialTheme.colorScheme.surfaceVariant //keby chcem zmenit neskor
-                            else
-                                MaterialTheme.colorScheme.surfaceVariant
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
                         ),
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -1071,54 +1269,305 @@ fun MainScreen(
                                 .fillMaxWidth()
                                 .padding(horizontal = 20.dp, vertical = 16.dp),
                             verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            horizontalArrangement = Arrangement.spacedBy(14.dp)
                         ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier.weight(1f),
-                                horizontalArrangement = Arrangement.spacedBy(14.dp)
-                            ) {
-                                Box(
-                                    modifier = Modifier
-                                        .size(46.dp)
-                                        .background(
-                                            color = if (isDailyActive) MaterialTheme.colorScheme.primary
-                                            else MaterialTheme.colorScheme.outline.copy(alpha = 0.25f),
-                                            shape = RoundedCornerShape(14.dp)
-                                        ),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        Icons.Default.Schedule,
-                                        contentDescription = null,
-                                        tint = if (isDailyActive) MaterialTheme.colorScheme.onPrimary
-                                        else MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(22.dp)
-                                    )
-                                }
-                                Column {
-                                    Text(
-                                        text = strings.dailyWallpaper,
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                    Text(
-                                        text = if (isDailyActive) {
-                                            val formattedHour = String.format("%02d", dailyHour)
-                                            String.format(strings.active, formattedHour)
-                                        } else {
-                                            strings.inactive
-                                        },
-                                        style = MaterialTheme.typography.bodySmall,
+                            // Icon badge
+                            Box(
+                                modifier = Modifier
+                                    .size(46.dp)
+                                    .background(
                                         color = if (isDailyActive) MaterialTheme.colorScheme.primary
-                                        else MaterialTheme.colorScheme.outline
-                                    )
-                                }
+                                        else MaterialTheme.colorScheme.outline.copy(alpha = 0.25f),
+                                        shape = RoundedCornerShape(14.dp)
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    Icons.Default.Schedule,
+                                    contentDescription = null,
+                                    tint = if (isDailyActive) MaterialTheme.colorScheme.onPrimary
+                                    else MaterialTheme.colorScheme.onSurfaceVariant,
+                                    modifier = Modifier.size(22.dp)
+                                )
+                            }
+                            // Title + subtitle — weight(1f) so Switch is never overlapped
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = strings.autoWallpaper,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    text = if (isDailyActive) {
+                                        when {
+                                            changeOnScreenOff -> strings.autoWallpaperActiveScreenOff
+                                            autoIntervalHours < 24 -> String.format(strings.autoWallpaperActiveHourly, autoIntervalHours)
+                                            else -> String.format(strings.autoWallpaperActiveDaily, String.format("%02d", dailyHour))
+                                        }
+                                    } else {
+                                        strings.inactive
+                                    },
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = if (isDailyActive) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.outline,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
                             }
                             Switch(
                                 checked = isDailyActive,
-                                onCheckedChange = { toggleDailyWorker(it) }
+                                onCheckedChange = { toggleAutoWorker(it) }
                             )
+                        }
+                    }
+
+                    // AUTO WALLPAPER SUB-MENU (visible only when toggle is on)
+                    AnimatedVisibility(
+                        visible = isDailyActive,
+                        enter = expandVertically(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow)) + fadeIn(tween(280)),
+                        exit = shrinkVertically(animationSpec = tween(220, easing = FastOutSlowInEasing)) + fadeOut(tween(220))
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+
+                            // ── INTERVAL ROW ─────────────────────────────────
+                            Card(
+                                shape = RoundedCornerShape(20.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = if (changeOnScreenOff)
+                                        MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                                    else
+                                        MaterialTheme.colorScheme.surfaceVariant
+                                ),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
+
+                                    // Header: label on left, current value pill on right
+                                    val intervalLabel = when (autoIntervalHours) {
+                                        1 -> strings.autoWallpaperEvery1h
+                                        2 -> strings.autoWallpaperEvery2h
+                                        3 -> strings.autoWallpaperEvery3h
+                                        6 -> strings.autoWallpaperEvery6h
+                                        12 -> strings.autoWallpaperEvery12h
+                                        else -> strings.autoWallpaperEvery24h
+                                    }
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Text(
+                                            text = strings.autoWallpaperIntervalLabel,
+                                            style = MaterialTheme.typography.titleSmall,
+                                            fontWeight = FontWeight.SemiBold,
+                                            color = if (changeOnScreenOff) MaterialTheme.colorScheme.onSurfaceVariant
+                                            else MaterialTheme.colorScheme.onSurface
+                                        )
+                                        // Pill badge showing selected value
+                                        Box(
+                                            modifier = Modifier
+                                                .background(
+                                                    color = if (changeOnScreenOff)
+                                                        MaterialTheme.colorScheme.outline.copy(alpha = 0.15f)
+                                                    else
+                                                        MaterialTheme.colorScheme.primaryContainer,
+                                                    shape = RoundedCornerShape(20.dp)
+                                                )
+                                                .padding(horizontal = 12.dp, vertical = 4.dp)
+                                        ) {
+                                            Text(
+                                                text = intervalLabel,
+                                                style = MaterialTheme.typography.labelMedium,
+                                                fontWeight = FontWeight.Bold,
+                                                color = if (changeOnScreenOff)
+                                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                                else
+                                                    MaterialTheme.colorScheme.onPrimaryContainer
+                                            )
+                                        }
+                                    }
+
+                                    Spacer(Modifier.height(12.dp))
+
+                                    // Slider snapping to: 1 2 3 6 12 24
+                                    val intervalSteps = listOf(1, 2, 3, 6, 12, 24)
+                                    val sliderIndex = intervalSteps.indexOf(autoIntervalHours).coerceAtLeast(0).toFloat()
+                                    Slider(
+                                        value = sliderIndex,
+                                        onValueChange = { raw ->
+                                            val idx = raw.roundToInt().coerceIn(0, intervalSteps.lastIndex)
+                                            val hours = intervalSteps[idx]
+                                            if (hours != autoIntervalHours) {
+                                                autoIntervalHours = hours
+                                                prefs.edit().putInt("auto_interval_hours", hours).apply()
+                                                performHaptic(HapticFeedbackType.TextHandleMove)
+                                                reloadPreviewData()
+                                                if (isDailyActive && !changeOnScreenOff) {
+                                                    scheduleAutoWallpaper(context, hours, dailyHour)
+                                                }
+                                            }
+                                        },
+                                        valueRange = 0f..(intervalSteps.lastIndex.toFloat()),
+                                        steps = intervalSteps.lastIndex - 1,
+                                        enabled = !changeOnScreenOff,
+                                        colors = SliderDefaults.colors(
+                                            thumbColor = MaterialTheme.colorScheme.primary,
+                                            activeTrackColor = MaterialTheme.colorScheme.primary,
+                                            inactiveTrackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.25f),
+                                            disabledThumbColor = MaterialTheme.colorScheme.outline,
+                                            disabledActiveTrackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+                                        ),
+                                        modifier = Modifier.fillMaxWidth()
+                                    )
+
+                                    // Tick labels below slider
+                                    Row(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 4.dp),
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        intervalSteps.forEach { h ->
+                                            Text(
+                                                text = if (h < 24) "${h}h" else "24h",
+                                                style = MaterialTheme.typography.labelSmall,
+                                                color = if (!changeOnScreenOff && autoIntervalHours == h)
+                                                    MaterialTheme.colorScheme.primary
+                                                else
+                                                    MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = if (changeOnScreenOff) 0.4f else 0.7f),
+                                                fontWeight = if (!changeOnScreenOff && autoIntervalHours == h) FontWeight.Bold else FontWeight.Normal,
+                                                textAlign = TextAlign.Center
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            // ── TIME OF DAY ROW (only for 24 h, non screen-off) ──
+                            AnimatedVisibility(
+                                visible = autoIntervalHours == 24 && !changeOnScreenOff,
+                                enter = expandVertically(spring(dampingRatio = Spring.DampingRatioMediumBouncy)) + fadeIn(tween(200)),
+                                exit = shrinkVertically(tween(180)) + fadeOut(tween(180))
+                            ) {
+                                Card(
+                                    shape = RoundedCornerShape(20.dp),
+                                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.SpaceBetween
+                                        ) {
+                                            Text(
+                                                text = strings.autoWallpaperTimeLabel,
+                                                style = MaterialTheme.typography.titleSmall,
+                                                fontWeight = FontWeight.SemiBold
+                                            )
+                                            Box(
+                                                modifier = Modifier
+                                                    .background(
+                                                        MaterialTheme.colorScheme.primaryContainer,
+                                                        RoundedCornerShape(20.dp)
+                                                    )
+                                                    .padding(horizontal = 12.dp, vertical = 4.dp)
+                                            ) {
+                                                Text(
+                                                    text = String.format("%02d:00", dailyHour),
+                                                    style = MaterialTheme.typography.labelMedium,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                                )
+                                            }
+                                        }
+                                        Spacer(Modifier.height(12.dp))
+                                        Slider(
+                                            value = dailyHour.toFloat(),
+                                            onValueChange = {
+                                                dailyHour = it.roundToInt()
+                                                performHaptic(HapticFeedbackType.TextHandleMove)
+                                            },
+                                            valueRange = 0f..23f,
+                                            steps = 22,
+                                            colors = SliderDefaults.colors(
+                                                thumbColor = MaterialTheme.colorScheme.primary,
+                                                activeTrackColor = MaterialTheme.colorScheme.primary,
+                                                inactiveTrackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.25f)
+                                            ),
+                                            modifier = Modifier.fillMaxWidth()
+                                        )
+                                        LaunchedEffect(dailyHour) {
+                                            prefs.edit().putInt("daily_hour", dailyHour).apply()
+                                            if (isDailyActive && autoIntervalHours == 24 && !changeOnScreenOff) {
+                                                scheduleDailyWallpaper(context, dailyHour)
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // ── ON SCREEN OFF ROW ────────────────────────────
+                            Card(
+                                shape = RoundedCornerShape(20.dp),
+                                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 20.dp, vertical = 14.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(14.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(40.dp)
+                                            .background(
+                                                color = if (changeOnScreenOff) MaterialTheme.colorScheme.primary
+                                                else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                                                shape = RoundedCornerShape(12.dp)
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            Icons.Outlined.TouchApp,
+                                            contentDescription = null,
+                                            tint = if (changeOnScreenOff) MaterialTheme.colorScheme.onPrimary
+                                            else MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+                                    Column(modifier = Modifier.weight(1f)) {
+                                        Text(
+                                            text = strings.autoWallpaperOnScreenOff,
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            fontWeight = FontWeight.SemiBold
+                                        )
+                                        Text(
+                                            text = strings.autoWallpaperOnScreenOffDesc,
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            maxLines = 2
+                                        )
+                                    }
+                                    Switch(
+                                        checked = changeOnScreenOff,
+                                        onCheckedChange = { enabled ->
+                                            changeOnScreenOff = enabled
+                                            prefs.edit().putBoolean("change_on_screen_off", enabled).apply()
+                                            performHaptic(HapticFeedbackType.LongPress)
+                                            if (isDailyActive) {
+                                                if (enabled) {
+                                                    WorkManager.getInstance(context).cancelUniqueWork("DailyBibleWallpaper")
+                                                } else {
+                                                    scheduleAutoWallpaper(context, autoIntervalHours, dailyHour)
+                                                }
+                                            }
+                                        }
+                                    )
+                                }
+                            }
                         }
                     }
 
@@ -1268,7 +1717,7 @@ fun MainScreen(
                         }
 
                         // Farba textu
-                        ColorPickerRow(selectedColor = textColor) {
+                        ColorPickerRow(selectedColor = textColor, strings = strings) {
                             textColor = it; performHaptic(HapticFeedbackType.TextHandleMove);
                             saveSettings()
                         }
@@ -1530,7 +1979,7 @@ fun MainScreen(
                                     prefs.edit().putString("verse_lang", it).apply()
                                     versePair = null
                                     scope.launch {
-                                        versePair = LocalBibleProvider.getVerse(context, it)
+                                        versePair = LocalBibleProvider.getVerseForInterval(context, it, autoIntervalHours)
                                     }
                                 }
                             }
@@ -1607,54 +2056,6 @@ fun MainScreen(
                                     if (it) sysHaptic.performHapticFeedback(HapticFeedbackType.LongPress)
                                 }
                             )
-                        }
-                    }
-
-                    Spacer(Modifier.height(24.dp))
-
-                    // --- DAILY WALLPAPER SECTION ---
-                    SettingsSectionHeader(
-                        icon = Icons.Default.Schedule,
-                        title = strings.dailyWallpaper
-                    )
-                    SettingsCard {
-                        Text(
-                            text = if (isDailyActive) {
-                                val formattedHour = String.format("%02d", dailyHour)
-                                String.format(strings.active, formattedHour)
-                            } else {
-                                strings.inactive
-                            },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = if (isDailyActive) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Spacer(Modifier.height(8.dp))
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Slider(
-                                value = dailyHour.toFloat(),
-                                onValueChange = {
-                                    dailyHour = it.roundToInt()
-                                    if (useHaptics) performHaptic(HapticFeedbackType.TextHandleMove)
-                                },
-                                valueRange = 0f..23f,
-                                steps = 22,
-                                modifier = Modifier.weight(1f)
-                            )
-                            Text(
-                                text = String.format("%02d:00", dailyHour),
-                                modifier = Modifier.padding(start = 12.dp),
-                                style = MaterialTheme.typography.bodyLarge,
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
-                        LaunchedEffect(dailyHour) {
-                            prefs.edit().putInt("daily_hour", dailyHour).apply()
-                            if (isDailyActive) {
-                                scheduleDailyWallpaper(context, dailyHour)
-                            }
                         }
                     }
 
@@ -2647,7 +3048,7 @@ fun getComposeFontWeight(fontFamilyStr: String, isBold: Boolean): FontWeight {
 }
 
 @Composable
-fun ColorPickerRow(selectedColor: Int, onColorSelected: (Int) -> Unit) {
+fun ColorPickerRow(selectedColor: Int, strings: AppStrings, onColorSelected: (Int) -> Unit) {
     var showDialog by remember { mutableStateOf(false) }
     val controller = rememberColorPickerController()
 
@@ -2663,7 +3064,7 @@ fun ColorPickerRow(selectedColor: Int, onColorSelected: (Int) -> Unit) {
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
-            title = { Text("Vyberte farbu") },
+            title = { Text(strings.colorPickerTitle) },
             text = {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     HsvColorPicker(
@@ -2686,12 +3087,12 @@ fun ColorPickerRow(selectedColor: Int, onColorSelected: (Int) -> Unit) {
                     onColorSelected(controller.selectedColor.value.toArgb())
                     showDialog = false
                 }) {
-                    Text("OK")
+                    Text(strings.done)
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDialog = false }) {
-                    Text("Zrušiť")
+                    Text(strings.cancel)
                 }
             }
         )
@@ -2845,16 +3246,52 @@ fun scheduleDailyWallpaper(context: Context, hour: Int) {
 
     workManager.enqueueUniquePeriodicWork(
         "DailyBibleWallpaper",
-        ExistingPeriodicWorkPolicy.REPLACE, // Restarts timer with new hour
+        ExistingPeriodicWorkPolicy.REPLACE,
         dailyWorkRequest
     )
 }
 
-// Helper to keep your existing toggle code working
+/**
+ * Schedules the wallpaper worker based on interval.
+ * For 24h, aligns to the user-chosen time-of-day (cross-device sync via UTC epoch slot).
+ * For shorter intervals, uses the interval directly — all devices on same slot because
+ * epoch_hours / intervalHours gives the same slot number worldwide at the same UTC time.
+ */
+fun scheduleAutoWallpaper(context: Context, intervalHours: Int, dailyHour: Int) {
+    val workManager = WorkManager.getInstance(context)
+
+    if (intervalHours == 24) {
+        scheduleDailyWallpaper(context, dailyHour)
+        return
+    }
+
+    // For sub-day intervals: align initial delay to the next slot boundary
+    // so all devices with the same interval are in sync (e.g. every 6h → 0,6,12,18 UTC)
+    val nowEpochHours = System.currentTimeMillis() / (1000L * 60 * 60)
+    val nextSlot = (nowEpochHours / intervalHours + 1) * intervalHours
+    val nextSlotMs = nextSlot * 60L * 60L * 1000L
+    val initialDelayMs = nextSlotMs - System.currentTimeMillis()
+
+    val workRequest = PeriodicWorkRequestBuilder<DailyVerseWorker>(intervalHours.toLong(), TimeUnit.HOURS)
+        .setInitialDelay(initialDelayMs, TimeUnit.MILLISECONDS)
+        .setConstraints(Constraints.Builder()
+            .setRequiredNetworkType(NetworkType.NOT_REQUIRED)
+            .build())
+        .build()
+
+    workManager.enqueueUniquePeriodicWork(
+        "DailyBibleWallpaper",
+        ExistingPeriodicWorkPolicy.REPLACE,
+        workRequest
+    )
+}
+
+// Helper to keep boot receiver / legacy code working
 fun scheduleWorker(context: Context) {
     val prefs = context.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
     val savedHour = prefs.getInt("daily_hour", 6)
-    scheduleDailyWallpaper(context, savedHour)
+    val intervalHours = prefs.getInt("auto_interval_hours", 24)
+    scheduleAutoWallpaper(context, intervalHours, savedHour)
 }
 
 fun runOneTimeWorker(context: Context) {

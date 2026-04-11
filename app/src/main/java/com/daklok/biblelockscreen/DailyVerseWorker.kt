@@ -46,7 +46,13 @@ class DailyVerseWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
         } else {
             val defaultLang = LocalBibleProvider.getDefaultLanguage()
             val verseLang = prefs.getString("verse_lang", defaultLang) ?: defaultLang
-            LocalBibleProvider.getVerse(applicationContext, verseLang)
+            val changeOnScreenOff = prefs.getBoolean("change_on_screen_off", false)
+            if (changeOnScreenOff) {
+                LocalBibleProvider.getVerseForScreenOff(applicationContext, verseLang)
+            } else {
+                val intervalHours = prefs.getInt("auto_interval_hours", 24)
+                LocalBibleProvider.getVerseForInterval(applicationContext, verseLang, intervalHours)
+            }
         }
 
         val finalBitmap = WallpaperUtils.createBitmapWithText(

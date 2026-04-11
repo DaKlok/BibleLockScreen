@@ -43,4 +43,67 @@ object LocalBibleProvider {
             Pair("Error loading verse", "")
         }
     }
+
+    /**
+     * Returns a verse synced across all devices by dividing the UTC epoch hours
+     * by the interval. Every device in the same UTC slot gets the same verse index.
+     * For 24h intervals this is equivalent to the daily verse (same slot all day).
+     */
+    fun getVerseForInterval(context: Context, lang: String, intervalHours: Int): Pair<String, String> {
+        return try {
+            val jsonString = context.assets
+                .open("verses_$lang.json")
+                .bufferedReader()
+                .use { it.readText() }
+
+            val verses = Gson().fromJson(jsonString, Array<Verse>::class.java)
+
+            if (verses.isNullOrEmpty()) {
+                return Pair("No verses found", "")
+            }
+
+            val index = if (intervalHours >= 24) {
+                // 📅 DAY-BASED (stable per calendar day)
+                val dayOfYear = Calendar.getInstance().get(Calendar.DAY_OF_YEAR)
+                (dayOfYear - 1) % verses.size
+            } else {
+                // ⏱️ HOUR-BASED (stable time slots)
+                val epochHours = System.currentTimeMillis() / (1000L * 60 * 60)
+                val slot = epochHours / intervalHours
+                (slot % verses.size).toInt()
+            }
+
+            val selected = verses[index]
+            Pair(selected.text, selected.ref)
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Pair("Error loading verse", "")
+        }
+    }
+
+    /**
+     * Returns the verse for screen-off mode using a simple incrementing counter
+     * stored in SharedPreferences. Each screen-off event advances the counter by 1,
+     * so every lock shows a new verse regardless of time elapsed.
+     */
+    fun getVerseForScreenOff(context: Context, lang: String): Pair<String, String> {
+        return try {
+            val prefs = context.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
+            val index = prefs.getInt("screen_off_verse_index", 0)
+
+            val jsonString = context.assets.open("verses_$lang.json").bufferedReader().use { it.readText() }
+            val verses = Gson().fromJson(jsonString, Array<Verse>::class.java)
+
+            if (verses.isNullOrEmpty()) {
+                Pair("No verses found", "")
+            } else {
+                val selected = verses[index % verses.size]
+                Pair(selected.text, selected.ref)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Pair("Error loading verse", "")
+        }
+    }
 }
