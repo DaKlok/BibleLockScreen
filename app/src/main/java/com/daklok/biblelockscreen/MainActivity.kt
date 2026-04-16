@@ -76,10 +76,9 @@ import androidx.core.content.ContextCompat
 import androidx.work.*
 import coil.compose.rememberAsyncImagePainter
 import coil.memory.MemoryCache
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.drawscope.DrawScope
 import com.daklok.biblelockscreen.ui.theme.BibleLockScreenTheme
-import com.github.skydoves.colorpicker.compose.BrightnessSlider
-import com.github.skydoves.colorpicker.compose.HsvColorPicker
-import com.github.skydoves.colorpicker.compose.rememberColorPickerController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -87,6 +86,11 @@ import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.TimeUnit
 import kotlin.math.roundToInt
+import kotlin.math.atan2
+import kotlin.math.cos
+import kotlin.math.min
+import kotlin.math.sin
+import kotlin.math.sqrt
 
 // --- TRANSLATIONS ---
 data class AppStrings(
@@ -1717,9 +1721,13 @@ fun MainScreen(
                         }
 
                         // Farba textu
-                        ColorPickerRow(selectedColor = textColor, strings = strings) {
-                            textColor = it; performHaptic(HapticFeedbackType.TextHandleMove);
+                        ColorPickerRow(selectedColor = textColor, strings = strings) { newColor ->
+                            textColor = newColor
+                            performHaptic(HapticFeedbackType.TextHandleMove)
                             saveSettings()
+                            if (imageUri != null) {
+                                runOneTimeWorker(context)
+                            }
                         }
 
                         // Písmo (Font)
@@ -3047,64 +3055,312 @@ fun getComposeFontWeight(fontFamilyStr: String, isBold: Boolean): FontWeight {
     }
 }
 
+// ── Color picker helpers ──────────────────────────────────────────────────────
+
+private fun hsvToComposeColor(hue: Float, sat: Float, value: Float): Color {
+    val f = { n: Float ->
+        val k = (n + hue / 60f) % 6f
+        value - value * sat * maxOf(0f, minOf(k, 4f - k, 1f))
+    }
+    return Color(f(5f), f(3f), f(1f))
+}
+
+private fun composeColorToHsv(color: Color): Triple<Float, Float, Float> {
+    val r = color.red; val g = color.green; val b = color.blue
+    val max = maxOf(r, g, b); val mn = minOf(r, g, b); val d = max - mn
+    val h = when {
+        d == 0f  -> 0f
+        max == r -> 60f * (((g - b) / d + 6f) % 6f)
+        max == g -> 60f * ((b - r) / d + 2f)
+        else     -> 60f * ((r - g) / d + 4f)
+    }
+    return Triple(h, if (max == 0f) 0f else d / max, max)
+}
+
+private fun Color.toHexStr(): String = String.format("%06X", toArgb() and 0xFFFFFF)
+
+private fun hexStrToColor(hex: String): Color? {
+    if (hex.length != 6) return null
+    return try {
+        val v = hex.toLong(16)
+        Color(((v shr 16) and 0xFF) / 255f, ((v shr 8) and 0xFF) / 255f, (v and 0xFF) / 255f)
+    } catch (_: NumberFormatException) { null }
+}
+
+private fun DrawScope.drawHsvWheel(value: Float) {
+    val cx = size.width / 2f; val cy = size.height / 2f; val r = min(cx, cy)
+    val rings = 28; val slices = 360
+    for (h in 0 until slices) {
+        for (ring in 0 until rings) {
+            val sat   = (ring + 0.5f) / rings
+            val outer = (ring + 1).toFloat() / rings * r
+            drawArc(
+                color      = hsvToComposeColor(h.toFloat(), sat, value),
+                startAngle = h - 0.7f,
+                sweepAngle = 1.4f,
+                useCenter  = true,
+                topLeft    = androidx.compose.ui.geometry.Offset(cx - outer, cy - outer),
+                size       = Size(outer * 2f, outer * 2f)
+            )
+        }
+    }
+}
+
+// ── ColorPickerRow ────────────────────────────────────────────────────────────
+
 @Composable
 fun ColorPickerRow(selectedColor: Int, strings: AppStrings, onColorSelected: (Int) -> Unit) {
     var showDialog by remember { mutableStateOf(false) }
-    val controller = rememberColorPickerController()
 
-    val colors = listOf(
+    val presetColors = listOf(
         AndroidColor.WHITE,
         AndroidColor.BLACK,
-        AndroidColor.parseColor("#FFFFE0"), // Light Yellow
-        AndroidColor.parseColor("#87CEEB"), // Sky Blue
-        AndroidColor.parseColor("#FFB6C1"), // Light Pink
-        AndroidColor.parseColor("#98FB98")  // Pale Green
+        AndroidColor.parseColor("#CFDEF3"), // soft blue-white
+        AndroidColor.parseColor("#FFF8E7"), // warm cream
+        AndroidColor.parseColor("#AAAAAA"), // mid gray
+        AndroidColor.parseColor("#FFB347"), // golden
     )
 
     if (showDialog) {
+        val initColor = Color(selectedColor)
+        val (initH, initS, initV) = composeColorToHsv(initColor)
+
+        var hueState   by remember { mutableStateOf(initH) }
+        var satState   by remember { mutableStateOf(initS) }
+        var valueState by remember { mutableStateOf(initV) }
+        val pickedColor by remember(hueState, satState, valueState) {
+            derivedStateOf { hsvToComposeColor(hueState, satState, valueState) }
+        }
+        var hexText by remember { mutableStateOf(initColor.toHexStr()) }
+        var rText   by remember { mutableStateOf((initColor.red   * 255).toInt().toString()) }
+        var gText   by remember { mutableStateOf((initColor.green * 255).toInt().toString()) }
+        var bText   by remember { mutableStateOf((initColor.blue  * 255).toInt().toString()) }
+
+        fun setHsv(h: Float, s: Float, v: Float) {
+            hueState = h; satState = s; valueState = v
+            val c = hsvToComposeColor(h, s, v)
+            hexText = c.toHexStr()
+            rText = (c.red * 255).toInt().toString()
+            gText = (c.green * 255).toInt().toString()
+            bText = (c.blue * 255).toInt().toString()
+        }
+
         AlertDialog(
             onDismissRequest = { showDialog = false },
             title = { Text(strings.colorPickerTitle) },
             text = {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    HsvColorPicker(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(300.dp),
-                        controller = controller
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    // Wheel + swatch row
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(14.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        // Color wheel
+                        Box(
+                            modifier = Modifier
+                                .size(150.dp)
+                                .clip(CircleShape)
+                                .pointerInput(valueState) {
+                                    val sz = size.width.toFloat(); val cx = sz / 2f; val r = sz / 2f
+                                    fun handle(pos: androidx.compose.ui.geometry.Offset) {
+                                        val dx = pos.x - cx; val dy = pos.y - cx
+                                        val dist = sqrt(dx * dx + dy * dy).coerceAtMost(r)
+                                        val h = ((atan2(dy, dx) * 180f / Math.PI.toFloat()) + 360f) % 360f
+                                        setHsv(h, dist / r, valueState)
+                                    }
+                                    detectTapGestures { handle(it) }
+                                }
+                                .pointerInput(valueState) {
+                                    val sz = size.width.toFloat(); val cx = sz / 2f; val r = sz / 2f
+                                    detectDragGestures { change, _ ->
+                                        val pos = change.position
+                                        val dx = pos.x - cx; val dy = pos.y - cx
+                                        val dist = sqrt(dx * dx + dy * dy).coerceAtMost(r)
+                                        val h = ((atan2(dy, dx) * 180f / Math.PI.toFloat()) + 360f) % 360f
+                                        setHsv(h, dist / r, valueState)
+                                    }
+                                }
+                        ) {
+                            androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
+                                drawHsvWheel(valueState)
+                                val cx2 = size.width / 2f; val cy2 = size.height / 2f
+                                val r2  = min(cx2, cy2)
+                                val ang = hueState * Math.PI.toFloat() / 180f
+                                val dotX = cx2 + satState * r2 * cos(ang)
+                                val dotY = cy2 + satState * r2 * sin(ang)
+                                drawCircle(Color.White,    radius = 9f,  center = androidx.compose.ui.geometry.Offset(dotX, dotY))
+                                drawCircle(pickedColor,    radius = 6f,  center = androidx.compose.ui.geometry.Offset(dotX, dotY))
+                            }
+                        }
+
+                        // Right column: swatch + brightness
+                        Column(
+                            modifier = Modifier.weight(1f),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(42.dp)
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(pickedColor)
+                                    .border(0.5.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(10.dp))
+                            )
+                            Text(
+                                text = "\"For God so loved...\"",
+                                fontSize = 11.sp,
+                                color = pickedColor,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp))
+                                    .padding(horizontal = 8.dp, vertical = 5.dp)
+                            )
+                        }
+                    }
+
+                    // Brightness slider
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "Brightness",
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.width(70.dp)
+                        )
+                        Slider(
+                            value = valueState,
+                            onValueChange = { setHsv(hueState, satState, it) },
+                            valueRange = 0f..1f,
+                            modifier = Modifier.weight(1f)
+                        )
+                        Text(
+                            text = "${(valueState * 100).toInt()}%",
+                            fontSize = 12.sp,
+                            modifier = Modifier.width(36.dp)
+                        )
+                    }
+
+                    // Hex input
+                    OutlinedTextField(
+                        value = hexText,
+                        onValueChange = { raw ->
+                            val clean = raw.filter { it.isDigit() || it.lowercaseChar() in 'a'..'f' }.uppercase().take(6)
+                            hexText = clean
+                            if (clean.length == 6) {
+                                hexStrToColor(clean)?.let { c ->
+                                    val (h, s, v) = composeColorToHsv(c)
+                                    hueState = h; satState = s; valueState = v
+                                    rText = (c.red * 255).toInt().toString()
+                                    gText = (c.green * 255).toInt().toString()
+                                    bText = (c.blue * 255).toInt().toString()
+                                }
+                            }
+                        },
+                        label = { Text("Hex") },
+                        prefix = { Text("#") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    BrightnessSlider(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(32.dp),
-                        controller = controller
-                    )
+
+                    // RGB inputs
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                        fun onRgbChange() {
+                            val r2 = rText.toIntOrNull()?.coerceIn(0, 255) ?: return
+                            val g2 = gText.toIntOrNull()?.coerceIn(0, 255) ?: return
+                            val b2 = bText.toIntOrNull()?.coerceIn(0, 255) ?: return
+                            val c  = Color(r2 / 255f, g2 / 255f, b2 / 255f)
+                            val (h, s, v) = composeColorToHsv(c)
+                            hueState = h; satState = s; valueState = v
+                            hexText = c.toHexStr()
+                        }
+                        OutlinedTextField(
+                            value = rText,
+                            onValueChange = { rText = it.filter { c -> c.isDigit() }.take(3); onRgbChange() },
+                            label = { Text("R") },
+                            singleLine = true,
+                            modifier = Modifier.weight(1f)
+                        )
+                        OutlinedTextField(
+                            value = gText,
+                            onValueChange = { gText = it.filter { c -> c.isDigit() }.take(3); onRgbChange() },
+                            label = { Text("G") },
+                            singleLine = true,
+                            modifier = Modifier.weight(1f)
+                        )
+                        OutlinedTextField(
+                            value = bText,
+                            onValueChange = { bText = it.filter { c -> c.isDigit() }.take(3); onRgbChange() },
+                            label = { Text("B") },
+                            singleLine = true,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+
+                    // Presets
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        listOf(
+                            AndroidColor.WHITE,
+                            AndroidColor.BLACK,
+                            AndroidColor.parseColor("#CFDEF3"),
+                            AndroidColor.parseColor("#FFF8E7"),
+                            AndroidColor.parseColor("#AAAAAA"),
+                            AndroidColor.parseColor("#FFB347"),
+                            AndroidColor.parseColor("#87CEEB"),
+                            AndroidColor.parseColor("#DDA0DD"),
+                        ).forEach { preset ->
+                            val pc = Color(preset)
+                            val sel = pickedColor.toHexStr() == pc.toHexStr()
+                            Box(
+                                modifier = Modifier
+                                    .size(26.dp)
+                                    .clip(CircleShape)
+                                    .background(pc)
+                                    .border(
+                                        if (sel) 2.dp else 0.5.dp,
+                                        if (sel) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant,
+                                        CircleShape
+                                    )
+                                    .clickable {
+                                        val (h, s, v) = composeColorToHsv(pc)
+                                        setHsv(h, s, v)
+                                    }
+                            )
+                        }
+                    }
                 }
             },
             confirmButton = {
                 TextButton(onClick = {
-                    onColorSelected(controller.selectedColor.value.toArgb())
+                    onColorSelected(pickedColor.toArgb())
                     showDialog = false
-                }) {
-                    Text(strings.done)
-                }
+                }) { Text(strings.done) }
             },
             dismissButton = {
-                TextButton(onClick = { showDialog = false }) {
-                    Text(strings.cancel)
-                }
+                TextButton(onClick = { showDialog = false }) { Text(strings.cancel) }
             }
         )
     }
 
+    // Quick preset swatches row (always visible)
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        colors.forEach { color ->
+        presetColors.forEach { color ->
             val isSelected = selectedColor == color
             val ringSize by animateDpAsState(
                 targetValue = if (isSelected) 3.dp else 0.dp,
@@ -3126,12 +3382,12 @@ fun ColorPickerRow(selectedColor: Int, strings: AppStrings, onColorSelected: (In
                         Icons.Default.Check,
                         contentDescription = null,
                         modifier = Modifier.size(18.dp),
-                        tint = if (color == AndroidColor.WHITE || color == AndroidColor.parseColor("#FFFFE0")) Color.Black else Color.White
+                        tint = if (color == AndroidColor.WHITE) Color.Black else Color.White
                     )
                 }
             }
         }
-        // Tlačidlo pre otvorenie Color Wheel
+        // Open full picker button
         Box(
             modifier = Modifier
                 .size(44.dp)
