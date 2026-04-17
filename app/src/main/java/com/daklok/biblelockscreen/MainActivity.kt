@@ -183,7 +183,13 @@ data class AppStrings(
     val autoWorkerOff: String = "Automatická zmena bola vypnutá.",
 
     // Color picker
-    val colorPickerTitle: String = "Vybrať farbu"
+    val colorPickerTitle: String = "Vybrať farbu",
+
+    // Wallpaper target
+    val wallpaperTargetLabel: String = "Použiť tapetu na",
+    val wallpaperTargetLock: String = "Zamknutá",
+    val wallpaperTargetHome: String = "Domov",
+    val wallpaperTargetBoth: String = "Oboje"
 )
 
 val skStrings = AppStrings()
@@ -261,7 +267,11 @@ val enStrings = AppStrings(
     autoWallpaperActiveScreenOff = "Active (on lock)",
     autoWorkerOn = "Enabled! Wallpaper will change based on your interval.",
     autoWorkerOff = "Automatic change disabled.",
-    colorPickerTitle = "Select color"
+    colorPickerTitle = "Select color",
+    wallpaperTargetLabel = "Apply wallpaper to",
+    wallpaperTargetLock = "Lock screen",
+    wallpaperTargetHome = "Home screen",
+    wallpaperTargetBoth = "Both"
 )
 
 val czStrings = AppStrings(
@@ -337,7 +347,11 @@ val czStrings = AppStrings(
     autoWallpaperActiveScreenOff = "Aktivní (při zamknutí)",
     autoWorkerOn = "Zapnuto! Tapeta se změní dle nastaveného intervalu.",
     autoWorkerOff = "Automatická změna byla vypnuta.",
-    colorPickerTitle = "Vybrat barvu"
+    colorPickerTitle = "Vybrat barvu",
+    wallpaperTargetLabel = "Použít tapetu na",
+    wallpaperTargetLock = "Zamčená",
+    wallpaperTargetHome = "Domů",
+    wallpaperTargetBoth = "Oboje"
 )
 
 val esStrings = AppStrings(
@@ -413,7 +427,11 @@ val esStrings = AppStrings(
     autoWallpaperActiveScreenOff = "Activo (al bloquear)",
     autoWorkerOn = "¡Activado! El fondo cambiará según el intervalo configurado.",
     autoWorkerOff = "Cambio automático desactivado.",
-    colorPickerTitle = "Seleccionar color"
+    colorPickerTitle = "Seleccionar color",
+    wallpaperTargetLabel = "Aplicar fondo en",
+    wallpaperTargetLock = "Bloqueo",
+    wallpaperTargetHome = "Inicio",
+    wallpaperTargetBoth = "Ambos"
 )
 
 val itStrings = AppStrings(
@@ -489,7 +507,11 @@ val itStrings = AppStrings(
     autoWallpaperActiveScreenOff = "Attivo (al blocco)",
     autoWorkerOn = "Attivato! Lo sfondo cambierà in base all'intervallo impostato.",
     autoWorkerOff = "Cambio automatico disattivato.",
-    colorPickerTitle = "Seleziona colore"
+    colorPickerTitle = "Seleziona colore",
+    wallpaperTargetLabel = "Applica sfondo su",
+    wallpaperTargetLock = "Blocco",
+    wallpaperTargetHome = "Home",
+    wallpaperTargetBoth = "Entrambi"
 )
 
 val frStrings = AppStrings(
@@ -565,7 +587,11 @@ val frStrings = AppStrings(
     autoWallpaperActiveScreenOff = "Actif (au verrouillage)",
     autoWorkerOn = "Activé ! Le fond changera selon l'intervalle configuré.",
     autoWorkerOff = "Changement automatique désactivé.",
-    colorPickerTitle = "Choisir une couleur"
+    colorPickerTitle = "Choisir une couleur",
+    wallpaperTargetLabel = "Appliquer le fond sur",
+    wallpaperTargetLock = "Verrouillage",
+    wallpaperTargetHome = "Accueil",
+    wallpaperTargetBoth = "Les deux"
 )
 
 val deStrings = AppStrings(
@@ -641,7 +667,11 @@ val deStrings = AppStrings(
     autoWallpaperActiveScreenOff = "Aktiv (bei Sperrung)",
     autoWorkerOn = "Aktiviert! Das Hintergrundbild wechselt nach dem eingestellten Intervall.",
     autoWorkerOff = "Automatischer Wechsel deaktiviert.",
-    colorPickerTitle = "Farbe auswählen"
+    colorPickerTitle = "Farbe auswählen",
+    wallpaperTargetLabel = "Hintergrundbild anwenden auf",
+    wallpaperTargetLock = "Sperrbildschirm",
+    wallpaperTargetHome = "Startbildschirm",
+    wallpaperTargetBoth = "Beide"
 )
 
 val huStrings = AppStrings(
@@ -718,7 +748,11 @@ val huStrings = AppStrings(
     autoWallpaperActiveScreenOff = "Aktív (zárolásnál)",
     autoWorkerOn = "Bekapcsolva! A háttérkép a beállított időközönként változik.",
     autoWorkerOff = "Automatikus csere kikapcsolva.",
-    colorPickerTitle = "Szín kiválasztása"
+    colorPickerTitle = "Szín kiválasztása",
+    wallpaperTargetLabel = "Háttérkép alkalmazása",
+    wallpaperTargetLock = "Zárolás",
+    wallpaperTargetHome = "Főképernyő",
+    wallpaperTargetBoth = "Mindkettő"
 )
 
 val plStrings = AppStrings(
@@ -795,7 +829,11 @@ val plStrings = AppStrings(
     autoWallpaperActiveScreenOff = "Aktywne (przy blokowaniu)",
     autoWorkerOn = "Włączone! Tapeta zmieni się zgodnie z ustawionym interwałem.",
     autoWorkerOff = "Automatyczna zmiana wyłączona.",
-    colorPickerTitle = "Wybierz kolor"
+    colorPickerTitle = "Wybierz kolor",
+    wallpaperTargetLabel = "Zastosuj tapetę na",
+    wallpaperTargetLock = "Ekran blokady",
+    wallpaperTargetHome = "Ekran główny",
+    wallpaperTargetBoth = "Oba"
 )
 
 // Helper function to dynamically select system language or fallback to EN
@@ -938,6 +976,8 @@ fun MainScreen(
     var useShadow by remember { mutableStateOf(prefs.getBoolean("use_shadow", true)) }
     var fontFamilyStr by remember { mutableStateOf(prefs.getString("font_family", "sans-serif") ?: "sans-serif") }
     var useHaptics by remember { mutableStateOf(prefs.getBoolean("use_haptics", true)) }
+    // 0 = Lock screen only, 1 = Home screen only, 2 = Both
+    var wallpaperTarget by remember { mutableIntStateOf(prefs.getInt("wallpaper_target", 0)) }
 
     var appLang by remember { mutableStateOf(prefs.getString("app_lang", defaultSystemLang) ?: defaultSystemLang) }
     var verseLang by remember { mutableStateOf(prefs.getString("verse_lang", defaultSystemLang) ?: defaultSystemLang) }
@@ -1037,6 +1077,7 @@ fun MainScreen(
             .putString("font_family", fontFamilyStr)
             .putBoolean("use_haptics", useHaptics)
             .putFloat("bg_darkness", bgDarkness)
+            .putInt("wallpaper_target", wallpaperTarget)
             .apply()
     }
 
@@ -1727,9 +1768,7 @@ fun MainScreen(
                             textColor = newColor
                             performHaptic(HapticFeedbackType.TextHandleMove)
                             saveSettings()
-                            if (imageUri != null) {
-                                runOneTimeWorker(context)
-                            }
+                            if (imageUri != null) runOneTimeWorker(context)
                         }
 
                         // Písmo (Font)
@@ -2011,6 +2050,43 @@ fun MainScreen(
                                     selected = themeMode == index,
                                     onClick = { onThemeChange(index) },
                                     shape = SegmentedButtonDefaults.itemShape(index = index, count = themeOptions.size)
+                                ) {
+                                    Text(label, maxLines = 1)
+                                }
+                            }
+                        }
+
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Wallpaper,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(strings.wallpaperTargetLabel, style = MaterialTheme.typography.bodyMedium)
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        val targetOptions = listOf(
+                            strings.wallpaperTargetLock,
+                            strings.wallpaperTargetHome,
+                            strings.wallpaperTargetBoth
+                        )
+                        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                            targetOptions.forEachIndexed { index, label ->
+                                SegmentedButton(
+                                    selected = wallpaperTarget == index,
+                                    onClick = {
+                                        wallpaperTarget = index
+                                        saveSettings()
+                                        performHaptic(HapticFeedbackType.TextHandleMove)
+                                    },
+                                    shape = SegmentedButtonDefaults.itemShape(index = index, count = targetOptions.size)
                                 ) {
                                     Text(label, maxLines = 1)
                                 }
@@ -3089,10 +3165,6 @@ private fun hexStrToColor(hex: String): Color? {
     } catch (_: NumberFormatException) { null }
 }
 
-private fun DrawScope.drawHsvWheel(cachedBitmap: androidx.compose.ui.graphics.ImageBitmap) {
-    drawImage(cachedBitmap)
-}
-
 private fun buildWheelBitmap(sizePx: Int, value: Float): android.graphics.Bitmap {
     val bmp = android.graphics.Bitmap.createBitmap(sizePx, sizePx, android.graphics.Bitmap.Config.ARGB_8888)
     val cx = sizePx / 2f; val r = cx
@@ -3100,9 +3172,9 @@ private fun buildWheelBitmap(sizePx: Int, value: Float): android.graphics.Bitmap
     for (y in 0 until sizePx) {
         for (x in 0 until sizePx) {
             val dx = x - cx; val dy = y - cx
-            val dist = kotlin.math.sqrt(dx * dx + dy * dy)
+            val dist = sqrt(dx * dx + dy * dy)
             if (dist > r) { pixels[y * sizePx + x] = 0; continue }
-            val hue = ((kotlin.math.atan2(dy, dx) * 180f / Math.PI.toFloat()) + 360f) % 360f
+            val hue = ((atan2(dy, dx) * 180f / Math.PI.toFloat()) + 360f) % 360f
             val sat = (dist / r).coerceIn(0f, 1f)
             val c = hsvToComposeColor(hue, sat, value)
             pixels[y * sizePx + x] = android.graphics.Color.argb(
@@ -3119,6 +3191,7 @@ private fun buildWheelBitmap(sizePx: Int, value: Float): android.graphics.Bitmap
 
 @Composable
 private fun rememberWheelBitmap(sizePx: Int, value: Float): ImageBitmap? {
+    // Quantise to 2% steps so we don't re-render on every slider pixel
     val brightnessKey = (value * 50).toInt()
     val state = produceState<ImageBitmap?>(initialValue = null, sizePx, brightnessKey) {
         this.value = withContext(Dispatchers.Default) {
@@ -3137,10 +3210,10 @@ fun ColorPickerRow(selectedColor: Int, strings: AppStrings, onColorSelected: (In
     val presetColors = listOf(
         AndroidColor.WHITE,
         AndroidColor.BLACK,
-        AndroidColor.parseColor("#CFDEF3"), // soft blue-white
-        AndroidColor.parseColor("#FFF8E7"), // warm cream
-        AndroidColor.parseColor("#AAAAAA"), // mid gray
-        AndroidColor.parseColor("#FFB347"), // golden
+        AndroidColor.parseColor("#CFDEF3"),
+        AndroidColor.parseColor("#FFF8E7"),
+        AndroidColor.parseColor("#AAAAAA"),
+        AndroidColor.parseColor("#FFB347"),
     )
 
     if (showDialog) {
@@ -3162,9 +3235,9 @@ fun ColorPickerRow(selectedColor: Int, strings: AppStrings, onColorSelected: (In
             hueState = h; satState = s; valueState = v
             val c = hsvToComposeColor(h, s, v)
             hexText = c.toHexStr()
-            rText = (c.red * 255).toInt().toString()
+            rText = (c.red   * 255).toInt().toString()
             gText = (c.green * 255).toInt().toString()
-            bText = (c.blue * 255).toInt().toString()
+            bText = (c.blue  * 255).toInt().toString()
         }
 
         AlertDialog(
@@ -3175,13 +3248,16 @@ fun ColorPickerRow(selectedColor: Int, strings: AppStrings, onColorSelected: (In
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    // Wheel + swatch row
+                    // Wheel + swatch
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(14.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        // Color wheel
+                        val density = LocalDensity.current
+                        val wheelSizePx = with(density) { 150.dp.roundToPx() }
+                        val wheelBitmap = rememberWheelBitmap(wheelSizePx, valueState)
+
                         Box(
                             modifier = Modifier
                                 .size(150.dp)
@@ -3207,22 +3283,19 @@ fun ColorPickerRow(selectedColor: Int, strings: AppStrings, onColorSelected: (In
                                     }
                                 }
                         ) {
-                            val density = LocalDensity.current
-                            val wheelSizePx = with(density) { 150.dp.roundToPx() }
-                            val wheelBitmap = rememberWheelBitmap(wheelSizePx, valueState)
                             androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
                                 if (wheelBitmap != null) drawImage(wheelBitmap)
-                                val cx2 = size.width / 2f; val cy2 = size.height / 2f
-                                val r2  = min(cx2, cy2)
-                                val ang = hueState * Math.PI.toFloat() / 180f
+                                val cx2  = size.width  / 2f; val cy2 = size.height / 2f
+                                val r2   = min(cx2, cy2)
+                                val ang  = hueState * Math.PI.toFloat() / 180f
                                 val dotX = cx2 + satState * r2 * cos(ang)
                                 val dotY = cy2 + satState * r2 * sin(ang)
-                                drawCircle(Color.White,    radius = 9f,  center = androidx.compose.ui.geometry.Offset(dotX, dotY))
-                                drawCircle(pickedColor,    radius = 6f,  center = androidx.compose.ui.geometry.Offset(dotX, dotY))
+                                drawCircle(Color.White,   radius = 9f, center = androidx.compose.ui.geometry.Offset(dotX, dotY))
+                                drawCircle(pickedColor,   radius = 6f, center = androidx.compose.ui.geometry.Offset(dotX, dotY))
                             }
                         }
 
-                        // Right column: swatch + brightness
+                        // Right: swatch + preview text
                         Column(
                             modifier = Modifier.weight(1f),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
@@ -3284,9 +3357,9 @@ fun ColorPickerRow(selectedColor: Int, strings: AppStrings, onColorSelected: (In
                                 hexStrToColor(clean)?.let { c ->
                                     val (h, s, v) = composeColorToHsv(c)
                                     hueState = h; satState = s; valueState = v
-                                    rText = (c.red * 255).toInt().toString()
+                                    rText = (c.red   * 255).toInt().toString()
                                     gText = (c.green * 255).toInt().toString()
-                                    bText = (c.blue * 255).toInt().toString()
+                                    bText = (c.blue  * 255).toInt().toString()
                                 }
                             }
                         },
@@ -3310,27 +3383,21 @@ fun ColorPickerRow(selectedColor: Int, strings: AppStrings, onColorSelected: (In
                         OutlinedTextField(
                             value = rText,
                             onValueChange = { rText = it.filter { c -> c.isDigit() }.take(3); onRgbChange() },
-                            label = { Text("R") },
-                            singleLine = true,
-                            modifier = Modifier.weight(1f)
+                            label = { Text("R") }, singleLine = true, modifier = Modifier.weight(1f)
                         )
                         OutlinedTextField(
                             value = gText,
                             onValueChange = { gText = it.filter { c -> c.isDigit() }.take(3); onRgbChange() },
-                            label = { Text("G") },
-                            singleLine = true,
-                            modifier = Modifier.weight(1f)
+                            label = { Text("G") }, singleLine = true, modifier = Modifier.weight(1f)
                         )
                         OutlinedTextField(
                             value = bText,
                             onValueChange = { bText = it.filter { c -> c.isDigit() }.take(3); onRgbChange() },
-                            label = { Text("B") },
-                            singleLine = true,
-                            modifier = Modifier.weight(1f)
+                            label = { Text("B") }, singleLine = true, modifier = Modifier.weight(1f)
                         )
                     }
 
-                    // Presets
+                    // Preset dots
                     Row(
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                         modifier = Modifier.fillMaxWidth()
@@ -3378,7 +3445,7 @@ fun ColorPickerRow(selectedColor: Int, strings: AppStrings, onColorSelected: (In
         )
     }
 
-    // Quick preset swatches row (always visible)
+    // Always-visible quick preset row
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -3412,7 +3479,7 @@ fun ColorPickerRow(selectedColor: Int, strings: AppStrings, onColorSelected: (In
                 }
             }
         }
-        // Open full picker button
+        // Open full picker
         Box(
             modifier = Modifier
                 .size(44.dp)

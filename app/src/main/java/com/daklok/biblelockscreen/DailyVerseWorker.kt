@@ -74,12 +74,19 @@ class DailyVerseWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
 
         if (finalBitmap != null) {
             val wallpaperManager = WallpaperManager.getInstance(applicationContext)
+            // 0 = lock only, 1 = home only, 2 = both
+            val target = prefs.getInt("wallpaper_target", 0)
+            val flag = when (target) {
+                1    -> WallpaperManager.FLAG_SYSTEM
+                2    -> WallpaperManager.FLAG_LOCK or WallpaperManager.FLAG_SYSTEM
+                else -> WallpaperManager.FLAG_LOCK
+            }
             try {
                 wallpaperManager.setBitmap(
                     finalBitmap,
                     null,
                     true,
-                    WallpaperManager.FLAG_LOCK
+                    flag
                 )
                 return Result.success()
             } catch (e: Exception) {

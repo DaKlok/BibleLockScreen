@@ -19,8 +19,8 @@ android {
         applicationId = "com.daklok.biblelockscreen"
         minSdk = 24
         targetSdk = 36
-        versionCode = 7
-        versionName = "1.6"
+        versionCode = 8
+        versionName = "1.7"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -78,9 +78,7 @@ dependencies {
     // Gson - na ukladanie objektov (ak by bolo treba)
     implementation("com.google.code.gson:gson:2.10.1")
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.32.0")
-    
-    // Color Picker - pre pokročilý výber farieb
-    implementation("com.github.skydoves:colorpicker-compose:1.0.0")
+
 
     implementation(libs.androidx.compose.material3)
     implementation(libs.androidx.material.icons.extended) // Add this line
