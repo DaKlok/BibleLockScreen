@@ -91,7 +91,7 @@ object WallpaperUtils {
             val boxWidth = screenW * 0.80f * textWidthMultiplier
             val paddingPx = screenW * 0.025f
             val textLayoutWidth = max(1f, boxWidth - (2 * paddingPx)).toInt()
-            
+
             var baseSize = screenW * 0.055f
             if (verse.length > 150) baseSize = screenW * 0.045f
             textPaint.textSize = baseSize * textSizeMultiplier
@@ -110,7 +110,7 @@ object WallpaperUtils {
                 .trim()
 
             val refPaint = TextPaint().apply {
-                color = applyAlpha(if (textColorInt == Color.BLACK) Color.DKGRAY else Color.LTGRAY, textAlpha)
+                color = applyAlpha(textColorInt, textAlpha * 0.8f)
                 textSize = textPaint.textSize * 0.75f
                 isAntiAlias = true
                 typeface = Typeface.create(fontFamilyStr, Typeface.NORMAL)
@@ -129,7 +129,7 @@ object WallpaperUtils {
             // 7. Pozícia
             val centerX = screenW / 2f
             val centerY = (screenH / 2f) - (totalBlockHeight / 2f)
-            
+
             val defaultOffset = screenH * 0.05f
             val userOffsetPixels = (screenH * 0.35f) * verticalOffset
             val blockTopY = centerY + userOffsetPixels + defaultOffset

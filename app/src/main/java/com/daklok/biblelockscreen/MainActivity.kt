@@ -77,6 +77,8 @@ import androidx.work.*
 import coil.compose.rememberAsyncImagePainter
 import coil.memory.MemoryCache
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import com.daklok.biblelockscreen.ui.theme.BibleLockScreenTheme
 import kotlinx.coroutines.Dispatchers
@@ -3087,23 +3089,43 @@ private fun hexStrToColor(hex: String): Color? {
     } catch (_: NumberFormatException) { null }
 }
 
-private fun DrawScope.drawHsvWheel(value: Float) {
-    val cx = size.width / 2f; val cy = size.height / 2f; val r = min(cx, cy)
-    val rings = 28; val slices = 360
-    for (h in 0 until slices) {
-        for (ring in 0 until rings) {
-            val sat   = (ring + 0.5f) / rings
-            val outer = (ring + 1).toFloat() / rings * r
-            drawArc(
-                color      = hsvToComposeColor(h.toFloat(), sat, value),
-                startAngle = h - 0.7f,
-                sweepAngle = 1.4f,
-                useCenter  = true,
-                topLeft    = androidx.compose.ui.geometry.Offset(cx - outer, cy - outer),
-                size       = Size(outer * 2f, outer * 2f)
+private fun DrawScope.drawHsvWheel(cachedBitmap: androidx.compose.ui.graphics.ImageBitmap) {
+    drawImage(cachedBitmap)
+}
+
+private fun buildWheelBitmap(sizePx: Int, value: Float): android.graphics.Bitmap {
+    val bmp = android.graphics.Bitmap.createBitmap(sizePx, sizePx, android.graphics.Bitmap.Config.ARGB_8888)
+    val cx = sizePx / 2f; val r = cx
+    val pixels = IntArray(sizePx * sizePx)
+    for (y in 0 until sizePx) {
+        for (x in 0 until sizePx) {
+            val dx = x - cx; val dy = y - cx
+            val dist = kotlin.math.sqrt(dx * dx + dy * dy)
+            if (dist > r) { pixels[y * sizePx + x] = 0; continue }
+            val hue = ((kotlin.math.atan2(dy, dx) * 180f / Math.PI.toFloat()) + 360f) % 360f
+            val sat = (dist / r).coerceIn(0f, 1f)
+            val c = hsvToComposeColor(hue, sat, value)
+            pixels[y * sizePx + x] = android.graphics.Color.argb(
+                255,
+                (c.red * 255).toInt(),
+                (c.green * 255).toInt(),
+                (c.blue * 255).toInt()
             )
         }
     }
+    bmp.setPixels(pixels, 0, sizePx, 0, 0, sizePx, sizePx)
+    return bmp
+}
+
+@Composable
+private fun rememberWheelBitmap(sizePx: Int, value: Float): ImageBitmap? {
+    val brightnessKey = (value * 50).toInt()
+    val state = produceState<ImageBitmap?>(initialValue = null, sizePx, brightnessKey) {
+        this.value = withContext(Dispatchers.Default) {
+            buildWheelBitmap(sizePx, brightnessKey / 50f).asImageBitmap()
+        }
+    }
+    return state.value
 }
 
 // ── ColorPickerRow ────────────────────────────────────────────────────────────
@@ -3185,8 +3207,11 @@ fun ColorPickerRow(selectedColor: Int, strings: AppStrings, onColorSelected: (In
                                     }
                                 }
                         ) {
+                            val density = LocalDensity.current
+                            val wheelSizePx = with(density) { 150.dp.roundToPx() }
+                            val wheelBitmap = rememberWheelBitmap(wheelSizePx, valueState)
                             androidx.compose.foundation.Canvas(modifier = Modifier.fillMaxSize()) {
-                                drawHsvWheel(valueState)
+                                if (wheelBitmap != null) drawImage(wheelBitmap)
                                 val cx2 = size.width / 2f; val cy2 = size.height / 2f
                                 val r2  = min(cx2, cy2)
                                 val ang = hueState * Math.PI.toFloat() / 180f
