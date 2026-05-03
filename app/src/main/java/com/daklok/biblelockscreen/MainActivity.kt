@@ -75,11 +75,8 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.work.*
 import coil.compose.rememberAsyncImagePainter
-import coil.memory.MemoryCache
-import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.graphics.drawscope.DrawScope
 import com.daklok.biblelockscreen.ui.theme.BibleLockScreenTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -2017,10 +2014,17 @@ fun MainScreen(
                             }
                         )
                         HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+                        val customDbOptions = remember(showSettings) {
+                            VerseJsonManager.listCustomDatabases(context)
+                                .map { it.lang to "★ ${it.lang} (custom · ${it.verseCount} verses)" }
+                        }
+                        val allVerseOptions = remember(customDbOptions) {
+                            availableLanguages + customDbOptions
+                        }
                         LanguageDropdown(
                             label = strings.verseLanguage,
                             selectedCode = verseLang,
-                            options = availableLanguages,
+                            options = allVerseOptions,
                             showLabel = true,
                             onSelect = {
                                 if (verseLang != it) {
@@ -2032,6 +2036,20 @@ fun MainScreen(
                                     }
                                 }
                             }
+                        )
+                    }
+
+                    Spacer(Modifier.height(24.dp))
+
+                    // --- VERSE DATABASES SECTION ---
+                    SettingsSectionHeader(
+                        icon = Icons.Default.LibraryBooks,
+                        title = "Verse databases"
+                    )
+                    SettingsCard {
+                        VerseDatabaseSection(
+                            strings = strings,
+                            showNotification = showNotification
                         )
                     }
 

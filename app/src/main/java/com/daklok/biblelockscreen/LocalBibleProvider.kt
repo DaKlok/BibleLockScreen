@@ -23,12 +23,24 @@ object LocalBibleProvider {
         }
     }
 
+    /**
+     * Loads JSON for a language — checks custom databases first, falls back to bundled assets.
+     */
+    private fun loadJson(context: Context, lang: String): String? {
+        VerseJsonManager.loadCustomVerses(context, lang)?.let { verses ->
+            if (verses.isNotEmpty()) return com.google.gson.Gson().toJson(verses)
+        }
+        return try {
+            context.assets.open("verses_$lang.json").bufferedReader().use { it.readText() }
+        } catch (e: Exception) { null }
+    }
+
     fun getVerse(context: Context, lang: String): Pair<String, String> {
         return try {
 
             val dayOfYear = Calendar.getInstance().get(Calendar.DAY_OF_YEAR)
 
-            val jsonString = context.assets.open("verses_$lang.json").bufferedReader().use { it.readText() }
+            val jsonString = loadJson(context, lang) ?: return Pair("Error loading verse", "")
 
             val verses = Gson().fromJson(jsonString, Array<Verse>::class.java)
 
@@ -51,10 +63,7 @@ object LocalBibleProvider {
      */
     fun getVerseForInterval(context: Context, lang: String, intervalHours: Int): Pair<String, String> {
         return try {
-            val jsonString = context.assets
-                .open("verses_$lang.json")
-                .bufferedReader()
-                .use { it.readText() }
+            val jsonString = loadJson(context, lang) ?: return Pair("Error loading verse", "")
 
             val verses = Gson().fromJson(jsonString, Array<Verse>::class.java)
 
@@ -92,7 +101,7 @@ object LocalBibleProvider {
             val prefs = context.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
             val index = prefs.getInt("screen_off_verse_index", 0)
 
-            val jsonString = context.assets.open("verses_$lang.json").bufferedReader().use { it.readText() }
+            val jsonString = loadJson(context, lang) ?: return Pair("Error loading verse", "")
             val verses = Gson().fromJson(jsonString, Array<Verse>::class.java)
 
             if (verses.isNullOrEmpty()) {
