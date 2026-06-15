@@ -52,7 +52,8 @@ import kotlinx.coroutines.launch
 @Composable
 fun VerseDatabaseSection(
     strings: AppStrings,
-    showNotification: (String, NotificationType) -> Job
+    showNotification: (String, NotificationType) -> Job,
+    onDbChanged: () -> Unit = {}
 ) {
     var showSheet by remember { mutableStateOf(false) }
 
@@ -69,12 +70,12 @@ fun VerseDatabaseSection(
         )
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                "Verse databases",
+                strings.vdbTitle,
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium
             )
             Text(
-                "Create, import or export collections",
+                strings.vdbSubtitle,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -88,7 +89,7 @@ fun VerseDatabaseSection(
                 containerColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
             )
         ) {
-            Text("Manage", style = MaterialTheme.typography.labelMedium)
+            Text(strings.vdbManage, style = MaterialTheme.typography.labelMedium)
         }
     }
 
@@ -96,7 +97,8 @@ fun VerseDatabaseSection(
         VerseDatabaseSheet(
             strings = strings,
             showNotification = showNotification,
-            onDismiss = { showSheet = false }
+            onDismiss = { showSheet = false },
+            onDbChanged = onDbChanged
         )
     }
 }
@@ -121,17 +123,18 @@ private sealed class DbNav {
 fun VerseDatabaseSheet(
     strings: AppStrings,
     showNotification: (String, NotificationType) -> Job,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onDbChanged: () -> Unit = {}
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var nav by remember { mutableStateOf<DbNav>(DbNav.Home) }
     val isHome = nav is DbNav.Home
 
     val sheetTitle = when (val n = nav) {
-        is DbNav.Home -> "Verse databases"
-        is DbNav.Create -> "New database"
-        is DbNav.Edit -> "Edit · ${n.db.lang}"
-        is DbNav.ImportExport -> "Import / Export"
+        is DbNav.Home -> strings.vdbTitle
+        is DbNav.Create -> strings.vdbNewDatabase
+        is DbNav.Edit -> "${strings.vdbEditPrefix} ${n.db.lang}"
+        is DbNav.ImportExport -> strings.vdbImportExport
     }
 
     ModalBottomSheet(
@@ -196,23 +199,27 @@ fun VerseDatabaseSheet(
                         showNotification = showNotification,
                         onCreate = { nav = DbNav.Create },
                         onEdit = { nav = DbNav.Edit(it) },
-                        onImportExport = { nav = DbNav.ImportExport }
+                        onImportExport = { nav = DbNav.ImportExport },
+                        onDbChanged = onDbChanged
                     )
                     is DbNav.Create -> CreateEditScreen(
                         strings = strings,
                         showNotification = showNotification,
                         existingDb = null,
-                        onDone = { nav = DbNav.Home }
+                        onDone = { nav = DbNav.Home },
+                        onDbChanged = onDbChanged
                     )
                     is DbNav.Edit -> CreateEditScreen(
                         strings = strings,
                         showNotification = showNotification,
                         existingDb = current.db,
-                        onDone = { nav = DbNav.Home }
+                        onDone = { nav = DbNav.Home },
+                        onDbChanged = onDbChanged
                     )
                     is DbNav.ImportExport -> ImportExportScreen(
                         strings = strings,
-                        showNotification = showNotification
+                        showNotification = showNotification,
+                        onDbChanged = onDbChanged
                     )
                 }
             }
@@ -230,14 +237,18 @@ private fun HomeScreen(
     showNotification: (String, NotificationType) -> Job,
     onCreate: () -> Unit,
     onEdit: (CustomVerseDb) -> Unit,
-    onImportExport: () -> Unit
+    onImportExport: () -> Unit,
+    onDbChanged: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     var customDbs by remember { mutableStateOf(VerseJsonManager.listCustomDatabases(context)) }
     var deleteTarget by remember { mutableStateOf<CustomVerseDb?>(null) }
 
-    fun refresh() { customDbs = VerseJsonManager.listCustomDatabases(context) }
+    fun refresh() {
+        customDbs = VerseJsonManager.listCustomDatabases(context)
+        onDbChanged()
+    }
 
     // Delete confirmation dialog
     deleteTarget?.let { db ->
@@ -249,10 +260,10 @@ private fun HomeScreen(
                     tint = MaterialTheme.colorScheme.error
                 )
             },
-            title = { Text("Delete \"${db.lang}\"?") },
+            title = { Text("${strings.vdbDeleteTitle} \"${db.lang}\"?") },
             text = {
                 Text(
-                    "${db.verseCount} verses will be permanently removed.",
+                    "${db.verseCount} ${strings.vdbDeleteText}",
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             },
@@ -262,13 +273,13 @@ private fun HomeScreen(
                         VerseJsonManager.deleteCustomDatabase(context, db.lang)
                         refresh()
                         deleteTarget = null
-                        showNotification("Deleted ${db.lang}", NotificationType.INFO)
+                        showNotification("${strings.vdbDeleted} ${db.lang}", NotificationType.INFO)
                     },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.error,
                         contentColor = MaterialTheme.colorScheme.onError
                     )
-                ) { Text("Delete") }
+                ) { Text(strings.vdbDelete) }
             },
             dismissButton = {
                 TextButton(onClick = { deleteTarget = null }) { Text(strings.cancel) }
@@ -303,7 +314,7 @@ private fun HomeScreen(
             ) {
                 Icon(Icons.Default.Add, null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(6.dp))
-                Text("Create new", fontWeight = FontWeight.SemiBold)
+                Text(strings.vdbCreateNew, fontWeight = FontWeight.SemiBold)
             }
             OutlinedButton(
                 onClick = {
@@ -316,7 +327,7 @@ private fun HomeScreen(
             ) {
                 Icon(Icons.Default.SwapVert, null, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(6.dp))
-                Text("Import / Export")
+                Text(strings.vdbImportExport)
             }
         }
 
@@ -326,13 +337,14 @@ private fun HomeScreen(
             enter = expandVertically(spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMediumLow)) + fadeIn(tween(280)),
             exit = shrinkVertically(tween(200)) + fadeOut(tween(200))
         ) {
-            DbSection(label = "Custom") {
+            DbSection(label = strings.vdbSectionCustom) {
                 customDbs.forEachIndexed { idx, db ->
                     if (idx > 0) HorizontalDivider(
                         modifier = Modifier.padding(horizontal = 16.dp),
                         color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
                     )
                     CustomDbRow(
+                        strings = strings,
                         db = db,
                         onEdit = {
                             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -348,7 +360,7 @@ private fun HomeScreen(
         }
 
         // ── Built-in databases ────────────────────────────────────────────
-        DbSection(label = "Built-in") {
+        DbSection(label = strings.vdbSectionBuiltIn) {
             availableLanguages.forEachIndexed { idx, (code, name) ->
                 if (idx > 0) HorizontalDivider(
                     modifier = Modifier.padding(horizontal = 16.dp),
@@ -388,7 +400,7 @@ private fun HomeScreen(
                     modifier = Modifier.size(13.dp)
                 )
                 Text(
-                    "Select a custom DB via Settings → Verse Language",
+                    strings.vdbHint,
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -422,6 +434,7 @@ private fun DbSection(
 
 @Composable
 private fun CustomDbRow(
+    strings: AppStrings,
     db: CustomVerseDb,
     onEdit: () -> Unit,
     onDelete: () -> Unit
@@ -450,12 +463,12 @@ private fun CustomDbRow(
         }
         Column(modifier = Modifier.weight(1f)) {
             Text(
-                "${db.verseCount} verses",
+                "${db.verseCount} ${strings.vdbVerses}",
                 style = MaterialTheme.typography.bodyMedium,
                 fontWeight = FontWeight.Medium
             )
             Text(
-                "Custom",
+                strings.vdbCustomLabel,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -471,7 +484,7 @@ private fun CustomDbRow(
         // Delete
         IconButton(onClick = onDelete, modifier = Modifier.size(36.dp)) {
             Icon(
-                Icons.Default.Delete, "Delete",
+                Icons.Default.Delete, contentDescription = null,
                 tint = MaterialTheme.colorScheme.error,
                 modifier = Modifier.size(18.dp)
             )
@@ -494,7 +507,8 @@ private fun CreateEditScreen(
     strings: AppStrings,
     showNotification: (String, NotificationType) -> Job,
     existingDb: CustomVerseDb?,
-    onDone: () -> Unit
+    onDone: () -> Unit,
+    onDbChanged: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -527,9 +541,9 @@ private fun CreateEditScreen(
     fun save() {
         focusManager.clearFocus()
         val code = langCode.trim().uppercase()
-        if (code.isBlank()) { showNotification("Enter a database code", NotificationType.ERROR); return }
+        if (code.isBlank()) { showNotification(strings.vdbErrorCode, NotificationType.ERROR); return }
         val valid = drafts.filter { it.text.isNotBlank() }
-        if (valid.isEmpty()) { showNotification("Add at least one verse", NotificationType.ERROR); return }
+        if (valid.isEmpty()) { showNotification(strings.vdbErrorVerse, NotificationType.ERROR); return }
         isSaving = true
         scope.launch {
             val verses = valid.map { Verse(text = it.text.trim(), ref = it.ref.trim(), lang = code) }
@@ -538,9 +552,10 @@ private fun CreateEditScreen(
                     isSaving = false
                     saveSuccess = true
                     haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onDbChanged()
                     showNotification(
-                        if (isEditing) "Updated \"$code\" · ${verses.size} verses"
-                        else "Created \"$code\" · ${verses.size} verses",
+                        if (isEditing) "${strings.vdbUpdated} \"$code\" · ${verses.size} ${strings.vdbVerses}"
+                        else "${strings.vdbCreated} \"$code\" · ${verses.size} ${strings.vdbVerses}",
                         NotificationType.SUCCESS
                     )
                     delay(600)
@@ -548,7 +563,7 @@ private fun CreateEditScreen(
                 },
                 onFailure = {
                     isSaving = false
-                    showNotification("Failed: ${it.message}", NotificationType.ERROR)
+                    showNotification("${strings.vdbErrorFailed}: ${it.message}", NotificationType.ERROR)
                 }
             )
         }
@@ -577,15 +592,15 @@ private fun CreateEditScreen(
                             if (!isEditing)
                                 langCode = it.filter { c -> c.isLetterOrDigit() }.uppercase().take(8)
                         },
-                        label = { Text("Code") },
-                        placeholder = { Text("e.g. KJV") },
+                        label = { Text(strings.vdbCodeLabel) },
+                        placeholder = { Text(strings.vdbCodePlaceholder) },
                         singleLine = true,
                         enabled = !isEditing,
                         modifier = Modifier.weight(1f),
                         shape = RoundedCornerShape(14.dp),
                         supportingText = {
                             Text(
-                                "Select this in Settings → Verse Language",
+                                strings.vdbCodeHint,
                                 style = MaterialTheme.typography.labelSmall
                             )
                         }
@@ -615,7 +630,7 @@ private fun CreateEditScreen(
                                     color = MaterialTheme.colorScheme.onPrimary
                                 )
                                 1 -> Icon(Icons.Default.Check, null, modifier = Modifier.size(18.dp), tint = Color.White)
-                                else -> Text(if (isEditing) "Update" else "Save", fontWeight = FontWeight.SemiBold)
+                                else -> Text(if (isEditing) strings.vdbUpdate else strings.vdbSave, fontWeight = FontWeight.SemiBold)
                             }
                         }
                     }
@@ -636,8 +651,8 @@ private fun CreateEditScreen(
                         modifier = Modifier.weight(1f)
                     ) { count ->
                         Text(
-                            if (count == 0) "No verses — tap + below to add"
-                            else "$filledCount / $count verse${if (count != 1) "s" else ""} filled",
+                            if (count == 0) strings.vdbNoVerses
+                            else "$filledCount / $count ${if (count != 1) strings.vdbVersePlural else strings.vdbVerse} ${strings.vdbVersesFilled}",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -651,7 +666,7 @@ private fun CreateEditScreen(
                             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 0.dp),
                             modifier = Modifier.height(28.dp)
                         ) {
-                            Text("Clear all", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+                            Text(strings.vdbClearAll, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
                         }
                     }
                 }
@@ -682,9 +697,9 @@ private fun CreateEditScreen(
                                 tint = MaterialTheme.colorScheme.primary.copy(alpha = 0.4f),
                                 modifier = Modifier.size(36.dp)
                             )
-                            Text("No verses yet", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
+                            Text(strings.vdbNoVersesYet, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold)
                             Text(
-                                "Tap the button below to add your first verse",
+                                strings.vdbAddFirstVerse,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 textAlign = TextAlign.Center
@@ -696,6 +711,7 @@ private fun CreateEditScreen(
 
             itemsIndexed(drafts, key = { _, d -> d.id }) { idx, draft ->
                 VerseEditorCard(
+                    strings = strings,
                     index = idx + 1,
                     draft = draft,
                     autoFocus = idx == drafts.lastIndex && draft.text.isEmpty(),
@@ -717,7 +733,7 @@ private fun CreateEditScreen(
                 ) {
                     Icon(Icons.Default.Add, null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
                     Spacer(Modifier.width(8.dp))
-                    Text("Add verse", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
+                    Text(strings.vdbAddVerse, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
                 }
                 Spacer(Modifier.height(40.dp))
             }
@@ -727,6 +743,7 @@ private fun CreateEditScreen(
 
 @Composable
 private fun VerseEditorCard(
+    strings: AppStrings,
     index: Int,
     draft: DraftVerse,
     autoFocus: Boolean,
@@ -783,7 +800,7 @@ private fun VerseEditorCard(
                         }
                     }
                 }
-                Text("Verse $index", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                Text("${strings.vdbVerseCard} $index", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
                 IconButton(onClick = onDelete, modifier = Modifier.size(28.dp)) {
                     Icon(Icons.Default.Close, null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), modifier = Modifier.size(16.dp))
                 }
@@ -791,7 +808,7 @@ private fun VerseEditorCard(
             OutlinedTextField(
                 value = draft.text,
                 onValueChange = onTextChange,
-                label = { Text("Verse text") },
+                label = { Text(strings.vdbVerseText) },
                 modifier = Modifier.fillMaxWidth().focusRequester(textFocus),
                 shape = RoundedCornerShape(12.dp),
                 minLines = 2,
@@ -801,8 +818,8 @@ private fun VerseEditorCard(
             OutlinedTextField(
                 value = draft.ref,
                 onValueChange = onRefChange,
-                label = { Text("Reference") },
-                placeholder = { Text("e.g. John 3:16") },
+                label = { Text(strings.vdbReference) },
+                placeholder = { Text(strings.vdbReferencePlaceholder) },
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
@@ -822,7 +839,8 @@ private fun VerseEditorCard(
 @Composable
 private fun ImportExportScreen(
     strings: AppStrings,
-    showNotification: (String, NotificationType) -> Job
+    showNotification: (String, NotificationType) -> Job,
+    onDbChanged: () -> Unit = {}
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -844,18 +862,18 @@ private fun ImportExportScreen(
         var codeInput by remember { mutableStateOf("") }
         AlertDialog(
             onDismissRequest = { showCodeDialog = false },
-            title = { Text("Database code") },
+            title = { Text(strings.vdbImportCodeTitle) },
             text = {
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        "Enter a short code for this database (e.g. KJV). It overrides a built-in database if the code matches.",
+                        strings.vdbImportCodeDesc,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     OutlinedTextField(
                         value = codeInput,
                         onValueChange = { codeInput = it.filter { c -> c.isLetterOrDigit() }.uppercase().take(8) },
-                        label = { Text("Code") },
+                        label = { Text(strings.vdbCodeLabel) },
                         singleLine = true,
                         modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(12.dp)
@@ -873,18 +891,19 @@ private fun ImportExportScreen(
                                 VerseJsonManager.importFromUri(context, uri, codeInput).fold(
                                     onSuccess = { count ->
                                         isImporting = false
-                                        showNotification("Imported $count verses as \"$codeInput\"", NotificationType.SUCCESS)
+                                        onDbChanged()
+                                        showNotification("${strings.vdbImportSuccess.format(count)} \"$codeInput\"", NotificationType.SUCCESS)
                                     },
                                     onFailure = { e ->
                                         isImporting = false
-                                        showNotification("Import failed: ${e.message}", NotificationType.ERROR)
+                                        showNotification("${strings.vdbImportFailed}: ${e.message}", NotificationType.ERROR)
                                     }
                                 )
                             }
                         }
                     },
                     enabled = codeInput.isNotBlank()
-                ) { Text("Import") }
+                ) { Text(strings.vdbImport) }
             },
             dismissButton = {
                 TextButton(onClick = { showCodeDialog = false }) { Text(strings.cancel) }
@@ -905,7 +924,7 @@ private fun ImportExportScreen(
                 exportStatus = "idle"
             } else {
                 exportStatus = "idle"
-                showNotification("Export failed", NotificationType.ERROR)
+                showNotification(strings.vdbExportFailed, NotificationType.ERROR)
             }
         }
     }
@@ -936,7 +955,7 @@ private fun ImportExportScreen(
                 ) {
                     Icon(Icons.Default.Info, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp).padding(top = 2.dp))
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text("JSON format", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
+                        Text(strings.vdbJsonFormat, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold)
                         Text(
                             "[{\"text\":\"...\",\"ref\":\"Gen 1:1\",\"lang\":\"MY\"}]",
                             style = MaterialTheme.typography.bodySmall,
@@ -948,7 +967,7 @@ private fun ImportExportScreen(
             }
 
             //Import
-            DbSection(label = "Import") {
+            DbSection(label = strings.vdbImportTitle) {
                 Row(
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 14.dp),
                     verticalAlignment = Alignment.CenterVertically,
@@ -956,8 +975,8 @@ private fun ImportExportScreen(
                 ) {
                     Icon(Icons.Default.Upload, null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(20.dp))
                     Column(modifier = Modifier.weight(1f)) {
-                        Text("Import JSON file", style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-                        Text("Pick a verse .json from your device", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(strings.vdbImportJson, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+                        Text(strings.vdbImportDesc, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                     if (isImporting) {
                         CircularProgressIndicator(modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
@@ -970,22 +989,23 @@ private fun ImportExportScreen(
                             colors = ButtonDefaults.filledTonalButtonColors(
                                 containerColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
                             )
-                        ) { Text("Browse", style = MaterialTheme.typography.labelMedium) }
+                        ) { Text(strings.vdbBrowse, style = MaterialTheme.typography.labelMedium) }
                     }
                 }
             }
 
             //Export custom databases
             if (customDbs.isNotEmpty()) {
-                DbSection(label = "Export — Custom") {
+                DbSection(label = strings.vdbExportCustom) {
                     customDbs.forEachIndexed { idx, db ->
                         if (idx > 0) HorizontalDivider(
                             modifier = Modifier.padding(horizontal = 16.dp),
                             color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
                         )
                         ExportRow(
+                            strings = strings,
                             name = db.lang,
-                            subtitle = "${db.verseCount} verses · custom",
+                            subtitle = "${db.verseCount} ${strings.vdbVerses} · ${strings.vdbCustomLabel}",
                             code = db.lang,
                             onExport = { doExport(db.lang) }
                         )
@@ -994,13 +1014,14 @@ private fun ImportExportScreen(
             }
 
             //Export built-in databases
-            DbSection(label = "Export — Built-in") {
+            DbSection(label = strings.vdbExportBuiltIn) {
                 availableLanguages.forEachIndexed { idx, (code, name) ->
                     if (idx > 0) HorizontalDivider(
                         modifier = Modifier.padding(horizontal = 16.dp),
                         color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
                     )
                     ExportRow(
+                        strings = strings,
                         name = name,
                         subtitle = "verses_$code.json",
                         code = code,
@@ -1039,14 +1060,14 @@ private fun ImportExportScreen(
                                 strokeWidth = 2.dp,
                                 color = MaterialTheme.colorScheme.onSecondaryContainer
                             )
-                            Text("Saving to Downloads…", style = MaterialTheme.typography.labelLarge)
+                            Text(strings.vdbExporting, style = MaterialTheme.typography.labelLarge)
                         } else {
                             Icon(
                                 Icons.Default.Check, null,
                                 tint = Color(0xFF4CAF50),
                                 modifier = Modifier.size(20.dp)
                             )
-                            Text("Saved to Downloads", style = MaterialTheme.typography.labelLarge)
+                            Text(strings.vdbExportDone, style = MaterialTheme.typography.labelLarge)
                         }
                     }
                 }
@@ -1057,6 +1078,7 @@ private fun ImportExportScreen(
 
 @Composable
 private fun ExportRow(
+    strings: AppStrings,
     name: String,
     subtitle: String,
     code: String,
@@ -1080,7 +1102,7 @@ private fun ExportRow(
         ) {
             Icon(Icons.Default.Download, null, modifier = Modifier.size(14.dp))
             Spacer(Modifier.width(4.dp))
-            Text("Export", style = MaterialTheme.typography.labelMedium)
+            Text(strings.vdbExport, style = MaterialTheme.typography.labelMedium)
         }
     }
 }
