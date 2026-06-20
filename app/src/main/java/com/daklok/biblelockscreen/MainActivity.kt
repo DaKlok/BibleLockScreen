@@ -244,7 +244,41 @@ data class AppStrings(
     val vdbExporting: String = "Ukladám do Downloads…",
     val vdbExportDone: String = "Uložené do Downloads",
     val vdbExportFailed: String = "Export zlyhal",
-    val vdbJsonFormat: String = "Formát JSON"
+    val vdbJsonFormat: String = "Formát JSON",
+
+    // Backup & Restore
+    val backupTitle: String = "Záloha a obnova",
+    val backupExport: String = "Zálohovať nastavenia",
+    val backupExportDesc: String = "Uloží všetky nastavenia, tapetu a databázy do jedného súboru",
+    val backupImport: String = "Obnoviť zo zálohy",
+    val backupImportDesc: String = "Nahradí všetky aktuálne nastavenia, tapetu a databázy",
+    val backupExporting: String = "Zálohujem…",
+    val backupImporting: String = "Obnovujem…",
+    val backupExportSuccess: String = "Záloha uložená · %d nastavení, %d databáz",
+    val backupImportSuccess: String = "Záloha obnovená · %d nastavení, %d databáz. Reštartujem…",
+    val backupExportFailed: String = "Záloha zlyhala",
+    val backupImportFailed: String = "Obnova zlyhala",
+    val backupConfirmTitle: String = "Obnoviť zo zálohy?",
+    val backupConfirmDesc: String = "Toto nahradí všetky tvoje aktuálne nastavenia, tapetu a databázy. Akciu nie je možné vrátiť späť.",
+
+    // Verse language source toggle (in Settings)
+    val vdbSourceDefault: String = "Vstavané",
+    val vdbSourceCustom: String = "Vlastné",
+    val vdbEmptyCustom: String = "Zatiaľ žiadne vlastné databázy",
+    val vdbEmptyCustomDesc: String = "Vytvor si vlastnú zbierku veršov — napríklad pre KJV alebo iný preklad.",
+    val vdbEmptyCustomCta: String = "Vytvoriť novú databázu",
+
+    // Duplicate-code warnings + import conflict dialog
+    val vdbWarningCodeBuiltin: String = "Kód \"%s\" je už použitý vstavanou databázou. Môžeš ho použiť — vlastná DB bude zdieľať kód.",
+    val vdbWarningCodeCustom: String = "Kód \"%s\" už existuje ako vlastná databáza. Uloženie ju prepíše.",
+    val vdbImportConflictTitle: String = "Kód už existuje",
+    val vdbImportConflictDesc: String = "Vlastná databáza s kódom \"%s\" už existuje. Zadaj iný kód, alebo nech \"%s\" na prepísanie.",
+    val vdbImportConflictAction: String = "Importovať s týmto kódom",
+
+    // Overwrite confirmation dialog (CreateEditScreen — Save with existing custom code)
+    val vdbOverwriteTitle: String = "Prepísať databázu?",
+    val vdbOverwriteDesc: String = "Vlastná databáza s kódom \"%s\" už existuje. Uloženie natrvalo prepíše jej verše. Túto akciu nie je možné vrátiť späť.",
+    val vdbOverwriteConfirm: String = "Prepísať"
 )
 
 val skStrings = AppStrings()
@@ -381,7 +415,41 @@ val enStrings = AppStrings(
     vdbExporting = "Saving to Downloads…",
     vdbExportDone = "Saved to Downloads",
     vdbExportFailed = "Export failed",
-    vdbJsonFormat = "JSON format"
+    vdbJsonFormat = "JSON format",
+
+    // Backup & Restore
+    backupTitle = "Backup & Restore",
+    backupExport = "Back up settings",
+    backupExportDesc = "Saves all settings, wallpaper, and databases to a single file",
+    backupImport = "Restore from backup",
+    backupImportDesc = "Replaces all current settings, wallpaper, and databases",
+    backupExporting = "Backing up…",
+    backupImporting = "Restoring…",
+    backupExportSuccess = "Backup saved · %d settings, %d databases",
+    backupImportSuccess = "Backup restored · %d settings, %d databases. Restarting…",
+    backupExportFailed = "Backup failed",
+    backupImportFailed = "Restore failed",
+    backupConfirmTitle = "Restore from backup?",
+    backupConfirmDesc = "This will replace all your current settings, wallpaper, and databases. This cannot be undone.",
+
+    // Verse language source toggle (in Settings)
+    vdbSourceDefault = "Default",
+    vdbSourceCustom = "Custom",
+    vdbEmptyCustom = "No custom databases yet",
+    vdbEmptyCustomDesc = "Create your own verse collection — for example KJV or another translation.",
+    vdbEmptyCustomCta = "Create new database",
+
+    // Duplicate-code warnings + import conflict dialog
+    vdbWarningCodeBuiltin = "Code \"%s\" is already used by a built-in database. You can still use it — the custom DB will share the code.",
+    vdbWarningCodeCustom = "Code \"%s\" already exists as a custom database. Saving will overwrite it.",
+    vdbImportConflictTitle = "Code already exists",
+    vdbImportConflictDesc = "A custom database with code \"%s\" already exists. Enter a different code, or keep \"%s\" to overwrite.",
+    vdbImportConflictAction = "Import with this code",
+
+    // Overwrite confirmation dialog (CreateEditScreen — Save with existing custom code)
+    vdbOverwriteTitle = "Overwrite database?",
+    vdbOverwriteDesc = "A custom database with code \"%s\" already exists. Saving will permanently replace its verses. This action cannot be undone.",
+    vdbOverwriteConfirm = "Overwrite"
 )
 
 val czStrings = AppStrings(
@@ -516,7 +584,41 @@ val czStrings = AppStrings(
     vdbExporting = "Ukládám do Downloads…",
     vdbExportDone = "Uloženo do Downloads",
     vdbExportFailed = "Export selhal",
-    vdbJsonFormat = "Formát JSON"
+    vdbJsonFormat = "Formát JSON",
+
+    // Backup & Restore
+    backupTitle = "Záloha a obnova",
+    backupExport = "Zálohovat nastavení",
+    backupExportDesc = "Uloží všechna nastavení, tapetu a databáze do jednoho souboru",
+    backupImport = "Obnovit ze zálohy",
+    backupImportDesc = "Nahradí všechna aktuální nastavení, tapetu a databáze",
+    backupExporting = "Zálohuji…",
+    backupImporting = "Obnovuji…",
+    backupExportSuccess = "Záloha uložena · %d nastavení, %d databází",
+    backupImportSuccess = "Záloha obnovena · %d nastavení, %d databází. Restartuji…",
+    backupExportFailed = "Záloha selhala",
+    backupImportFailed = "Obnova selhala",
+    backupConfirmTitle = "Obnovit ze zálohy?",
+    backupConfirmDesc = "Toto nahradí všechna tvá aktuální nastavení, tapetu a databáze. Akci nelze vrátit zpět.",
+
+    // Verse language source toggle (in Settings)
+    vdbSourceDefault = "Vestavěné",
+    vdbSourceCustom = "Vlastní",
+    vdbEmptyCustom = "Zatím žádné vlastní databáze",
+    vdbEmptyCustomDesc = "Vytvoř si vlastní sbírku veršů — třeba pro KJV nebo jiný překlad.",
+    vdbEmptyCustomCta = "Vytvořit novou databázi",
+
+    // Duplicate-code warnings + import conflict dialog
+    vdbWarningCodeBuiltin = "Kód \"%s\" je již použit vestavěnou databází. Můžeš ho použít — vlastní DB bude sdílet kód.",
+    vdbWarningCodeCustom = "Kód \"%s\" již existuje jako vlastní databáze. Uložení ji přepíše.",
+    vdbImportConflictTitle = "Kód již existuje",
+    vdbImportConflictDesc = "Vlastní databáze s kódem \"%s\" již existuje. Zadej jiný kód, nebo nech \"%s\" pro přepsání.",
+    vdbImportConflictAction = "Importovat s tímto kódem",
+
+    // Overwrite confirmation dialog (CreateEditScreen — Save with existing custom code)
+    vdbOverwriteTitle = "Přepsat databázi?",
+    vdbOverwriteDesc = "Vlastní databáze s kódem \"%s\" již existuje. Uložení trvale přepíše její verše. Tuto akci nelze vrátit zpět.",
+    vdbOverwriteConfirm = "Přepsat"
 )
 
 val esStrings = AppStrings(
@@ -651,7 +753,41 @@ val esStrings = AppStrings(
     vdbExporting = "Guardando en Descargas…",
     vdbExportDone = "Guardado en Descargas",
     vdbExportFailed = "Error al exportar",
-    vdbJsonFormat = "Formato JSON"
+    vdbJsonFormat = "Formato JSON",
+
+    // Backup & Restore
+    backupTitle = "Copia de seguridad y restauración",
+    backupExport = "Hacer copia de seguridad",
+    backupExportDesc = "Guarda todos los ajustes, fondo de pantalla y bases de datos en un solo archivo",
+    backupImport = "Restaurar desde copia de seguridad",
+    backupImportDesc = "Reemplaza todos los ajustes, fondo de pantalla y bases de datos actuales",
+    backupExporting = "Haciendo copia…",
+    backupImporting = "Restaurando…",
+    backupExportSuccess = "Copia guardada · %d ajustes, %d bases de datos",
+    backupImportSuccess = "Copia restaurada · %d ajustes, %d bases de datos. Reiniciando…",
+    backupExportFailed = "La copia de seguridad falló",
+    backupImportFailed = "La restauración falló",
+    backupConfirmTitle = "¿Restaurar desde copia de seguridad?",
+    backupConfirmDesc = "Esto reemplazará todos tus ajustes, fondo de pantalla y bases de datos actuales. No se puede deshacer.",
+
+    // Verse language source toggle (in Settings)
+    vdbSourceDefault = "Predeterminadas",
+    vdbSourceCustom = "Personalizadas",
+    vdbEmptyCustom = "Aún no hay bases de datos personalizadas",
+    vdbEmptyCustomDesc = "Crea tu propia colección de versículos, por ejemplo KJV u otra traducción.",
+    vdbEmptyCustomCta = "Crear nueva base de datos",
+
+    // Duplicate-code warnings + import conflict dialog
+    vdbWarningCodeBuiltin = "El código \"%s\" ya lo usa una base de datos integrada. Puedes usarlo — la base personalizada compartirá el código.",
+    vdbWarningCodeCustom = "El código \"%s\" ya existe como base de datos personalizada. Guardar la sobrescribirá.",
+    vdbImportConflictTitle = "El código ya existe",
+    vdbImportConflictDesc = "Ya existe una base de datos personalizada con el código \"%s\". Introduce un código distinto, o deja \"%s\" para sobrescribir.",
+    vdbImportConflictAction = "Importar con este código",
+
+    // Overwrite confirmation dialog (CreateEditScreen — Save with existing custom code)
+    vdbOverwriteTitle = "¿Sobrescribir base de datos?",
+    vdbOverwriteDesc = "Ya existe una base de datos personalizada con el código \"%s\". Guardar reemplazará permanentemente sus versículos. Esta acción no se puede deshacer.",
+    vdbOverwriteConfirm = "Sobrescribir"
 )
 
 val itStrings = AppStrings(
@@ -786,7 +922,41 @@ val itStrings = AppStrings(
     vdbExporting = "Salvataggio in Download…",
     vdbExportDone = "Salvato in Download",
     vdbExportFailed = "Esportazione fallita",
-    vdbJsonFormat = "Formato JSON"
+    vdbJsonFormat = "Formato JSON",
+
+    // Backup & Restore
+    backupTitle = "Backup e ripristino",
+    backupExport = "Esegui backup delle impostazioni",
+    backupExportDesc = "Salva tutte le impostazioni, lo sfondo e i database in un unico file",
+    backupImport = "Ripristina da backup",
+    backupImportDesc = "Sostituisce tutte le impostazioni, lo sfondo e i database attuali",
+    backupExporting = "Backup in corso…",
+    backupImporting = "Ripristino in corso…",
+    backupExportSuccess = "Backup salvato · %d impostazioni, %d database",
+    backupImportSuccess = "Backup ripristinato · %d impostazioni, %d database. Riavvio…",
+    backupExportFailed = "Backup fallito",
+    backupImportFailed = "Ripristino fallito",
+    backupConfirmTitle = "Ripristinare dal backup?",
+    backupConfirmDesc = "Verranno sostituite tutte le impostazioni, lo sfondo e i database attuali. Operazione irreversibile.",
+
+    // Verse language source toggle (in Settings)
+    vdbSourceDefault = "Predefinite",
+    vdbSourceCustom = "Personalizzate",
+    vdbEmptyCustom = "Nessun database personalizzato",
+    vdbEmptyCustomDesc = "Crea la tua raccolta di versetti, ad esempio KJV o un'altra traduzione.",
+    vdbEmptyCustomCta = "Crea nuovo database",
+
+    // Duplicate-code warnings + import conflict dialog
+    vdbWarningCodeBuiltin = "Il codice \"%s\" è già usato da un database integrato. Puoi comunque usarlo — il database personalizzato condividerà il codice.",
+    vdbWarningCodeCustom = "Il codice \"%s\" esiste già come database personalizzato. Il salvataggio lo sovrascriverà.",
+    vdbImportConflictTitle = "Codice già esistente",
+    vdbImportConflictDesc = "Esiste già un database personalizzato con codice \"%s\". Inserisci un codice diverso, oppure lascia \"%s\" per sovrascrivere.",
+    vdbImportConflictAction = "Importa con questo codice",
+
+    // Overwrite confirmation dialog (CreateEditScreen — Save with existing custom code)
+    vdbOverwriteTitle = "Sovrascrivere il database?",
+    vdbOverwriteDesc = "Esiste già un database personalizzato con codice \"%s\". Il salvataggio sostituirà definitivamente i suoi versetti. Questa azione non può essere annullata.",
+    vdbOverwriteConfirm = "Sovrascrivi"
 )
 
 val frStrings = AppStrings(
@@ -921,7 +1091,41 @@ val frStrings = AppStrings(
     vdbExporting = "Enregistrement dans Téléchargements…",
     vdbExportDone = "Enregistré dans Téléchargements",
     vdbExportFailed = "Échec de l'exportation",
-    vdbJsonFormat = "Format JSON"
+    vdbJsonFormat = "Format JSON",
+
+    // Backup & Restore
+    backupTitle = "Sauvegarde et restauration",
+    backupExport = "Sauvegarder les paramètres",
+    backupExportDesc = "Enregistre tous les paramètres, le fond d'écran et les bases de données dans un seul fichier",
+    backupImport = "Restaurer depuis une sauvegarde",
+    backupImportDesc = "Remplace tous les paramètres, le fond d'écran et les bases de données actuels",
+    backupExporting = "Sauvegarde…",
+    backupImporting = "Restauration…",
+    backupExportSuccess = "Sauvegarde enregistrée · %d paramètres, %d bases de données",
+    backupImportSuccess = "Sauvegarde restaurée · %d paramètres, %d bases de données. Redémarrage…",
+    backupExportFailed = "Échec de la sauvegarde",
+    backupImportFailed = "Échec de la restauration",
+    backupConfirmTitle = "Restaurer depuis une sauvegarde ?",
+    backupConfirmDesc = "Cela remplacera tous vos paramètres, fond d'écran et bases de données actuels. Action irréversible.",
+
+    // Verse language source toggle (in Settings)
+    vdbSourceDefault = "Intégrées",
+    vdbSourceCustom = "Personnalisées",
+    vdbEmptyCustom = "Aucune base de données personnalisée",
+    vdbEmptyCustomDesc = "Créez votre propre collection de versets, par exemple KJV ou une autre traduction.",
+    vdbEmptyCustomCta = "Créer une base de données",
+
+    // Duplicate-code warnings + import conflict dialog
+    vdbWarningCodeBuiltin = "Le code \"%s\" est déjà utilisé par une base de données intégrée. Vous pouvez l'utiliser — la base personnalisée partagera le code.",
+    vdbWarningCodeCustom = "Le code \"%s\" existe déjà comme base de données personnalisée. L'enregistrement l'écrasera.",
+    vdbImportConflictTitle = "Le code existe déjà",
+    vdbImportConflictDesc = "Une base de données personnalisée avec le code \"%s\" existe déjà. Saisissez un autre code, ou laissez \"%s\" pour écraser.",
+    vdbImportConflictAction = "Importer avec ce code",
+
+    // Overwrite confirmation dialog (CreateEditScreen — Save with existing custom code)
+    vdbOverwriteTitle = "Écraser la base de données ?",
+    vdbOverwriteDesc = "Une base de données personnalisée avec le code \"%s\" existe déjà. L'enregistrement remplacera définitivement ses versets. Cette action est irréversible.",
+    vdbOverwriteConfirm = "Écraser"
 )
 
 val deStrings = AppStrings(
@@ -1056,7 +1260,41 @@ val deStrings = AppStrings(
     vdbExporting = "Wird in Downloads gespeichert…",
     vdbExportDone = "In Downloads gespeichert",
     vdbExportFailed = "Export fehlgeschlagen",
-    vdbJsonFormat = "JSON-Format"
+    vdbJsonFormat = "JSON-Format",
+
+    // Backup & Restore
+    backupTitle = "Sicherung & Wiederherstellung",
+    backupExport = "Einstellungen sichern",
+    backupExportDesc = "Speichert alle Einstellungen, das Hintergrundbild und die Datenbanken in einer Datei",
+    backupImport = "Aus Sicherung wiederherstellen",
+    backupImportDesc = "Ersetzt alle aktuellen Einstellungen, das Hintergrundbild und die Datenbanken",
+    backupExporting = "Sichere…",
+    backupImporting = "Stelle wieder her…",
+    backupExportSuccess = "Sicherung gespeichert · %d Einstellungen, %d Datenbanken",
+    backupImportSuccess = "Sicherung wiederhergestellt · %d Einstellungen, %d Datenbanken. Neustart…",
+    backupExportFailed = "Sicherung fehlgeschlagen",
+    backupImportFailed = "Wiederherstellung fehlgeschlagen",
+    backupConfirmTitle = "Aus Sicherung wiederherstellen?",
+    backupConfirmDesc = "Dies ersetzt alle deine aktuellen Einstellungen, das Hintergrundbild und die Datenbanken. Vorgang nicht umkehrbar.",
+
+    // Verse language source toggle (in Settings)
+    vdbSourceDefault = "Standard",
+    vdbSourceCustom = "Eigene",
+    vdbEmptyCustom = "Noch keine eigenen Datenbanken",
+    vdbEmptyCustomDesc = "Erstelle deine eigene Verssammlung, z. B. KJV oder eine andere Übersetzung.",
+    vdbEmptyCustomCta = "Neue Datenbank erstellen",
+
+    // Duplicate-code warnings + import conflict dialog
+    vdbWarningCodeBuiltin = "Code \"%s\" wird bereits von einer integrierten Datenbank verwendet. Du kannst ihn trotzdem verwenden — die eigene DB teilt sich den Code.",
+    vdbWarningCodeCustom = "Code \"%s\" existiert bereits als eigene Datenbank. Speichern überschreibt sie.",
+    vdbImportConflictTitle = "Code existiert bereits",
+    vdbImportConflictDesc = "Eine eigene Datenbank mit Code \"%s\" existiert bereits. Gib einen anderen Code ein, oder behalte \"%s\" zum Überschreiben.",
+    vdbImportConflictAction = "Mit diesem Code importieren",
+
+    // Overwrite confirmation dialog (CreateEditScreen — Save with existing custom code)
+    vdbOverwriteTitle = "Datenbank überschreiben?",
+    vdbOverwriteDesc = "Eine eigene Datenbank mit Code \"%s\" existiert bereits. Speichern überschreibt ihre Verse dauerhaft. Diese Aktion kann nicht rückgängig gemacht werden.",
+    vdbOverwriteConfirm = "Überschreiben"
 )
 
 val huStrings = AppStrings(
@@ -1192,7 +1430,41 @@ val huStrings = AppStrings(
     vdbExporting = "Mentés a Letöltések mappába…",
     vdbExportDone = "Mentve a Letöltések mappába",
     vdbExportFailed = "Exportálás sikertelen",
-    vdbJsonFormat = "JSON formátum"
+    vdbJsonFormat = "JSON formátum",
+
+    // Backup & Restore
+    backupTitle = "Biztonsági mentés és visszaállítás",
+    backupExport = "Beállítások mentése",
+    backupExportDesc = "Minden beállítást, háttérképet és adatbázist egyetlen fájlba ment",
+    backupImport = "Visszaállítás mentésből",
+    backupImportDesc = "Lecseréli az összes jelenlegi beállítást, háttérképet és adatbázist",
+    backupExporting = "Mentés…",
+    backupImporting = "Visszaállítás…",
+    backupExportSuccess = "Mentés elmentve · %d beállítás, %d adatbázis",
+    backupImportSuccess = "Mentés visszaállítva · %d beállítás, %d adatbázis. Újraindítás…",
+    backupExportFailed = "A mentés sikertelen",
+    backupImportFailed = "A visszaállítás sikertelen",
+    backupConfirmTitle = "Visszaállítás mentésből?",
+    backupConfirmDesc = "Ez lecseréli az összes jelenlegi beállításodat, háttérképedet és adatbázisodat. A művelet nem visszavonható.",
+
+    // Verse language source toggle (in Settings)
+    vdbSourceDefault = "Beépített",
+    vdbSourceCustom = "Saját",
+    vdbEmptyCustom = "Még nincsenek saját adatbázisok",
+    vdbEmptyCustomDesc = "Hozd létre a saját versgyűjteményedet — például KJV vagy más fordítás.",
+    vdbEmptyCustomCta = "Új adatbázis létrehozása",
+
+    // Duplicate-code warnings + import conflict dialog
+    vdbWarningCodeBuiltin = "A(z) \"%s\" kódot már használja egy beépített adatbázis. Használhatod — a saját DB megosztja a kódot.",
+    vdbWarningCodeCustom = "A(z) \"%s\" kód már létezik saját adatbázisként. A mentés felülírja.",
+    vdbImportConflictTitle = "A kód már létezik",
+    vdbImportConflictDesc = "Már létezik saját adatbázis \"%s\" kóddal. Adj meg másik kódot, vagy hagyd \"%s\"-t a felülíráshoz.",
+    vdbImportConflictAction = "Importálás ezzel a kóddal",
+
+    // Overwrite confirmation dialog (CreateEditScreen — Save with existing custom code)
+    vdbOverwriteTitle = "Adatbázis felülírása?",
+    vdbOverwriteDesc = "Már létezik saját adatbázis \"%s\" kóddal. A mentés véglegesen felülírja a verseit. Ez a művelet nem visszavonható.",
+    vdbOverwriteConfirm = "Felülírás"
 )
 
 val plStrings = AppStrings(
@@ -1328,7 +1600,41 @@ val plStrings = AppStrings(
     vdbExporting = "Zapisywanie do Pobrane…",
     vdbExportDone = "Zapisano do Pobrane",
     vdbExportFailed = "Eksport nie powiódł się",
-    vdbJsonFormat = "Format JSON"
+    vdbJsonFormat = "Format JSON",
+
+    // Backup & Restore
+    backupTitle = "Kopia zapasowa i przywracanie",
+    backupExport = "Utwórz kopię zapasową ustawień",
+    backupExportDesc = "Zapisuje wszystkie ustawienia, tapetę i bazy danych do jednego pliku",
+    backupImport = "Przywróć z kopii zapasowej",
+    backupImportDesc = "Zastępuje wszystkie obecne ustawienia, tapetę i bazy danych",
+    backupExporting = "Tworzenie kopii…",
+    backupImporting = "Przywracanie…",
+    backupExportSuccess = "Kopia zapisana · %d ustawień, %d baz danych",
+    backupImportSuccess = "Kopia przywrócona · %d ustawień, %d baz danych. Restart…",
+    backupExportFailed = "Tworzenie kopii nie powiodło się",
+    backupImportFailed = "Przywracanie nie powiodło się",
+    backupConfirmTitle = "Przywrócić z kopii zapasowej?",
+    backupConfirmDesc = "To zastąpi wszystkie Twoje obecne ustawienia, tapetę i bazy danych. Tej czynności nie można cofnąć.",
+
+    // Verse language source toggle (in Settings)
+    vdbSourceDefault = "Wbudowane",
+    vdbSourceCustom = "Własne",
+    vdbEmptyCustom = "Brak własnych baz danych",
+    vdbEmptyCustomDesc = "Utwórz własną kolekcję wersetów — np. KJV lub inne tłumaczenie.",
+    vdbEmptyCustomCta = "Utwórz nową bazę danych",
+
+    // Duplicate-code warnings + import conflict dialog
+    vdbWarningCodeBuiltin = "Kod \"%s\" jest już używany przez wbudowaną bazę. Możesz go użyć — własna baza będzie współdzielić kod.",
+    vdbWarningCodeCustom = "Kod \"%s\" już istnieje jako własna baza danych. Zapisanie ją nadpisze.",
+    vdbImportConflictTitle = "Kod już istnieje",
+    vdbImportConflictDesc = "Własna baza danych z kodem \"%s\" już istnieje. Wpisz inny kod, lub zostaw \"%s\" aby nadpisać.",
+    vdbImportConflictAction = "Importuj z tym kodem",
+
+    // Overwrite confirmation dialog (CreateEditScreen — Save with existing custom code)
+    vdbOverwriteTitle = "Nadpisać bazę danych?",
+    vdbOverwriteDesc = "Własna baza danych z kodem \"%s\" już istnieje. Zapisanie trwale zastąpi jej wersety. Tej czynności nie można cofnąć.",
+    vdbOverwriteConfirm = "Nadpisz"
 )
 fun getDefaultAppLanguage(): String {
     val sysLang = Locale.getDefault().language.uppercase()
@@ -1474,6 +1780,27 @@ fun MainScreen(
 
     var appLang by remember { mutableStateOf(prefs.getString("app_lang", defaultSystemLang) ?: defaultSystemLang) }
     var verseLang by remember { mutableStateOf(prefs.getString("verse_lang", defaultSystemLang) ?: defaultSystemLang) }
+    // Track whether the selected verse language comes from a built-in asset
+    // (SOURCE_BUILTIN) or a user-created custom database (SOURCE_CUSTOM).
+    // This disambiguates the case where a custom DB shares a code with a
+    // built-in (e.g. a custom "EN" overriding the built-in "EN").
+    var verseLangSource by remember {
+        mutableStateOf(
+            prefs.getString("verse_lang_source", LocalBibleProvider.SOURCE_BUILTIN)
+                ?: LocalBibleProvider.SOURCE_BUILTIN
+        )
+    }
+    // Per-segment "last selected code" memory. When the user flips the
+    // Default / Custom segmented toggle, we auto-apply the last code they
+    // had chosen in that segment (so e.g. switching Default→Custom→Default
+    // restores the built-in language they had picked, e.g. Slovak).
+    // Defaults: builtin → app language, custom → first custom DB if any.
+    var lastBuiltinCode by remember {
+        mutableStateOf(prefs.getString("last_builtin_code", appLang) ?: appLang)
+    }
+    var lastCustomCode by remember {
+        mutableStateOf(prefs.getString("last_custom_code", "") ?: "")
+    }
 
     // Strings
     val strings = when (appLang) {
@@ -1491,9 +1818,23 @@ fun MainScreen(
     // Edit Mode a Settings
     var isEditing by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
+    // Verse-database sheet state — driven by both the "Manage" button in the
+    // Verse databases section and the "Create new database" CTA inside the
+    // VerseLanguagePicker (when the custom list is empty).
+    var showDbSheet by remember { mutableStateOf(false) }
+    var dbSheetOpenCreate by remember { mutableStateOf(false) }
+    // Hoisted so both the settings sheet (picker + manage button) and the
+    // outer VerseDatabaseSheet host can read/refresh the same list.
+    var customDbs by remember { mutableStateOf(VerseJsonManager.listCustomDatabases(context)) }
     var isDailyActive by remember { mutableStateOf(prefs.getBoolean("auto_wallpaper_active", false)) }
     var autoIntervalHours by remember { mutableIntStateOf(prefs.getInt("auto_interval_hours", 24)) }
     var changeOnScreenOff by remember { mutableStateOf(prefs.getBoolean("change_on_screen_off", false)) }
+
+    // Backup & Restore state
+    var isBackingUp by remember { mutableStateOf(false) }
+    var isRestoring by remember { mutableStateOf(false) }
+    var showRestoreConfirm by remember { mutableStateOf(false) }
+    var pendingRestoreUri by remember { mutableStateOf<Uri?>(null) }
 
     // Custom Haptic Helper
     val performHaptic = { type: HapticFeedbackType ->
@@ -1511,6 +1852,66 @@ fun MainScreen(
         }
     }
 
+    // Backup & Restore launchers + restore function — must be declared
+    // after showNotification and scope, both of which they reference.
+    // Export: user picks where to save the backup ZIP
+    val backupSaver = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/zip")
+    ) { uri ->
+        if (uri != null) {
+            isBackingUp = true
+            scope.launch {
+                SettingsBackupManager.export(context, uri).fold(
+                    onSuccess = { summary ->
+                        isBackingUp = false
+                        showNotification(
+                            strings.backupExportSuccess.format(summary.prefsCount, summary.databaseCount),
+                            NotificationType.SUCCESS
+                        )
+                    },
+                    onFailure = {
+                        isBackingUp = false
+                        showNotification(strings.backupExportFailed, NotificationType.ERROR)
+                    }
+                )
+            }
+        }
+    }
+
+    // Import: user picks a backup ZIP to restore from
+    val backupPicker = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument()
+    ) { uri ->
+        if (uri != null) {
+            pendingRestoreUri = uri
+            showRestoreConfirm = true
+        }
+    }
+
+    fun performRestore(uri: Uri) {
+        isRestoring = true
+        scope.launch {
+            SettingsBackupManager.import(context, uri).fold(
+                onSuccess = { summary ->
+                    isRestoring = false
+                    showNotification(
+                        strings.backupImportSuccess.format(summary.prefsCount, summary.databaseCount),
+                        NotificationType.SUCCESS
+                    )
+                    // Recreate the Activity so all `remember { prefs... }`
+                    // state re-initializes from the freshly-written prefs,
+                    // and the restored wallpaper is picked up.
+                    kotlinx.coroutines.delay(800)
+                    (context as? android.app.Activity)?.recreate()
+                },
+                onFailure = {
+                    isRestoring = false
+                    showNotification(strings.backupImportFailed, NotificationType.ERROR)
+                }
+            )
+        }
+    }
+
     // Function to reload data so it catches background changes (like new verse or worker wallpaper change)
     val reloadPreviewData = {
         val useCustomVerse = prefs.getBoolean("use_custom_verse", false)
@@ -1521,7 +1922,7 @@ fun MainScreen(
             versePair = Pair(savedCustomVerse, savedCustomRef ?: "")
         } else {
             scope.launch {
-                versePair = LocalBibleProvider.getVerseForInterval(context, verseLang, autoIntervalHours)
+                versePair = LocalBibleProvider.getVerseForInterval(context, verseLang, autoIntervalHours, verseLangSource)
             }
         }
 
@@ -1583,7 +1984,7 @@ fun MainScreen(
 
         if (enable) {
             prefs.edit().putBoolean("use_custom_verse", false).apply()
-            versePair = LocalBibleProvider.getVerseForInterval(context, verseLang, autoIntervalHours)
+            versePair = LocalBibleProvider.getVerseForInterval(context, verseLang, autoIntervalHours, verseLangSource)
             if (!changeOnScreenOff) {
                 scheduleAutoWallpaper(context, autoIntervalHours, dailyHour)
             }
@@ -1628,8 +2029,9 @@ fun MainScreen(
 
     val settingsSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    BackHandler(enabled = isEditing || showSettings) {
+    BackHandler(enabled = isEditing || showSettings || showDbSheet) {
         if (isEditing) isEditing = false
+        else if (showDbSheet) showDbSheet = false
         else if (showSettings) scope.launch {
             settingsSheetState.hide()
             showSettings = false
@@ -2498,12 +2900,6 @@ fun MainScreen(
                         icon = Icons.Default.Language,
                         title = strings.language
                     )
-                    var customDbOptions by remember {
-                        mutableStateOf(
-                            VerseJsonManager.listCustomDatabases(context)
-                                .map { it.lang to "★ ${it.lang} (${strings.vdbCustomLabel} · ${it.verseCount} ${strings.vdbVerses})" }
-                        )
-                    }
                     SettingsCard {
                         LanguageDropdown(
                             label = strings.appLanguage,
@@ -2513,22 +2909,92 @@ fun MainScreen(
                             onSelect = {
                                 appLang = it
                                 prefs.edit().putString("app_lang", it).apply()
-                            }
+                            },
+                            dismissLabel = strings.cancel,
+                            dialogIcon = Icons.Default.Language
                         )
                         HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
-                        val allVerseOptions = availableLanguages + customDbOptions
-                        LanguageDropdown(
-                            label = strings.verseLanguage,
+                        // Verse language is now selected via the new picker —
+                        // a Default / Custom segmented toggle keeps the two
+                        // sources visually separated instead of cramming them
+                        // into one long dropdown.
+                        VerseLanguagePicker(
+                            strings = strings,
                             selectedCode = verseLang,
-                            options = allVerseOptions,
-                            showLabel = true,
-                            onSelect = {
-                                if (verseLang != it) {
-                                    verseLang = it
-                                    prefs.edit().putString("verse_lang", it).apply()
+                            selectedSource = verseLangSource,
+                            customDbs = customDbs,
+                            onSelect = { code, source ->
+                                if (verseLang != code || verseLangSource != source) {
+                                    verseLang = code
+                                    verseLangSource = source
+                                    prefs.edit().putString("verse_lang", code).apply()
+                                    prefs.edit().putString("verse_lang_source", source).apply()
+                                    // Remember the code per-segment so switching
+                                    // back to this segment restores it.
+                                    if (source == LocalBibleProvider.SOURCE_BUILTIN) {
+                                        lastBuiltinCode = code
+                                        prefs.edit().putString("last_builtin_code", code).apply()
+                                    } else {
+                                        lastCustomCode = code
+                                        prefs.edit().putString("last_custom_code", code).apply()
+                                    }
                                     versePair = null
                                     scope.launch {
-                                        versePair = LocalBibleProvider.getVerseForInterval(context, it, autoIntervalHours)
+                                        versePair = LocalBibleProvider.getVerseForInterval(context, code, autoIntervalHours, source)
+                                    }
+                                }
+                            },
+                            onCreateCustom = {
+                                dbSheetOpenCreate = true
+                                showDbSheet = true
+                            },
+                            onSegmentChange = { newSource ->
+                                // The user tapped the segmented toggle. Auto-apply
+                                // the last-selected code for the new segment.
+                                when (newSource) {
+                                    LocalBibleProvider.SOURCE_BUILTIN -> {
+                                        // Fall back to appLang if no built-in was ever picked.
+                                        val code = lastBuiltinCode.ifBlank { appLang }
+                                        if (verseLang != code || verseLangSource != newSource) {
+                                            verseLang = code
+                                            verseLangSource = newSource
+                                            prefs.edit().putString("verse_lang", code).apply()
+                                            prefs.edit().putString("verse_lang_source", newSource).apply()
+                                            lastBuiltinCode = code
+                                            prefs.edit().putString("last_builtin_code", code).apply()
+                                            versePair = null
+                                            scope.launch {
+                                                versePair = LocalBibleProvider.getVerseForInterval(context, code, autoIntervalHours, newSource)
+                                            }
+                                        }
+                                    }
+                                    LocalBibleProvider.SOURCE_CUSTOM -> {
+                                        if (customDbs.isEmpty()) {
+                                            // No custom DBs exist — switch the source so the
+                                            // picker stays on the Custom segment and shows the
+                                            // empty-state CTA. Don't touch verseLang or reload
+                                            // verses (there's nothing to load yet).
+                                            if (verseLangSource != newSource) {
+                                                verseLangSource = newSource
+                                                prefs.edit().putString("verse_lang_source", newSource).apply()
+                                            }
+                                        } else {
+                                            // Pick the last custom code, or fall back to the
+                                            // first available custom DB.
+                                            val code = lastCustomCode.ifBlank { customDbs.first().lang }
+                                            if (verseLang != code || verseLangSource != newSource) {
+                                                verseLang = code
+                                                verseLangSource = newSource
+                                                prefs.edit().putString("verse_lang", code).apply()
+                                                prefs.edit().putString("verse_lang_source", newSource).apply()
+                                                lastCustomCode = code
+                                                prefs.edit().putString("last_custom_code", code).apply()
+                                                versePair = null
+                                                scope.launch {
+                                                    versePair = LocalBibleProvider.getVerseForInterval(context, code, autoIntervalHours, newSource)
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -2547,8 +3013,14 @@ fun MainScreen(
                             strings = strings,
                             showNotification = showNotification,
                             onDbChanged = {
-                                customDbOptions = VerseJsonManager.listCustomDatabases(context)
-                                    .map { db -> db.lang to "★ ${db.lang} (${strings.vdbCustomLabel} · ${db.verseCount} ${strings.vdbVerses})" }
+                                customDbs = VerseJsonManager.listCustomDatabases(context)
+                            },
+                            // Delegate sheet hosting to MainScreen so both the
+                            // "Manage" button and the picker's "Create new"
+                            // CTA route through the same showDbSheet state.
+                            onManage = {
+                                dbSheetOpenCreate = false
+                                showDbSheet = true
                             }
                         )
                     }
@@ -2665,6 +3137,143 @@ fun MainScreen(
 
                     Spacer(Modifier.height(24.dp))
 
+                    // --- BACKUP & RESTORE SECTION ---
+                    SettingsSectionHeader(
+                        icon = Icons.Outlined.Settings,
+                        title = strings.backupTitle
+                    )
+                    SettingsCard {
+                        // Export
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Upload, null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    strings.backupExport,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    strings.backupExportDesc,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            if (isBackingUp) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(22.dp),
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                FilledTonalButton(
+                                    onClick = {
+                                        val dateStr = SimpleDateFormat("yyyyMMdd_HHmm", Locale.getDefault()).format(Date())
+                                        backupSaver.launch("bible_lockscreen_backup_$dateStr.zip")
+                                    },
+                                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
+                                    modifier = Modifier.height(34.dp),
+                                    shape = RoundedCornerShape(10.dp),
+                                    colors = ButtonDefaults.filledTonalButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
+                                    )
+                                ) {
+                                    Text(strings.backupExport, style = MaterialTheme.typography.labelMedium)
+                                }
+                            }
+                        }
+
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+
+                        // Import
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(
+                                Icons.Default.Download, null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    strings.backupImport,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    strings.backupImportDesc,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            if (isRestoring) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(22.dp),
+                                    strokeWidth = 2.dp
+                                )
+                            } else {
+                                FilledTonalButton(
+                                    onClick = { backupPicker.launch(arrayOf("application/zip", "application/octet-stream", "*/*")) },
+                                    contentPadding = PaddingValues(horizontal = 14.dp, vertical = 0.dp),
+                                    modifier = Modifier.height(34.dp),
+                                    shape = RoundedCornerShape(10.dp),
+                                    colors = ButtonDefaults.filledTonalButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
+                                    )
+                                ) {
+                                    Text(strings.backupImport, style = MaterialTheme.typography.labelMedium)
+                                }
+                            }
+                        }
+                    }
+
+                    // Restore confirmation dialog
+                    if (showRestoreConfirm) {
+                        AlertDialog(
+                            onDismissRequest = { showRestoreConfirm = false },
+                            icon = {
+                                Icon(
+                                    Icons.Default.Warning, null,
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            },
+                            title = { Text(strings.backupConfirmTitle) },
+                            text = {
+                                Text(
+                                    strings.backupConfirmDesc,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            },
+                            confirmButton = {
+                                Button(
+                                    onClick = {
+                                        showRestoreConfirm = false
+                                        pendingRestoreUri?.let { performRestore(it) }
+                                        pendingRestoreUri = null
+                                    },
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.error,
+                                        contentColor = MaterialTheme.colorScheme.onError
+                                    )
+                                ) { Text(strings.backupImport) }
+                            },
+                            dismissButton = {
+                                TextButton(onClick = { showRestoreConfirm = false }) { Text(strings.cancel) }
+                            }
+                        )
+                    }
+
+                    Spacer(Modifier.height(24.dp))
+
                     // --- SUPPORT SECTION ---
                     SettingsSectionHeader(
                         icon = Icons.Outlined.Favorite,
@@ -2698,6 +3307,21 @@ fun MainScreen(
                     Spacer(Modifier.height(8.dp))
                 }
             }
+        }
+
+        // Verse-database sheet — opened either by the "Manage" button in the
+        // Verse databases section, or by the "Create new database" CTA inside
+        // the VerseLanguagePicker's empty custom state.
+        if (showDbSheet) {
+            VerseDatabaseSheet(
+                strings = strings,
+                showNotification = showNotification,
+                onDismiss = { showDbSheet = false },
+                onDbChanged = {
+                    customDbs = VerseJsonManager.listCustomDatabases(context)
+                },
+                openCreate = dbSheetOpenCreate
+            )
         }
 
         // Expressive Full-Screen Editor s animáciou
@@ -2854,13 +3478,16 @@ fun MainScreen(
 
 // --- KOMPONENTY ---
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LanguageDropdown(
     label: String,
     selectedCode: String,
     options: List<Pair<String, String>>,
     showLabel: Boolean = true,
-    onSelect: (String) -> Unit
+    onSelect: (String) -> Unit,
+    dismissLabel: String = "Cancel",
+    dialogIcon: androidx.compose.ui.graphics.vector.ImageVector? = null
 ) {
     var expanded by remember { mutableStateOf(false) }
     val selectedLabel = options.find { it.first == selectedCode }?.second ?: selectedCode
@@ -2869,31 +3496,30 @@ fun LanguageDropdown(
         if (showLabel) {
             Text(label, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
         }
-        Box {
-            OutlinedButton(
-                onClick = { expanded = true },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(selectedLabel)
-                Spacer(modifier = Modifier.weight(1f))
-                Icon(Icons.Default.ArrowDropDown, null)
-            }
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false },
-                modifier = Modifier.fillMaxWidth(0.7f)
-            ) {
-                options.forEach { (code, name) ->
-                    DropdownMenuItem(
-                        text = { Text(name) },
-                        onClick = {
-                            onSelect(code)
-                            expanded = false
-                        }
-                    )
-                }
-            }
+        OutlinedButton(
+            onClick = { expanded = true },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(14.dp)
+        ) {
+            Text(selectedLabel)
+            Spacer(modifier = Modifier.weight(1f))
+            Icon(Icons.Default.ArrowDropDown, null)
         }
+    }
+
+    if (expanded) {
+        LanguagePickerDialog(
+            onDismiss = { expanded = false },
+            title = label,
+            dismissLabel = dismissLabel,
+            icon = dialogIcon,
+            items = options.map { (code, name) -> LanguagePickerItem(code = code, title = name) },
+            selectedCode = selectedCode,
+            onSelect = {
+                onSelect(it)
+                expanded = false
+            }
+        )
     }
 }
 

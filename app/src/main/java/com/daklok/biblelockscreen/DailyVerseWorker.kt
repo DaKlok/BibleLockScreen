@@ -46,12 +46,14 @@ class DailyVerseWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
         } else {
             val defaultLang = LocalBibleProvider.getDefaultLanguage()
             val verseLang = prefs.getString("verse_lang", defaultLang) ?: defaultLang
+            val verseLangSource = prefs.getString("verse_lang_source", LocalBibleProvider.SOURCE_BUILTIN)
+                ?: LocalBibleProvider.SOURCE_BUILTIN
             val changeOnScreenOff = prefs.getBoolean("change_on_screen_off", false)
             if (changeOnScreenOff) {
-                LocalBibleProvider.getVerseForScreenOff(applicationContext, verseLang)
+                LocalBibleProvider.getVerseForScreenOff(applicationContext, verseLang, verseLangSource)
             } else {
                 val intervalHours = prefs.getInt("auto_interval_hours", 24)
-                LocalBibleProvider.getVerseForInterval(applicationContext, verseLang, intervalHours)
+                LocalBibleProvider.getVerseForInterval(applicationContext, verseLang, intervalHours, verseLangSource)
             }
         }
 

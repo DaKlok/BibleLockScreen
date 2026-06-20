@@ -15,6 +15,9 @@ data class Verse(
 
 object LocalBibleProvider {
 
+    const val SOURCE_BUILTIN = "BUILTIN"
+    const val SOURCE_CUSTOM = "CUSTOM"
+
     fun getDefaultLanguage(): String {
         return when (val sysLang = Locale.getDefault().language.uppercase()) {
             "CS" -> "CZ"
@@ -24,23 +27,36 @@ object LocalBibleProvider {
     }
 
     /**
-     * Loads JSON for a language — checks custom databases first, falls back to bundled assets.
+     * Loads JSON for a language, respecting the source.
+     *
+     * - SOURCE_CUSTOM → only loads from the user's custom databases.
+     * - SOURCE_BUILTIN (default) → only loads from bundled assets.
+     *
+     * This separation is what lets a user have a custom DB with the same
+     * code as a built-in (e.g. a custom "EN") and explicitly choose which
+     * one to use.
      */
-    private fun loadJson(context: Context, lang: String): String? {
-        VerseJsonManager.loadCustomVerses(context, lang)?.let { verses ->
-            if (verses.isNotEmpty()) return com.google.gson.Gson().toJson(verses)
+    private fun loadJson(context: Context, lang: String, source: String = SOURCE_BUILTIN): String? {
+        return when (source) {
+            SOURCE_CUSTOM -> {
+                VerseJsonManager.loadCustomVerses(context, lang)?.let { verses ->
+                    if (verses.isNotEmpty()) Gson().toJson(verses) else null
+                }
+            }
+            else -> {
+                try {
+                    context.assets.open("verses_$lang.json").bufferedReader().use { it.readText() }
+                } catch (e: Exception) { null }
+            }
         }
-        return try {
-            context.assets.open("verses_$lang.json").bufferedReader().use { it.readText() }
-        } catch (e: Exception) { null }
     }
 
-    fun getVerse(context: Context, lang: String): Pair<String, String> {
+    fun getVerse(context: Context, lang: String, source: String = SOURCE_BUILTIN): Pair<String, String> {
         return try {
 
             val dayOfYear = Calendar.getInstance().get(Calendar.DAY_OF_YEAR)
 
-            val jsonString = loadJson(context, lang) ?: return Pair("Error loading verse", "")
+            val jsonString = loadJson(context, lang, source) ?: return Pair("Error loading verse", "")
 
             val verses = Gson().fromJson(jsonString, Array<Verse>::class.java)
 
@@ -61,9 +77,9 @@ object LocalBibleProvider {
      * by the interval. Every device in the same UTC slot gets the same verse index.
      * For 24h intervals this is equivalent to the daily verse (same slot all day).
      */
-    fun getVerseForInterval(context: Context, lang: String, intervalHours: Int): Pair<String, String> {
+    fun getVerseForInterval(context: Context, lang: String, intervalHours: Int, source: String = SOURCE_BUILTIN): Pair<String, String> {
         return try {
-            val jsonString = loadJson(context, lang) ?: return Pair("Error loading verse", "")
+            val jsonString = loadJson(context, lang, source) ?: return Pair("Error loading verse", "")
 
             val verses = Gson().fromJson(jsonString, Array<Verse>::class.java)
 
@@ -96,12 +112,12 @@ object LocalBibleProvider {
      * stored in SharedPreferences. Each screen-off event advances the counter by 1,
      * so every lock shows a new verse regardless of time elapsed.
      */
-    fun getVerseForScreenOff(context: Context, lang: String): Pair<String, String> {
+    fun getVerseForScreenOff(context: Context, lang: String, source: String = SOURCE_BUILTIN): Pair<String, String> {
         return try {
             val prefs = context.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
             val index = prefs.getInt("screen_off_verse_index", 0)
 
-            val jsonString = loadJson(context, lang) ?: return Pair("Error loading verse", "")
+            val jsonString = loadJson(context, lang, source) ?: return Pair("Error loading verse", "")
             val verses = Gson().fromJson(jsonString, Array<Verse>::class.java)
 
             if (verses.isNullOrEmpty()) {
