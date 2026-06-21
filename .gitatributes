@@ -1,0 +1,4 @@
+# Force Unix line endings for text and JSON files
+* text=auto
+*.json text eol=lf
+*.txt text eol=lf
