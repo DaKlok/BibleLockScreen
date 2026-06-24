@@ -7,7 +7,6 @@
     <img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroidButtonGreyBorder_nofont.png" height="80" alt="Get it at IzzyOnDroid">
   </a>
 </p>
-
 <p align="center">
   <a href="https://apt.izzysoft.de/packages/com.daklok.biblelockscreen">
     <img src="https://img.shields.io/endpoint?url=https://apt.izzysoft.de/fdroid/api/v1/shield/com.daklok.biblelockscreen&label=IzzyOnDroid&style=for-the-badge" alt="IzzyOnDroid Version"/>
@@ -20,9 +19,36 @@
   </a>
 </p>
 
+<p align = "center">
+  <a href="https://f-droid.org/packages/com.daklok.biblelockscreen">
+    <img src="https://f-droid.org/badge/get-it-on.png" height="80" alt="Get it on F-Droid">
+  </a>
+</p>
+<p align="center">
+  <a href="https://f-droid.org/packages/com.daklok.biblelockscreen">
+    <img src="https://img.shields.io/f-droid/v/com.daklok.biblelockscreen?style=for-the-badge" alt="F-Droid Version"/>
+  </a>
+  <a href="https://f-droid.org/packages/com.daklok.biblelockscreen">
+    <img src="https://img.shields.io/badge/F--Droid-Reproducible-success?style=for-the-badge&logo=android" alt="F-Droid Reproducible Build"/>
+  </a>
+  <a href="https://github.com/daklok/biblelockscreen/blob/main/LICENSE">
+    <img src="https://img.shields.io/github/license/daklok/biblelockscreen?style=for-the-badge&color=blue" alt="License"/>
+  </a>
+</p>
+
 <p align="center">
   <img width="2000" alt="Screenshot_20260406-094105~2-right" src=".github/images/Main.png" />
 </p>
+
+---
+
+## 🔎 HOW IT WORKS
+
+1. **Choose Your Photo:** Select any image from your gallery to serve as the perfect canvas.
+2. **Customize the Verse:** Use our powerful editor to make the text look exactly how you want. Match the color to your background, choose a font that speaks to you, and position it perfectly.
+3. **Activate & Enjoy:** Turn on the daily automation. The app handles the rest, fetching the new verse and refreshing your wallpaper every morning.
+
+You are in complete control. Whether you prefer a minimalist, clean style or a bold, expressive design, Bible Lock Screen gives you the tools to create it.
 
 ---
 
