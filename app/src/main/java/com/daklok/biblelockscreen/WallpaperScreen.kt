@@ -86,23 +86,32 @@ fun WallpaperScreen(
     fun saveSettings(newSettings: WallpaperSettings) {
         settings = newSettings
         WallpaperSettings.save(prefs.edit(), newSettings)
+        scheduleWallpaperCycling(context)
     }
 
-    // Photo picker for adding wallpapers
+    // Multi-photo picker for adding wallpapers (only in the wallpaper screen)
     val photoPicker = rememberLauncherForActivityResult(
-        ActivityResultContracts.GetContent()
-    ) { uri ->
-        if (uri != null) {
+        ActivityResultContracts.GetMultipleContents()
+    ) { uris ->
+        if (uris.isNotEmpty()) {
             scope.launch {
-                val newId = WallpaperManager.addWallpaper(context, uri)
-                if (newId != null) {
-                    refresh()
-                    // If no active wallpaper yet, auto-activate the first one added
-                    if (activeId.isBlank() && wallpapers.isNotEmpty()) {
-                        val first = wallpapers.first()
-                        setActive(first)
-                    }
-                    showNotification(strings.wpAdd, NotificationType.SUCCESS)
+                var added = 0
+                uris.forEach { uri ->
+                    val newId = WallpaperManager.addWallpaper(context, uri)
+                    if (newId != null) added++
+                }
+                refresh()
+                // If no active wallpaper yet, auto-activate the first one added
+                if (activeId.isBlank() && wallpapers.isNotEmpty()) {
+                    val first = wallpapers.first()
+                    setActive(first)
+                }
+                if (added > 0) {
+                    showNotification(
+                        if (added == 1) strings.wpAdd
+                        else "$added ${strings.wpAdd}",
+                        NotificationType.SUCCESS
+                    )
                 } else {
                     showNotification(strings.wpAdd, NotificationType.ERROR)
                 }
@@ -260,6 +269,7 @@ fun WallpaperScreen(
                     wallpapers.forEach { wp ->
                         WallpaperThumbnail(
                             strings = strings,
+                            context = context,
                             wallpaper = wp,
                             isActive = wp.id == activeId,
                             onSetActive = { setActive(wp) },
@@ -351,37 +361,33 @@ fun WallpaperScreen(
                     Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                         HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
 
-                        // On-screen-off toggle
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Icon(
-                                Icons.Outlined.TouchApp, null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Column(modifier = Modifier.weight(1f)) {
-                                Text(strings.wpCycleOnScreenOff, style = MaterialTheme.typography.bodyMedium)
-                                Text(
-                                    strings.wpCycleOnScreenOffDesc,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            Switch(
-                                checked = settings.cycleOnScreenOff,
-                                onCheckedChange = {
-                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                    saveSettings(settings.copy(cycleOnScreenOff = it))
+                        // ── Mode picker (segmented buttons) ──────────────
+                        val modeOptions = listOf(
+                            strings.wpCycleModeInterval,
+                            strings.wpCycleModeScreenOff
+                        )
+                        SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+                            modeOptions.forEachIndexed { index, label ->
+                                val mode = if (index == 0)
+                                    WallpaperManager.CYCLE_CUSTOM_INTERVAL
+                                else
+                                    WallpaperManager.CYCLE_ON_SCREEN_OFF
+                                SegmentedButton(
+                                    selected = settings.cycleMode == mode,
+                                    onClick = {
+                                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                        saveSettings(settings.copy(cycleMode = mode))
+                                    },
+                                    shape = SegmentedButtonDefaults.itemShape(index = index, count = modeOptions.size)
+                                ) {
+                                    Text(label, maxLines = 1, style = MaterialTheme.typography.labelSmall)
                                 }
-                            )
+                            }
                         }
 
-                        // Interval slider — hidden when on-screen-off is active
+                        // ── Mode-specific sub-settings ────────────────────
                         AnimatedVisibility(
-                            visible = !settings.cycleOnScreenOff,
+                            visible = settings.cycleMode == WallpaperManager.CYCLE_CUSTOM_INTERVAL,
                             enter = expandVertically(tween(200)) + fadeIn(tween(200)),
                             exit = shrinkVertically(tween(160)) + fadeOut(tween(160))
                         ) {
@@ -428,180 +434,99 @@ fun WallpaperScreen(
                                     steps = intervalSteps.size - 2,
                                     modifier = Modifier.fillMaxWidth()
                                 )
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    intervalSteps.take(3).forEach { h ->
-                                        Text(
-                                            "${h}h",
-                                            style = MaterialTheme.typography.labelSmall,
-                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                // Daily hour — for 12h and 24h intervals
+                                AnimatedVisibility(visible = settings.cycleIntervalHours == 12 || settings.cycleIntervalHours == 24) {
+                                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                        Row(
+                                            modifier = Modifier.fillMaxWidth(),
+                                            verticalAlignment = Alignment.CenterVertically
+                                        ) {
+                                            Text(
+                                                strings.wpCycleDailyHour,
+                                                style = MaterialTheme.typography.bodyMedium,
+                                                modifier = Modifier.weight(1f)
+                                            )
+                                            Surface(
+                                                shape = RoundedCornerShape(8.dp),
+                                                color = MaterialTheme.colorScheme.primaryContainer
+                                            ) {
+                                                Text(
+                                                    String.format("%02d:00", settings.cycleDailyHour),
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                                )
+                                            }
+                                        }
+                                        Slider(
+                                            value = settings.cycleDailyHour.toFloat(),
+                                            onValueChange = { v ->
+                                                saveSettings(settings.copy(cycleDailyHour = v.toInt()))
+                                            },
+                                            valueRange = 0f..23f,
+                                            steps = 22,
+                                            modifier = Modifier.fillMaxWidth()
                                         )
                                     }
-                                    Text(
-                                        "24h",
-                                        style = MaterialTheme.typography.labelSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
                                 }
                             }
                         }
 
-                        // Daily hour slider — only for 24h interval
+                        // On-screen-off info
                         AnimatedVisibility(
-                            visible = settings.cycleIntervalHours == 24 && !settings.cycleOnScreenOff,
+                            visible = settings.cycleMode == WallpaperManager.CYCLE_ON_SCREEN_OFF,
                             enter = expandVertically(tween(200)) + fadeIn(tween(200)),
                             exit = shrinkVertically(tween(160)) + fadeOut(tween(160))
                         ) {
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                 Row(
                                     modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    Text(
-                                        strings.wpCycleDailyHour,
-                                        style = MaterialTheme.typography.bodyMedium,
-                                        modifier = Modifier.weight(1f)
+                                    Icon(
+                                        Icons.Default.Info, null,
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        modifier = Modifier.size(16.dp)
                                     )
+                                    Text(
+                                        strings.wpCycleModeScreenOffDesc,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                // Warning about potential slowness
+                                AnimatedVisibility(
+                                    visible = true,
+                                    enter = expandVertically(tween(200)) + fadeIn(tween(200)),
+                                    exit = shrinkVertically(tween(160)) + fadeOut(tween(160))
+                                ) {
                                     Surface(
-                                        shape = RoundedCornerShape(8.dp),
-                                        color = MaterialTheme.colorScheme.primaryContainer
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = MaterialTheme.colorScheme.errorContainer,
+                                        modifier = Modifier.fillMaxWidth()
                                     ) {
-                                        Text(
-                                            String.format("%02d:00", settings.cycleDailyHour),
-                                            style = MaterialTheme.typography.labelSmall,
-                                            fontWeight = FontWeight.Bold,
-                                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                        )
+                                        Row(
+                                            modifier = Modifier.padding(12.dp),
+                                            verticalAlignment = Alignment.Top,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Warning, null,
+                                                tint = MaterialTheme.colorScheme.onErrorContainer,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                            Text(
+                                                strings.wpDualLockWarning,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onErrorContainer
+                                            )
+                                        }
                                     }
                                 }
-                                Slider(
-                                    value = settings.cycleDailyHour.toFloat(),
-                                    onValueChange = { v ->
-                                        saveSettings(settings.copy(cycleDailyHour = v.toInt()))
-                                    },
-                                    valueRange = 0f..23f,
-                                    steps = 22,
-                                    modifier = Modifier.fillMaxWidth()
-                                )
                             }
                         }
-                    }
-                }
-            }
-        }
-
-        // ── Night mode ────────────────────────────────────────────────
-        Card(
-            shape = RoundedCornerShape(20.dp),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Column(
-                modifier = Modifier.padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(MaterialTheme.colorScheme.tertiaryContainer),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            Icons.Default.BrightnessMedium, null,
-                            tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                            modifier = Modifier.size(18.dp)
-                        )
-                    }
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            strings.wpNightMode,
-                            style = MaterialTheme.typography.bodyMedium,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Text(
-                            strings.wpNightModeDesc,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Switch(
-                        checked = settings.nightModeEnabled,
-                        onCheckedChange = {
-                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                            saveSettings(settings.copy(nightModeEnabled = it))
-                        }
-                    )
-                }
-
-                AnimatedVisibility(
-                    visible = settings.nightModeEnabled,
-                    enter = expandVertically(spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMediumLow)) + fadeIn(tween(280)),
-                    exit = shrinkVertically(tween(200)) + fadeOut(tween(200))
-                ) {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f))
-                        // Night start hour
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(strings.wpNightStart, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
-                            Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = MaterialTheme.colorScheme.tertiaryContainer
-                            ) {
-                                Text(
-                                    String.format("%02d:00", settings.nightStartHour),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onTertiaryContainer,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                )
-                            }
-                        }
-                        Slider(
-                            value = settings.nightStartHour.toFloat(),
-                            onValueChange = { v -> saveSettings(settings.copy(nightStartHour = v.toInt())) },
-                            valueRange = 0f..23f,
-                            steps = 22,
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                        // Night end hour
-                        Spacer(Modifier.height(4.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(strings.wpNightEnd, style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
-                            Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = MaterialTheme.colorScheme.tertiaryContainer
-                            ) {
-                                Text(
-                                    String.format("%02d:00", settings.nightEndHour),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    fontWeight = FontWeight.Bold,
-                                    color = MaterialTheme.colorScheme.onTertiaryContainer,
-                                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                                )
-                            }
-                        }
-                        Slider(
-                            value = settings.nightEndHour.toFloat(),
-                            onValueChange = { v -> saveSettings(settings.copy(nightEndHour = v.toInt())) },
-                            valueRange = 0f..23f,
-                            steps = 22,
-                            modifier = Modifier.fillMaxWidth()
-                        )
                     }
                 }
             }
@@ -616,6 +541,7 @@ fun WallpaperScreen(
 @Composable
 private fun WallpaperThumbnail(
     strings: AppStrings,
+    context: android.content.Context,
     wallpaper: WallpaperManager.Wallpaper,
     isActive: Boolean,
     onSetActive: () -> Unit,
@@ -635,7 +561,12 @@ private fun WallpaperThumbnail(
         Box(modifier = Modifier.fillMaxSize()) {
             // Wallpaper image
             coil.compose.AsyncImage(
-                model = wallpaper.file,
+                model = coil.request.ImageRequest.Builder(context)
+                    .data(wallpaper.file)
+                    .memoryCachePolicy(coil.request.CachePolicy.DISABLED)
+                    .diskCachePolicy(coil.request.CachePolicy.DISABLED)
+                    .crossfade(false)
+                    .build(),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
@@ -685,19 +616,20 @@ private fun WallpaperThumbnail(
                 }
             }
 
-            // Delete button (top-right)
-            IconButton(
-                onClick = onDelete,
+            // Delete button (top-right) — M3 Expressive squircle
+            Box(
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(4.dp)
+                    .padding(6.dp)
                     .size(28.dp)
-                    .clip(CircleShape)
-                    .background(Color.Black.copy(alpha = 0.5f))
+                    .clip(RoundedCornerShape(percent = 35))
+                    .background(MaterialTheme.colorScheme.error)
+                    .clickable(onClick = onDelete),
+                contentAlignment = Alignment.Center
             ) {
                 Icon(
                     Icons.Default.Close, null,
-                    tint = Color.White,
+                    tint = MaterialTheme.colorScheme.onError,
                     modifier = Modifier.size(16.dp)
                 )
             }

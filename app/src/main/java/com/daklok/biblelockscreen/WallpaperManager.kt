@@ -11,10 +11,6 @@ import java.io.File
  * wallpaper is the one currently used for the lock-screen preview and
  * background — it's copied to the legacy [user_wallpaper.jpg] location
  * so the existing rendering pipeline doesn't need to change.
- *
- * Night-mode wallpapers (optional) are stored alongside with a `_night`
- * suffix and activated by [WallpaperSettings.isNightMode] when the device
- * time falls inside [WallpaperSettings.nightStartHour, nightEndHour).
  */
 object WallpaperManager {
 
@@ -22,10 +18,19 @@ object WallpaperManager {
     private const val ACTIVE_WALLPAPER = "user_wallpaper.jpg"
 
     data class Wallpaper(
-        val id: String,        // filename without extension, e.g. "wp_1718901234567"
+        val id: String,
         val file: File,
         val sizeBytes: Long
     )
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Cycling modes
+    // ─────────────────────────────────────────────────────────────────────
+
+    const val CYCLE_ON_VERSE_CHANGE = "on_verse_change"
+    const val CYCLE_CUSTOM_INTERVAL = "custom_interval"
+    const val CYCLE_ON_SCREEN_OFF = "on_screen_off"
+    const val CYCLE_DAY_NIGHT = "day_night"
 
     // ─────────────────────────────────────────────────────────────────────
     // Directory helpers
@@ -69,10 +74,6 @@ object WallpaperManager {
     // Add / delete
     // ─────────────────────────────────────────────────────────────────────
 
-    /**
-     * Copies [sourceUri] into the wallpapers directory and returns the new
-     * wallpaper id, or null on failure.
-     */
     fun addWallpaper(context: Context, sourceUri: Uri): String? {
         return try {
             val id = "wp_${System.currentTimeMillis()}"
@@ -93,9 +94,7 @@ object WallpaperManager {
 
     /**
      * Ensures the legacy [user_wallpaper.jpg] exists. If it doesn't and we
-     * have at least one managed wallpaper, activates the first one. This
-     * bridges the old single-wallpaper system with the new multi-wallpaper
-     * gallery.
+     * have at least one managed wallpaper, activates the first one.
      */
     fun ensureActiveWallpaper(context: Context, prefs: android.content.SharedPreferences) {
         val active = activeWallpaperFile(context)
@@ -108,18 +107,74 @@ object WallpaperManager {
         }
     }
 
-    /**
-     * Returns the URI of the currently active wallpaper, suitable for
-     * passing to the preview / wallpaper rendering pipeline.
-     * Appends a cache-buster query param so Compose recomposes when the
-     * active wallpaper changes.
-     */
     fun activeWallpaperUri(context: Context): Uri? {
         val file = activeWallpaperFile(context)
         if (!file.exists()) return null
         return Uri.fromFile(file).buildUpon()
             .appendQueryParameter("v", System.currentTimeMillis().toString())
             .build()
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Cycling logic — called by DailyVerseWorker / ScreenOffReceiver
+    // ─────────────────────────────────────────────────────────────────────
+
+    /**
+     * Cycles to the next wallpaper in the gallery (wraps around).
+     * Copies it to user_wallpaper.jpg and updates the active_wallpaper_id pref.
+     * Returns true if the wallpaper was changed, false if there are < 2 wallpapers.
+     */
+    fun cycleToNext(context: Context, prefs: android.content.SharedPreferences): Boolean {
+        val wallpapers = listWallpapers(context)
+        if (wallpapers.size < 2) return false
+
+        val currentId = prefs.getString("active_wallpaper_id", null)
+        val currentIndex = wallpapers.indexOfFirst { it.id == currentId }
+        val nextIndex = (currentIndex + 1).coerceAtLeast(0) % wallpapers.size
+        val next = wallpapers[nextIndex]
+
+        if (setActiveWallpaper(context, next.id)) {
+            prefs.edit().putString("active_wallpaper_id", next.id).apply()
+            return true
+        }
+        return false
+    }
+
+    /**
+     * Handles day/night wallpaper switching. If it's currently night time
+     * (according to WallpaperSettings), switches to the night wallpaper.
+     * Otherwise switches to the day (active) wallpaper.
+     *
+     * Returns true if the wallpaper was changed.
+     */
+    fun applyDayNightIfNeeded(
+        context: Context,
+        prefs: android.content.SharedPreferences,
+        settings: WallpaperSettings
+    ): Boolean {
+        if (!settings.cycleEnabled || settings.cycleMode != CYCLE_DAY_NIGHT) return false
+
+        val isNight = settings.isCurrentlyNight()
+        val nightId = prefs.getString("night_wallpaper_id", null)
+        val currentId = prefs.getString("active_wallpaper_id", null)
+
+        if (isNight && nightId != null && currentId != nightId) {
+            // Switch to night wallpaper
+            if (setActiveWallpaper(context, nightId)) {
+                prefs.edit().putString("active_wallpaper_id", nightId).apply()
+                return true
+            }
+        } else if (!isNight) {
+            // Switch back to day wallpaper (the one stored as "day_wallpaper_id")
+            val dayId = prefs.getString("day_wallpaper_id", null)
+            if (dayId != null && currentId != dayId) {
+                if (setActiveWallpaper(context, dayId)) {
+                    prefs.edit().putString("active_wallpaper_id", dayId).apply()
+                    return true
+                }
+            }
+        }
+        return false
     }
 }
 
@@ -128,19 +183,16 @@ object WallpaperManager {
 // ─────────────────────────────────────────────────────────────────────────────
 
 data class WallpaperSettings(
-    /** Auto-cycle through all wallpapers (not just verse text). */
     val cycleEnabled: Boolean = false,
-    /** Hours between wallpaper swaps: 1, 2, 3, 6, 12, 24. */
+    /** Cycling mode: ON_VERSE_CHANGE, CUSTOM_INTERVAL, ON_SCREEN_OFF, DAY_NIGHT */
+    val cycleMode: String = WallpaperManager.CYCLE_ON_VERSE_CHANGE,
+    /** Hours between wallpaper swaps for CUSTOM_INTERVAL: 1, 2, 3, 6, 12, 24. */
     val cycleIntervalHours: Int = 24,
     /** Hour of day for 24h mode (0-23). */
     val cycleDailyHour: Int = 6,
-    /** Change wallpaper on every screen-off / lock. */
-    val cycleOnScreenOff: Boolean = false,
-    /** Night-mode: use a different wallpaper at night. */
-    val nightModeEnabled: Boolean = false,
-    /** Hour when night wallpaper activates (0-23). */
+    /** Hour when night wallpaper activates (0-23) — for DAY_NIGHT mode. */
     val nightStartHour: Int = 20,
-    /** Hour when night wallpaper deactivates (0-23). */
+    /** Hour when night wallpaper deactivates (0-23) — for DAY_NIGHT mode. */
     val nightEndHour: Int = 6
 ) {
     companion object {
@@ -149,35 +201,31 @@ data class WallpaperSettings(
         fun load(prefs: android.content.SharedPreferences): WallpaperSettings {
             return WallpaperSettings(
                 cycleEnabled = prefs.getBoolean(PREFIX + "enabled", false),
+                cycleMode = prefs.getString(PREFIX + "mode", WallpaperManager.CYCLE_ON_VERSE_CHANGE)
+                    ?: WallpaperManager.CYCLE_ON_VERSE_CHANGE,
                 cycleIntervalHours = prefs.getInt(PREFIX + "interval", 24),
                 cycleDailyHour = prefs.getInt(PREFIX + "daily_hour", 6),
-                cycleOnScreenOff = prefs.getBoolean(PREFIX + "on_screen_off", false),
-                nightModeEnabled = prefs.getBoolean(PREFIX + "night_enabled", false),
                 nightStartHour = prefs.getInt(PREFIX + "night_start", 20),
                 nightEndHour = prefs.getInt(PREFIX + "night_end", 6)
             )
         }
 
         fun save(prefs: android.content.SharedPreferences.Editor, settings: WallpaperSettings) {
-            prefs.apply {
-                putBoolean(PREFIX + "enabled", settings.cycleEnabled)
-                putInt(PREFIX + "interval", settings.cycleIntervalHours)
-                putInt(PREFIX + "daily_hour", settings.cycleDailyHour)
-                putBoolean(PREFIX + "on_screen_off", settings.cycleOnScreenOff)
-                putBoolean(PREFIX + "night_enabled", settings.nightModeEnabled)
-                putInt(PREFIX + "night_start", settings.nightStartHour)
-                putInt(PREFIX + "night_end", settings.nightEndHour)
-            }
+            prefs.putBoolean(PREFIX + "enabled", settings.cycleEnabled)
+            prefs.putString(PREFIX + "mode", settings.cycleMode)
+            prefs.putInt(PREFIX + "interval", settings.cycleIntervalHours)
+            prefs.putInt(PREFIX + "daily_hour", settings.cycleDailyHour)
+            prefs.putInt(PREFIX + "night_start", settings.nightStartHour)
+            prefs.putInt(PREFIX + "night_end", settings.nightEndHour)
+            prefs.apply()
         }
     }
 
-    /** Returns true if the current device time is inside the night window. */
     fun isCurrentlyNight(): Boolean {
         val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
         return if (nightStartHour <= nightEndHour) {
             hour in nightStartHour until nightEndHour
         } else {
-            // Wraps past midnight, e.g. 22 → 6
             hour >= nightStartHour || hour < nightEndHour
         }
     }

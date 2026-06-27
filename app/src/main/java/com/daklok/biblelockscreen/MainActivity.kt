@@ -78,6 +78,9 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.work.*
 import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
+import coil.size.Precision
+import coil.request.CachePolicy
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import com.daklok.biblelockscreen.ui.theme.BibleLockScreenTheme
@@ -286,6 +289,19 @@ data class AppStrings(
     val wpNightEnd: String = "Koniec noci",
     val wpActiveBadge: String = "Aktívna",
     val wpNightBadge: String = "Nočná",
+    val wpCycleModeVerse: String = "Pri zmene verša",
+    val wpCycleModeInterval: String = "Vlastný interval",
+    val wpCycleModeScreenOff: String = "Pri zamknutí",
+    val wpCycleModeDayNight: String = "Deň / Noc",
+    val wpCycleModeVerseDesc: String = "Tapeta sa zmení spolu s veršom",
+    val wpCycleModeDayNightDesc: String = "Automaticky prepínať medzi dennou a nočnou tapetou",
+    val wpCycleDayWallpaper: String = "Denná tapeta",
+    val wpCycleNightWallpaper: String = "Nočná tapeta",
+    val wpCycleModeIntervalDesc: String = "Zmena v pevných intervaloch",
+    val wpCycleModeScreenOffDesc: String = "Zmena pri každom zamknutí",
+    val wpDualLockWarning: String = "Zmena tapety pri vypnutom displeji môže trvať až 3 sekundy.",
+    val wpDayStart: String = "Začiatok dňa",
+    val wpDayEnd: String = "Koniec dňa",
     val wpPageHint: String = "Potiahni doľava pre tapety →",
 
     // Verse language source toggle (in Settings)
@@ -482,6 +498,19 @@ val enStrings = AppStrings(
     wpNightEnd = "Night ends",
     wpActiveBadge = "Active",
     wpNightBadge = "Night",
+    wpCycleModeVerse = "On verse change",
+    wpCycleModeInterval = "Custom interval",
+    wpCycleModeScreenOff = "On every lock",
+    wpCycleModeDayNight = "Day / Night",
+    wpCycleModeVerseDesc = "Wallpaper changes with the verse",
+    wpCycleModeDayNightDesc = "Automatically switch between day and night wallpaper",
+    wpCycleDayWallpaper = "Day wallpaper",
+    wpCycleNightWallpaper = "Night wallpaper",
+    wpCycleModeIntervalDesc = "Change at fixed intervals",
+    wpCycleModeScreenOffDesc = "Change on every screen lock",
+    wpDualLockWarning = "It could take up to 3 seconds to update wallpaper while screen is off.",
+    wpDayStart = "Day starts",
+    wpDayEnd = "Day ends",
     wpPageHint = "Swipe left for wallpapers →",
 
     // Verse language source toggle (in Settings)
@@ -676,6 +705,19 @@ val czStrings = AppStrings(
     wpNightEnd = "Konec noci",
     wpActiveBadge = "Aktivní",
     wpNightBadge = "Noční",
+    wpCycleModeVerse = "Při změně verše",
+    wpCycleModeInterval = "Vlastní interval",
+    wpCycleModeScreenOff = "Při zamčení",
+    wpCycleModeDayNight = "Den / Noc",
+    wpCycleModeVerseDesc = "Tapeta se změní spolu s veršem",
+    wpCycleModeDayNightDesc = "Automaticky přepínat mezi denní a noční tapetou",
+    wpCycleDayWallpaper = "Denní tapeta",
+    wpCycleNightWallpaper = "Noční tapeta",
+    wpCycleModeIntervalDesc = "Změna v pevných intervalech",
+    wpCycleModeScreenOffDesc = "Změna při každém zamčení",
+    wpDualLockWarning = "Změna tapety při vypnutém displeji může trvat až 3 sekundy.",
+    wpDayStart = "Začátek dne",
+    wpDayEnd = "Konec dne",
     wpPageHint = "Potáhni doleva pro tapety →",
 
     // Verse language source toggle (in Settings)
@@ -870,6 +912,19 @@ val esStrings = AppStrings(
     wpNightEnd = "Fin de la noche",
     wpActiveBadge = "Activo",
     wpNightBadge = "Noche",
+    wpCycleModeVerse = "Al cambiar versículo",
+    wpCycleModeInterval = "Intervalo personalizado",
+    wpCycleModeScreenOff = "Al bloquear",
+    wpCycleModeDayNight = "Día / Noche",
+    wpCycleModeVerseDesc = "El fondo cambia con el versículo",
+    wpCycleModeDayNightDesc = "Cambiar automáticamente entre fondo de día y de noche",
+    wpCycleDayWallpaper = "Fondo de día",
+    wpCycleNightWallpaper = "Fondo de noche",
+    wpCycleModeIntervalDesc = "Cambiar en intervalos fijos",
+    wpCycleModeScreenOffDesc = "Cambiar en cada bloqueo",
+    wpDualLockWarning = "El cambio de fondo con la pantalla apagada puede tardar hasta 3 segundos.",
+    wpDayStart = "El día empieza",
+    wpDayEnd = "El día termina",
     wpPageHint = "Desliza a la izquierda para fondos →",
 
     // Verse language source toggle (in Settings)
@@ -1064,6 +1119,19 @@ val itStrings = AppStrings(
     wpNightEnd = "Fine notte",
     wpActiveBadge = "Attivo",
     wpNightBadge = "Notte",
+    wpCycleModeVerse = "Al cambio versetto",
+    wpCycleModeInterval = "Intervallo personalizzato",
+    wpCycleModeScreenOff = "Ad ogni blocco",
+    wpCycleModeDayNight = "Giorno / Notte",
+    wpCycleModeVerseDesc = "Lo sfondo cambia con il versetto",
+    wpCycleModeDayNightDesc = "Cambia automaticamente tra sfondo di giorno e di notte",
+    wpCycleDayWallpaper = "Sfondo di giorno",
+    wpCycleNightWallpaper = "Sfondo di notte",
+    wpCycleModeIntervalDesc = "Cambia a intervalli fissi",
+    wpCycleModeScreenOffDesc = "Cambia ad ogni blocco",
+    wpDualLockWarning = "Il cambio sfondo a schermo spento può richiedere fino a 3 secondi.",
+    wpDayStart = "Il giorno inizia",
+    wpDayEnd = "Il giorno finisce",
     wpPageHint = "Scorvi a sinistra per gli sfondi →",
 
     // Verse language source toggle (in Settings)
@@ -1258,6 +1326,19 @@ val frStrings = AppStrings(
     wpNightEnd = "Fin de la nuit",
     wpActiveBadge = "Actif",
     wpNightBadge = "Nuit",
+    wpCycleModeVerse = "Au changement de verset",
+    wpCycleModeInterval = "Intervalle personnalisé",
+    wpCycleModeScreenOff = "À chaque verrouillage",
+    wpCycleModeDayNight = "Jour / Nuit",
+    wpCycleModeVerseDesc = "Le fond change avec le verset",
+    wpCycleModeDayNightDesc = "Basculer automatiquement entre le fond de jour et de nuit",
+    wpCycleDayWallpaper = "Fond de jour",
+    wpCycleNightWallpaper = "Fond de nuit",
+    wpCycleModeIntervalDesc = "Changer à intervalles fixes",
+    wpCycleModeScreenOffDesc = "Changer à chaque verrouillage",
+    wpDualLockWarning = "Le changement de fond écran éteint peut prendre jusqu'à 3 secondes.",
+    wpDayStart = "Le jour commence",
+    wpDayEnd = "Le jour finit",
     wpPageHint = "Glissez à gauche pour les fonds d'écran →",
 
     // Verse language source toggle (in Settings)
@@ -1452,6 +1533,19 @@ val deStrings = AppStrings(
     wpNightEnd = "Nacht endet",
     wpActiveBadge = "Aktiv",
     wpNightBadge = "Nacht",
+    wpCycleModeVerse = "Bei Verswechsel",
+    wpCycleModeInterval = "Eigenes Intervall",
+    wpCycleModeScreenOff = "Bei jedem Sperren",
+    wpCycleModeDayNight = "Tag / Nacht",
+    wpCycleModeVerseDesc = "Hintergrundbild wechselt mit dem Vers",
+    wpCycleModeDayNightDesc = "Automatisch zwischen Tag- und Nachthintergrund wechseln",
+    wpCycleDayWallpaper = "Tag-Hintergrund",
+    wpCycleNightWallpaper = "Nacht-Hintergrund",
+    wpCycleModeIntervalDesc = "Wechsel in festen Intervallen",
+    wpCycleModeScreenOffDesc = "Wechsel bei jedem Sperren",
+    wpDualLockWarning = "Der Hintergrundwechsel bei ausgeschaltetem Bildschirm kann bis zu 3 Sekunden dauern.",
+    wpDayStart = "Tag beginnt",
+    wpDayEnd = "Tag endet",
     wpPageHint = "Wische nach links für Hintergrundbilder →",
 
     // Verse language source toggle (in Settings)
@@ -1647,6 +1741,19 @@ val huStrings = AppStrings(
     wpNightEnd = "Éjszaka vége",
     wpActiveBadge = "Aktív",
     wpNightBadge = "Éjszaka",
+    wpCycleModeVerse = "Vers váltáskor",
+    wpCycleModeInterval = "Egyéni intervallum",
+    wpCycleModeScreenOff = "Minden záráskor",
+    wpCycleModeDayNight = "Nappal / Éjszaka",
+    wpCycleModeVerseDesc = "A háttérkép a verssel együtt vált",
+    wpCycleModeDayNightDesc = "Automatikus váltás nappali és éjszakai háttérkép között",
+    wpCycleDayWallpaper = "Nappali háttérkép",
+    wpCycleNightWallpaper = "Éjszakai háttérkép",
+    wpCycleModeIntervalDesc = "Váltás fix intervallumonként",
+    wpCycleModeScreenOffDesc = "Váltás minden záráskor",
+    wpDualLockWarning = "A háttérkép váltása kikapcsolt képernyőnél akár 3 másodpercet is igénybe vehet.",
+    wpDayStart = "Nappal kezdete",
+    wpDayEnd = "Nappal vége",
     wpPageHint = "Húzd balra a háttérképekért →",
 
     // Verse language source toggle (in Settings)
@@ -1842,9 +1949,21 @@ val plStrings = AppStrings(
     wpNightEnd = "Koniec nocy",
     wpActiveBadge = "Aktywna",
     wpNightBadge = "Noc",
+    wpCycleModeVerse = "Przy zmianie wersetu",
+    wpCycleModeInterval = "Własny interwał",
+    wpCycleModeScreenOff = "Przy każdej blokadzie",
+    wpCycleModeDayNight = "Dzień / Noc",
+    wpCycleModeVerseDesc = "Tapeta zmienia się z wersetem",
+    wpCycleModeDayNightDesc = "Automatyczne przełączanie między tapetą dzienną i nocną",
+    wpCycleDayWallpaper = "Tapeta dzienna",
+    wpCycleNightWallpaper = "Tapeta nocna",
+    wpCycleModeIntervalDesc = "Zmiana w stałych odstępach",
+    wpCycleModeScreenOffDesc = "Zmiana przy każdej blokadzie",
+    wpDualLockWarning = "Zmiana tapety przy wyłączonym ekranie może potrwać do 3 sekund.",
+    wpDayStart = "Dzień zaczyna się",
+    wpDayEnd = "Dzień kończy się",
     wpPageHint = "Przesuń w lewo dla tapet →",
 
-    // Verse language source toggle (in Settings)
     vdbSourceDefault = "Wbudowane",
     vdbSourceCustom = "Własne",
     vdbEmptyCustom = "Brak własnych baz danych",
@@ -2859,6 +2978,40 @@ fun MainScreen(
                                             }
                                         }
                                     )
+                                }
+                                // Warning when verse-on-lock is enabled (animated)
+                                AnimatedVisibility(
+                                    visible = changeOnScreenOff,
+                                    enter = expandVertically(
+                                        animationSpec = spring(
+                                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                                            stiffness = Spring.StiffnessMediumLow
+                                        )
+                                    ) + fadeIn(tween(250)),
+                                    exit = shrinkVertically(tween(200)) + fadeOut(tween(200))
+                                ) {
+                                    Surface(
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = MaterialTheme.colorScheme.errorContainer,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(12.dp),
+                                            verticalAlignment = Alignment.Top,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Warning, null,
+                                                tint = MaterialTheme.colorScheme.onErrorContainer,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                            Text(
+                                                strings.wpDualLockWarning,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onErrorContainer
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -3941,6 +4094,7 @@ fun FullScreenEditor(
     performHaptic: (HapticFeedbackType) -> Unit
 ) {
     val density = LocalDensity.current
+    val context = LocalContext.current
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
 
     // Lokálny stav
@@ -4014,7 +4168,14 @@ fun FullScreenEditor(
         if (uri != null) {
 
             Image(
-                painter = rememberAsyncImagePainter(uri),
+                painter = rememberAsyncImagePainter(
+                    ImageRequest.Builder(context)
+                        .data(uri)
+                        .memoryCachePolicy(CachePolicy.DISABLED)
+                        .diskCachePolicy(CachePolicy.DISABLED)
+                        .crossfade(false)
+                        .build()
+                ),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
@@ -4344,6 +4505,7 @@ fun Pixel6LockScreenPreview(
     onEditClick: () -> Unit
 ) {
     val density = LocalDensity.current
+    val context = LocalContext.current
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val previewHeight = (screenHeight * 0.75f)
 
@@ -4377,7 +4539,13 @@ fun Pixel6LockScreenPreview(
             // Pozadie
             if (uri != null) {
                 Image(
-                    painter = rememberAsyncImagePainter(uri),
+                    painter = rememberAsyncImagePainter(
+                        ImageRequest.Builder(context)
+                            .data(uri)
+                            .precision(Precision.INEXACT)
+                            .crossfade(false)
+                            .build()
+                    ),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
@@ -5150,4 +5318,65 @@ fun runOneTimeWorker(context: Context) {
         .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
         .build()
     WorkManager.getInstance(context).enqueue(req)
+}
+
+/**
+ * Schedules or cancels the wallpaper cycling worker.
+ *
+ * If wallpaper cycling is enabled and the mode requires a periodic worker
+ * (ON_VERSE_CHANGE or CUSTOM_INTERVAL), schedules a periodic worker under a
+ * unique name "WallpaperCycling". If disabled or in ON_SCREEN_OFF / DAY_NIGHT
+ * mode, cancels any existing cycling worker.
+ *
+ * This is separate from the verse cycling worker ("DailyBibleWallpaper") so
+ * both can run independently.
+ */
+fun scheduleWallpaperCycling(context: Context) {
+    val prefs = context.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
+    val settings = WallpaperSettings.load(prefs)
+    val workManager = WorkManager.getInstance(context)
+
+    if (!settings.cycleEnabled) {
+        workManager.cancelUniqueWork("WallpaperCycling")
+        return
+    }
+
+    when (settings.cycleMode) {
+        com.daklok.biblelockscreen.WallpaperManager.CYCLE_ON_SCREEN_OFF -> {
+            // No periodic worker needed — ScreenOffReceiver handles it
+            workManager.cancelUniqueWork("WallpaperCycling")
+        }
+        else -> {
+            // CUSTOM_INTERVAL — schedule a periodic worker (independent of verse cycling)
+            val intervalHours = settings.cycleIntervalHours
+            val wallpaperData = androidx.work.workDataOf("source" to "wallpaper")
+            if (intervalHours == 12 || intervalHours == 24) {
+                val now = java.util.Calendar.getInstance()
+                val target = java.util.Calendar.getInstance().apply {
+                    set(java.util.Calendar.HOUR_OF_DAY, settings.cycleDailyHour)
+                    set(java.util.Calendar.MINUTE, 0)
+                    set(java.util.Calendar.SECOND, 0)
+                    if (timeInMillis <= now.timeInMillis) {
+                        add(java.util.Calendar.HOUR_OF_DAY, intervalHours)
+                    }
+                }
+                val initialDelay = target.timeInMillis - now.timeInMillis
+                val req = PeriodicWorkRequestBuilder<DailyVerseWorker>(intervalHours.toLong(), TimeUnit.HOURS)
+                    .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
+                    .setInputData(wallpaperData)
+                    .build()
+                workManager.enqueueUniquePeriodicWork("WallpaperCycling", ExistingPeriodicWorkPolicy.REPLACE, req)
+            } else {
+                val nowEpochHours = System.currentTimeMillis() / (1000L * 60 * 60)
+                val nextSlot = (nowEpochHours / intervalHours + 1) * intervalHours
+                val nextSlotMs = nextSlot * 60L * 60L * 1000L
+                val initialDelayMs = nextSlotMs - System.currentTimeMillis()
+                val req = PeriodicWorkRequestBuilder<DailyVerseWorker>(intervalHours.toLong(), TimeUnit.HOURS)
+                    .setInitialDelay(initialDelayMs, TimeUnit.MILLISECONDS)
+                    .setInputData(wallpaperData)
+                    .build()
+                workManager.enqueueUniquePeriodicWork("WallpaperCycling", ExistingPeriodicWorkPolicy.REPLACE, req)
+            }
+        }
+    }
 }
