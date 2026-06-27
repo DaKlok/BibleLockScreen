@@ -23,6 +23,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -261,6 +263,31 @@ data class AppStrings(
     val backupConfirmTitle: String = "Obnoviť zo zálohy?",
     val backupConfirmDesc: String = "Toto nahradí všetky tvoje aktuálne nastavenia, tapetu a databázy. Akciu nie je možné vrátiť späť.",
 
+    // Wallpaper gallery screen
+    val wpScreenTitle: String = "Tapety",
+    val wpScreenSubtitle: String = "Spravuj svoje tapety a automatické striedanie",
+    val wpGalleryEmpty: String = "Žiadne tapety",
+    val wpGalleryEmptyDesc: String = "Pridaj svoju prvú tapetu — vyber fotku z galérie.",
+    val wpAdd: String = "Pridať tapetu",
+    val wpSetActive: String = "Použiť",
+    val wpActive: String = "Aktívna",
+    val wpDelete: String = "Odstrániť",
+    val wpDeleteConfirm: String = "Odstrániť túto tapetu?",
+    val wpDeleteConfirmDesc: String = "Tapeta bude natrvalo odstránená z aplikácie.",
+    val wpCycleTitle: String = "Automatické striedanie",
+    val wpCycleDesc: String = "Striedaj tapety automaticky podľa intervalu",
+    val wpCycleInterval: String = "Interval striedania",
+    val wpCycleDailyHour: String = "Čas dennej zmeny",
+    val wpCycleOnScreenOff: String = "Pri zamknutí",
+    val wpCycleOnScreenOffDesc: String = "Zmení tapetu pri každom zamknutí telefónu",
+    val wpNightMode: String = "Nočný režim",
+    val wpNightModeDesc: String = "Použiť inú tapetu v noci",
+    val wpNightStart: String = "Začiatok noci",
+    val wpNightEnd: String = "Koniec noci",
+    val wpActiveBadge: String = "Aktívna",
+    val wpNightBadge: String = "Nočná",
+    val wpPageHint: String = "Potiahni doľava pre tapety →",
+
     // Verse language source toggle (in Settings)
     val vdbSourceDefault: String = "Vstavané",
     val vdbSourceCustom: String = "Vlastné",
@@ -432,6 +459,31 @@ val enStrings = AppStrings(
     backupConfirmTitle = "Restore from backup?",
     backupConfirmDesc = "This will replace all your current settings, wallpaper, and databases. This cannot be undone.",
 
+    // Wallpaper gallery screen
+    wpScreenTitle = "Wallpapers",
+    wpScreenSubtitle = "Manage your wallpapers and auto-cycling",
+    wpGalleryEmpty = "No wallpapers",
+    wpGalleryEmptyDesc = "Add your first wallpaper — pick a photo from your gallery.",
+    wpAdd = "Add wallpaper",
+    wpSetActive = "Set active",
+    wpActive = "Active",
+    wpDelete = "Remove",
+    wpDeleteConfirm = "Remove this wallpaper?",
+    wpDeleteConfirmDesc = "The wallpaper will be permanently removed from the app.",
+    wpCycleTitle = "Auto-cycling",
+    wpCycleDesc = "Automatically cycle through wallpapers on a schedule",
+    wpCycleInterval = "Cycle interval",
+    wpCycleDailyHour = "Daily change time",
+    wpCycleOnScreenOff = "On lock",
+    wpCycleOnScreenOffDesc = "Change wallpaper every time you lock the phone",
+    wpNightMode = "Night mode",
+    wpNightModeDesc = "Use a different wallpaper at night",
+    wpNightStart = "Night starts",
+    wpNightEnd = "Night ends",
+    wpActiveBadge = "Active",
+    wpNightBadge = "Night",
+    wpPageHint = "Swipe left for wallpapers →",
+
     // Verse language source toggle (in Settings)
     vdbSourceDefault = "Default",
     vdbSourceCustom = "Custom",
@@ -600,6 +652,31 @@ val czStrings = AppStrings(
     backupImportFailed = "Obnova selhala",
     backupConfirmTitle = "Obnovit ze zálohy?",
     backupConfirmDesc = "Toto nahradí všechna tvá aktuální nastavení, tapetu a databáze. Akci nelze vrátit zpět.",
+
+    // Wallpaper gallery screen
+    wpScreenTitle = "Tapety",
+    wpScreenSubtitle = "Spravuj své tapety a automatické střídání",
+    wpGalleryEmpty = "Žádné tapety",
+    wpGalleryEmptyDesc = "Přidej svou první tapetu — vyber fotku z galerie.",
+    wpAdd = "Přidat tapetu",
+    wpSetActive = "Použít",
+    wpActive = "Aktivní",
+    wpDelete = "Odstranit",
+    wpDeleteConfirm = "Odstranit tuto tapetu?",
+    wpDeleteConfirmDesc = "Tapeta bude trvale odstraněna z aplikace.",
+    wpCycleTitle = "Automatické střídání",
+    wpCycleDesc = "Strídej tapety automaticky podle intervalu",
+    wpCycleInterval = "Interval střídání",
+    wpCycleDailyHour = "Čas denní změny",
+    wpCycleOnScreenOff = "Při zamčení",
+    wpCycleOnScreenOffDesc = "Změní tapetu při každém zamčení telefonu",
+    wpNightMode = "Noční režim",
+    wpNightModeDesc = "Použít jinou tapetu v noci",
+    wpNightStart = "Začátek noci",
+    wpNightEnd = "Konec noci",
+    wpActiveBadge = "Aktivní",
+    wpNightBadge = "Noční",
+    wpPageHint = "Potáhni doleva pro tapety →",
 
     // Verse language source toggle (in Settings)
     vdbSourceDefault = "Vestavěné",
@@ -770,6 +847,31 @@ val esStrings = AppStrings(
     backupConfirmTitle = "¿Restaurar desde copia de seguridad?",
     backupConfirmDesc = "Esto reemplazará todos tus ajustes, fondo de pantalla y bases de datos actuales. No se puede deshacer.",
 
+    // Wallpaper gallery screen
+    wpScreenTitle = "Fondos de pantalla",
+    wpScreenSubtitle = "Gestiona tus fondos y la rotación automática",
+    wpGalleryEmpty = "Sin fondos de pantalla",
+    wpGalleryEmptyDesc = "Añade tu primer fondo — elige una foto de la galería.",
+    wpAdd = "Añadir fondo",
+    wpSetActive = "Usar",
+    wpActive = "Activo",
+    wpDelete = "Eliminar",
+    wpDeleteConfirm = "¿Eliminar este fondo?",
+    wpDeleteConfirmDesc = "El fondo se eliminará permanentemente de la app.",
+    wpCycleTitle = "Rotación automática",
+    wpCycleDesc = "Cambia los fondos automáticamente según un intervalo",
+    wpCycleInterval = "Intervalo de rotación",
+    wpCycleDailyHour = "Hora de cambio diario",
+    wpCycleOnScreenOff = "Al bloquear",
+    wpCycleOnScreenOffDesc = "Cambia el fondo cada vez que bloqueas el teléfono",
+    wpNightMode = "Modo nocturno",
+    wpNightModeDesc = "Usar un fondo diferente por la noche",
+    wpNightStart = "Inicio de la noche",
+    wpNightEnd = "Fin de la noche",
+    wpActiveBadge = "Activo",
+    wpNightBadge = "Noche",
+    wpPageHint = "Desliza a la izquierda para fondos →",
+
     // Verse language source toggle (in Settings)
     vdbSourceDefault = "Predeterminadas",
     vdbSourceCustom = "Personalizadas",
@@ -938,6 +1040,31 @@ val itStrings = AppStrings(
     backupImportFailed = "Ripristino fallito",
     backupConfirmTitle = "Ripristinare dal backup?",
     backupConfirmDesc = "Verranno sostituite tutte le impostazioni, lo sfondo e i database attuali. Operazione irreversibile.",
+
+    // Wallpaper gallery screen
+    wpScreenTitle = "Sfondi",
+    wpScreenSubtitle = "Gestisci i tuoi sfondi e la rotazione automatica",
+    wpGalleryEmpty = "Nessuno sfondo",
+    wpGalleryEmptyDesc = "Aggiungi il tuo primo sfondo — scegli una foto dalla galleria.",
+    wpAdd = "Aggiungi sfondo",
+    wpSetActive = "Usa",
+    wpActive = "Attivo",
+    wpDelete = "Rimuovi",
+    wpDeleteConfirm = "Rimuovere questo sfondo?",
+    wpDeleteConfirmDesc = "Lo sfondo verrà rimosso definitivamente dall'app.",
+    wpCycleTitle = "Rotazione automatica",
+    wpCycleDesc = "Cambia sfondo automaticamente secondo un intervallo",
+    wpCycleInterval = "Intervallo di rotazione",
+    wpCycleDailyHour = "Ora cambio giornaliero",
+    wpCycleOnScreenOff = "Al blocco",
+    wpCycleOnScreenOffDesc = "Cambia sfondo ogni volta che blocchi il telefono",
+    wpNightMode = "Modalità notturna",
+    wpNightModeDesc = "Usa uno sfondo diverso di notte",
+    wpNightStart = "Inizio notte",
+    wpNightEnd = "Fine notte",
+    wpActiveBadge = "Attivo",
+    wpNightBadge = "Notte",
+    wpPageHint = "Scorvi a sinistra per gli sfondi →",
 
     // Verse language source toggle (in Settings)
     vdbSourceDefault = "Predefinite",
@@ -1108,6 +1235,31 @@ val frStrings = AppStrings(
     backupConfirmTitle = "Restaurer depuis une sauvegarde ?",
     backupConfirmDesc = "Cela remplacera tous vos paramètres, fond d'écran et bases de données actuels. Action irréversible.",
 
+    // Wallpaper gallery screen
+    wpScreenTitle = "Fonds d'écran",
+    wpScreenSubtitle = "Gérez vos fonds d'écran et la rotation automatique",
+    wpGalleryEmpty = "Aucun fond d'écran",
+    wpGalleryEmptyDesc = "Ajoutez votre premier fond — choisissez une photo de la galerie.",
+    wpAdd = "Ajouter un fond",
+    wpSetActive = "Utiliser",
+    wpActive = "Actif",
+    wpDelete = "Supprimer",
+    wpDeleteConfirm = "Supprimer ce fond d'écran ?",
+    wpDeleteConfirmDesc = "Le fond d'écran sera définitivement supprimé de l'app.",
+    wpCycleTitle = "Rotation automatique",
+    wpCycleDesc = "Change les fonds d'écran automatiquement selon un intervalle",
+    wpCycleInterval = "Intervalle de rotation",
+    wpCycleDailyHour = "Heure du changement quotidien",
+    wpCycleOnScreenOff = "Au verrouillage",
+    wpCycleOnScreenOffDesc = "Change le fond d'écran à chaque verrouillage du téléphone",
+    wpNightMode = "Mode nuit",
+    wpNightModeDesc = "Utiliser un fond d'écran différent la nuit",
+    wpNightStart = "Début de la nuit",
+    wpNightEnd = "Fin de la nuit",
+    wpActiveBadge = "Actif",
+    wpNightBadge = "Nuit",
+    wpPageHint = "Glissez à gauche pour les fonds d'écran →",
+
     // Verse language source toggle (in Settings)
     vdbSourceDefault = "Intégrées",
     vdbSourceCustom = "Personnalisées",
@@ -1276,6 +1428,31 @@ val deStrings = AppStrings(
     backupImportFailed = "Wiederherstellung fehlgeschlagen",
     backupConfirmTitle = "Aus Sicherung wiederherstellen?",
     backupConfirmDesc = "Dies ersetzt alle deine aktuellen Einstellungen, das Hintergrundbild und die Datenbanken. Vorgang nicht umkehrbar.",
+
+    // Wallpaper gallery screen
+    wpScreenTitle = "Hintergrundbilder",
+    wpScreenSubtitle = "Verwalte deine Hintergrundbilder und automatische Rotation",
+    wpGalleryEmpty = "Keine Hintergrundbilder",
+    wpGalleryEmptyDesc = "Füge dein erstes Hintergrundbild hinzu — wähle ein Foto aus der Galerie.",
+    wpAdd = "Hintergrundbild hinzufügen",
+    wpSetActive = "Verwenden",
+    wpActive = "Aktiv",
+    wpDelete = "Entfernen",
+    wpDeleteConfirm = "Dieses Hintergrundbild entfernen?",
+    wpDeleteConfirmDesc = "Das Hintergrundbild wird dauerhaft aus der App entfernt.",
+    wpCycleTitle = "Automatische Rotation",
+    wpCycleDesc = "Wechselt Hintergrundbilder automatisch nach einem Intervall",
+    wpCycleInterval = "Rotationsintervall",
+    wpCycleDailyHour = "Tägliche Wechselzeit",
+    wpCycleOnScreenOff = "Beim Sperren",
+    wpCycleOnScreenOffDesc = "Wechselt das Hintergrundbild bei jedem Sperren des Telefons",
+    wpNightMode = "Nachtmodus",
+    wpNightModeDesc = "Nachts ein anderes Hintergrundbild verwenden",
+    wpNightStart = "Nacht beginnt",
+    wpNightEnd = "Nacht endet",
+    wpActiveBadge = "Aktiv",
+    wpNightBadge = "Nacht",
+    wpPageHint = "Wische nach links für Hintergrundbilder →",
 
     // Verse language source toggle (in Settings)
     vdbSourceDefault = "Standard",
@@ -1447,6 +1624,31 @@ val huStrings = AppStrings(
     backupConfirmTitle = "Visszaállítás mentésből?",
     backupConfirmDesc = "Ez lecseréli az összes jelenlegi beállításodat, háttérképedet és adatbázisodat. A művelet nem visszavonható.",
 
+    // Wallpaper gallery screen
+    wpScreenTitle = "Háttérképek",
+    wpScreenSubtitle = "Kezeld a háttérképeidet és az automatikus váltást",
+    wpGalleryEmpty = "Nincs háttérkép",
+    wpGalleryEmptyDesc = "Add hozzá az első háttérképet — válassz egy fotót a galériából.",
+    wpAdd = "Háttérkép hozzáadása",
+    wpSetActive = "Használ",
+    wpActive = "Aktív",
+    wpDelete = "Eltávolít",
+    wpDeleteConfirm = "Eltávolítod ezt a háttérképet?",
+    wpDeleteConfirmDesc = "A háttérkép véglegesen el lesz távolítva az appból.",
+    wpCycleTitle = "Automatikus váltás",
+    wpCycleDesc = "A háttérképek automatikusan váltanak egy intervallum szerint",
+    wpCycleInterval = "Váltási intervallum",
+    wpCycleDailyHour = "Napi váltás ideje",
+    wpCycleOnScreenOff = "Záráskor",
+    wpCycleOnScreenOffDesc = "Háttérkép váltás minden telefonzáráskor",
+    wpNightMode = "Éjszakai mód",
+    wpNightModeDesc = "Éjjel másik háttérképet használ",
+    wpNightStart = "Éjszaka kezdete",
+    wpNightEnd = "Éjszaka vége",
+    wpActiveBadge = "Aktív",
+    wpNightBadge = "Éjszaka",
+    wpPageHint = "Húzd balra a háttérképekért →",
+
     // Verse language source toggle (in Settings)
     vdbSourceDefault = "Beépített",
     vdbSourceCustom = "Saját",
@@ -1616,6 +1818,31 @@ val plStrings = AppStrings(
     backupImportFailed = "Przywracanie nie powiodło się",
     backupConfirmTitle = "Przywrócić z kopii zapasowej?",
     backupConfirmDesc = "To zastąpi wszystkie Twoje obecne ustawienia, tapetę i bazy danych. Tej czynności nie można cofnąć.",
+
+    // Wallpaper gallery screen
+    wpScreenTitle = "Tapety",
+    wpScreenSubtitle = "Zarządzaj tapetami i automatyczną zmianą",
+    wpGalleryEmpty = "Brak tapet",
+    wpGalleryEmptyDesc = "Dodaj swoją pierwszą tapetę — wybierz zdjęcie z galerii.",
+    wpAdd = "Dodaj tapetę",
+    wpSetActive = "Użyj",
+    wpActive = "Aktywna",
+    wpDelete = "Usuń",
+    wpDeleteConfirm = "Usunąć tę tapetę?",
+    wpDeleteConfirmDesc = "Tapeta zostanie trwale usunięta z aplikacji.",
+    wpCycleTitle = "Automatyczna zmiana",
+    wpCycleDesc = "Zmieniaj tapety automatycznie według interwału",
+    wpCycleInterval = "Interwał zmiany",
+    wpCycleDailyHour = "Czas codziennej zmiany",
+    wpCycleOnScreenOff = "Przy blokadzie",
+    wpCycleOnScreenOffDesc = "Zmienia tapetę przy każdym zablokowaniu telefonu",
+    wpNightMode = "Tryb nocny",
+    wpNightModeDesc = "Używaj innej tapety w nocy",
+    wpNightStart = "Początek nocy",
+    wpNightEnd = "Koniec nocy",
+    wpActiveBadge = "Aktywna",
+    wpNightBadge = "Noc",
+    wpPageHint = "Przesuń w lewo dla tapet →",
 
     // Verse language source toggle (in Settings)
     vdbSourceDefault = "Wbudowane",
@@ -1953,6 +2180,19 @@ fun MainScreen(
     }
 
     LaunchedEffect(Unit) {
+        // One-time migration: if the user already has a user_wallpaper.jpg
+        // (from the old single-wallpaper system) but the gallery is empty,
+        // import it into the managed wallpapers/ folder so it shows up in
+        // the wallpaper screen and gets included in backups.
+        val existingActive = java.io.File(context.filesDir, "user_wallpaper.jpg")
+        val gallery = WallpaperManager.listWallpapers(context)
+        if (existingActive.exists() && gallery.isEmpty()) {
+            val id = "wp_${System.currentTimeMillis()}"
+            val target = java.io.File(java.io.File(context.filesDir, "wallpapers").also { it.mkdirs() }, "$id.jpg")
+            existingActive.copyTo(target, overwrite = true)
+            prefs.edit().putString("active_wallpaper_id", id).apply()
+        }
+
         // Initial setup and background worker observer check
         reloadPreviewData()
     }
@@ -1999,6 +2239,17 @@ fun MainScreen(
         uri?.let { sourceUri ->
             scope.launch(Dispatchers.IO) {
                 try {
+                    // Import the picked photo into the managed wallpapers/
+                    // gallery so it survives even if the user deletes the
+                    // original from storage. Returns the new wallpaper id.
+                    val newId = WallpaperManager.addWallpaper(context, sourceUri)
+                    if (newId != null) {
+                        // Set it as the active wallpaper (copies to user_wallpaper.jpg)
+                        WallpaperManager.setActiveWallpaper(context, newId)
+                        prefs.edit().putString("active_wallpaper_id", newId).apply()
+                    }
+
+                    // Also keep the legacy copy for backward compatibility
                     val fileName = "user_wallpaper.jpg"
                     val destinationFile = java.io.File(context.filesDir, fileName)
 
@@ -2039,6 +2290,11 @@ fun MainScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
+        // Horizontal pager: page 0 = main screen, page 1 = wallpaper gallery
+        val pagerState = rememberPagerState(initialPage = 0, pageCount = { 2 })
+        // Sync pager page when user swipes — used by the page indicator
+        val scope2 = rememberCoroutineScope()
+
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -2085,6 +2341,9 @@ fun MainScreen(
             snackbarHost = { },
             containerColor = MaterialTheme.colorScheme.background
         ) { padding ->
+            // ── Main scrollable Column (NOT inside a pager) ──────────────
+            // Only the preview area swipes horizontally; the settings below
+            // stay in place and scroll vertically with the rest of the page.
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -2095,51 +2354,143 @@ fun MainScreen(
                     .verticalScroll(scrollState),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // 1. DYNAMICKÝ PREVIEW CARD (Parallax efekt)
-                Box(
+                // 1. PREVIEW AREA — wrapped in a HorizontalPager so swiping
+                //    left/right switches between the lock-screen preview and
+                //    the wallpaper gallery. Only this area swipes; the
+                //    settings below do not.
+                HorizontalPager(
+                    state = pagerState,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 8.dp)
-                        .graphicsLayer {
-                            val scrollOffset = scrollState.value.toFloat()
-                            val scale = (1f - (scrollOffset / 1500f)).coerceIn(0.6f, 1f)
-                            val alphaVal = (1f - (scrollOffset / 900f)).coerceIn(0.5f, 1f)
-                            scaleX = scale
-                            scaleY = scale
-                            alpha = alphaVal
-                            translationY = scrollOffset * 0.5f
-                        }
-                ) {
-                    Pixel6LockScreenPreview(
-                        uri = imageUri,
-                        verseText = versePair?.first ?: strings.loading,
-                        verseReference = versePair?.second ?: "",
-                        textSizeMult = textSizeMult,
-                        textWidthMult = textWidthMult,
-                        verticalOffset = verticalOffset,
-                        textColor = textColor,
-                        textAlpha = textAlpha,
-                        bgBlur = bgBlur,
-                        bgDarkness = bgDarkness,
-                        isBold = isBold,
-                        useShadow = useShadow,
-                        fontFamilyStr = fontFamilyStr,
-                        showEditHint = true, // Ukazuje obrys s ceruzkou
-                        strings = strings,
-                        showBubbleHint = imageUri != null && !hasSeenEditHint,
-                        onClick = {
-                            performHaptic(HapticFeedbackType.LongPress)
-                            launcher.launch("image/*")
-                        },
-                        onEditClick = {
-                            performHaptic(HapticFeedbackType.LongPress)
-                            isEditing = true
-                            if (!hasSeenEditHint) {
-                                hasSeenEditHint = true
-                                prefs.edit().putBoolean("has_seen_edit_hint", true).apply()
+                        .animateContentSize(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioLowBouncy,
+                                stiffness = Spring.StiffnessLow
+                            )
+                        )
+                ) { page ->
+                    if (page == 0) {
+                        // Parallax zoom-out on the preview only — the wallpaper
+                        // screen (page 1) scrolls normally without this effect.
+                        Box(
+                            modifier = Modifier.graphicsLayer {
+                                val scrollOffset = scrollState.value.toFloat()
+                                val scale = (1f - (scrollOffset / 1500f)).coerceIn(0.6f, 1f)
+                                val alphaVal = (1f - (scrollOffset / 900f)).coerceIn(0.5f, 1f)
+                                scaleX = scale
+                                scaleY = scale
+                                alpha = alphaVal
+                                translationY = scrollOffset * 0.5f
                             }
+                        ) {
+                            Pixel6LockScreenPreview(
+                                uri = imageUri,
+                                verseText = versePair?.first ?: strings.loading,
+                                verseReference = versePair?.second ?: "",
+                                textSizeMult = textSizeMult,
+                                textWidthMult = textWidthMult,
+                                verticalOffset = verticalOffset,
+                                textColor = textColor,
+                                textAlpha = textAlpha,
+                                bgBlur = bgBlur,
+                                bgDarkness = bgDarkness,
+                                isBold = isBold,
+                                useShadow = useShadow,
+                                fontFamilyStr = fontFamilyStr,
+                                showEditHint = true,
+                                strings = strings,
+                                showBubbleHint = imageUri != null && !hasSeenEditHint,
+                                onClick = {
+                                    performHaptic(HapticFeedbackType.LongPress)
+                                    launcher.launch("image/*")
+                                },
+                                onEditClick = {
+                                    performHaptic(HapticFeedbackType.LongPress)
+                                    isEditing = true
+                                    if (!hasSeenEditHint) {
+                                        hasSeenEditHint = true
+                                        prefs.edit().putBoolean("has_seen_edit_hint", true).apply()
+                                    }
+                                }
+                            )
                         }
+                    } else {
+                        WallpaperScreen(
+                            strings = strings,
+                            showNotification = showNotification,
+                            onWallpaperChanged = {
+                                imageUri = WallpaperManager.activeWallpaperUri(context)
+                                reloadPreviewData()
+                            }
+                        )
+                    }
+                }
+
+                // ── Page indicator dots (under the preview) ──────────────
+                Row(
+                    modifier = Modifier
+                        .padding(top = 4.dp, bottom = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    repeat(2) { index ->
+                        val isSelected = pagerState.currentPage == index
+                        val width by animateDpAsState(
+                            targetValue = if (isSelected) 24.dp else 8.dp,
+                            animationSpec = spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMedium),
+                            label = "dot_$index"
+                        )
+                        Box(
+                            modifier = Modifier
+                                .size(width = width, height = 8.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (isSelected) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+                                )
+                                .clickable {
+                                    scope2.launch {
+                                        pagerState.animateScrollToPage(index)
+                                    }
+                                }
+                        )
+                    }
+                }
+
+                // ── Swipe hint (shows on page 0 until user swipes once) ──
+                AnimatedVisibility(
+                    visible = pagerState.currentPage == 0 && !hasSeenSwipeHint,
+                    enter = fadeIn(tween(250)) + slideInVertically(
+                        initialOffsetY = { it / 2 },
+                        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium)
+                    ),
+                    exit = fadeOut(tween(200)) + slideOutVertically(
+                        targetOffsetY = { -it / 2 },
+                        animationSpec = tween(200)
                     )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .padding(bottom = 4.dp)
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.9f))
+                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.ArrowForward, null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            strings.wpPageHint,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -2841,7 +3192,15 @@ fun MainScreen(
                         }
                     }
                     Spacer(modifier = Modifier.height(80.dp))
-                }
+                } // end settings Column
+            } // end main Column
+        } // end Scaffold content lambda
+
+        // Mark swipe hint as seen when user leaves page 0
+        LaunchedEffect(pagerState.currentPage) {
+            if (pagerState.currentPage != 0 && !hasSeenSwipeHint) {
+                hasSeenSwipeHint = true
+                prefs.edit().putBoolean("has_seen_swipe_hint", true).apply()
             }
         }
 
