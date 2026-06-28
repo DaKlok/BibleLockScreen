@@ -322,7 +322,7 @@ fun WallpaperScreen(
                         ) {
                             Icon(Icons.Default.GridView, null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
                             Spacer(Modifier.width(6.dp))
-                            Text(strings.wpViewAll, fontWeight = FontWeight.Medium)
+                            Text(strings.wpViewAllTitle, fontWeight = FontWeight.Medium)
                         }
                     }
                 }

@@ -187,6 +187,8 @@ data class AppStrings(
 
     // Color picker
     val colorPickerTitle: String = "Vybrať farbu",
+    val colorPickerBrightness: String = "Jas",
+    val colorPickerVerseColor: String = "Farba verša",
 
     // Wallpaper target
     val wallpaperTargetLabel: String = "Použiť tapetu na",
@@ -408,6 +410,8 @@ val enStrings = AppStrings(
     autoWorkerOn = "Enabled! Wallpaper will change based on your interval.",
     autoWorkerOff = "Automatic change disabled.",
     colorPickerTitle = "Select color",
+    colorPickerBrightness = "Brightness",
+    colorPickerVerseColor = "Verse color",
     wallpaperTargetLabel = "Apply wallpaper to",
     wallpaperTargetLock = "Lock screen",
     wallpaperTargetHome = "Home screen",
@@ -623,10 +627,16 @@ val czStrings = AppStrings(
     autoWorkerOn = "Zapnuto! Tapeta se změní dle nastaveného intervalu.",
     autoWorkerOff = "Automatická změna byla vypnuta.",
     colorPickerTitle = "Vybrat barvu",
+    colorPickerBrightness = "Jas",
+    colorPickerVerseColor = "Barva verše",
+
+    // Wallpaper target
     wallpaperTargetLabel = "Použít tapetu na",
     wallpaperTargetLock = "Zamčená",
     wallpaperTargetHome = "Domů",
-    wallpaperTargetBoth = "Oboje",
+    wallpaperTargetBoth= "Oboje",
+
+    // Verse database section
     vdbTitle = "Databáze veršů",
     vdbSubtitle = "Vytvoř, importuj nebo exportuj kolekce",
     vdbManage = "Spravovat",
@@ -735,13 +745,13 @@ val czStrings = AppStrings(
     wpDayStart = "Začátek dne",
     wpDayEnd = "Konec dne",
 
-    wpViewAll = "View all",
-    wpViewAllTitle = "All wallpapers",
-    wpSelectMode = "Select",
-    wpDeleteSelected = "Delete selected",
-    wpSelected = "selected",
-    wpDeleteAllConfirm = "Delete selected wallpapers?",
-    wpDeleteAllConfirmDesc = "The selected wallpapers will be permanently removed from the app.",
+    wpViewAll = "Zobrazit vše",
+    wpViewAllTitle = "Všechny tapety",
+    wpSelectMode = "Vybrat",
+    wpDeleteSelected = "Smazat vybrané",
+    wpSelected = "vybraných",
+    wpDeleteAllConfirm = "Smazat vybrané tapety?",
+    wpDeleteAllConfirmDesc = "Vybrané tapety budou trvale odstraněny z aplikace.",
     wpPageHint = "Potáhni doleva pro tapety →",
 
     // Verse language source toggle (in Settings)
@@ -838,10 +848,16 @@ val esStrings = AppStrings(
     autoWorkerOn = "¡Activado! El fondo cambiará según el intervalo configurado.",
     autoWorkerOff = "Cambio automático desactivado.",
     colorPickerTitle = "Seleccionar color",
+    colorPickerBrightness = "Brillo",
+    colorPickerVerseColor = "Color del versículo",
+
+    // Wallpaper target
     wallpaperTargetLabel = "Aplicar fondo en",
     wallpaperTargetLock = "Bloqueo",
     wallpaperTargetHome = "Inicio",
     wallpaperTargetBoth = "Ambos",
+
+    // Verse database section
     vdbTitle = "Bases de datos de versículos",
     vdbSubtitle = "Crea, importa o exporta colecciones",
     vdbManage = "Gestionar",
@@ -896,7 +912,7 @@ val esStrings = AppStrings(
     vdbExporting = "Guardando en Descargas…",
     vdbExportDone = "Guardado en Descargas",
     vdbExportFailed = "Error al exportar",
-    vdbJsonFormat = "Formato JSON",
+    vdbJsonFormat = "Formát JSON",
 
     // Backup & Restore
     backupTitle = "Copia de seguridad y restauración",
@@ -939,7 +955,7 @@ val esStrings = AppStrings(
     wpCycleModeVerse = "Al cambiar versículo",
     wpCycleModeInterval = "Intervalo personalizado",
     wpCycleModeScreenOff = "Al bloquear",
-    wpCycleModeDayNight = "Día / Noche",
+    wpCycleModeDayNight = "Día / Noc",
     wpCycleModeVerseDesc = "El fondo cambia con el versículo",
     wpCycleModeDayNightDesc = "Cambiar automáticamente entre fondo de día y de noche",
     wpCycleDayWallpaper = "Fondo de día",
@@ -950,13 +966,13 @@ val esStrings = AppStrings(
     wpDayStart = "El día empieza",
     wpDayEnd = "El día termina",
 
-    wpViewAll = "View all",
-    wpViewAllTitle = "All wallpapers",
-    wpSelectMode = "Select",
-    wpDeleteSelected = "Delete selected",
-    wpSelected = "selected",
-    wpDeleteAllConfirm = "Delete selected wallpapers?",
-    wpDeleteAllConfirmDesc = "The selected wallpapers will be permanently removed from the app.",
+    wpViewAll = "Ver todo",
+    wpViewAllTitle = "Todos los fondos",
+    wpSelectMode = "Seleccionar",
+    wpDeleteSelected = "Eliminar seleccionados",
+    wpSelected = "seleccionados",
+    wpDeleteAllConfirm = "¿Eliminar fondos seleccionados?",
+    wpDeleteAllConfirmDesc = "Los fondos seleccionados se eliminarán permanentemente de la app.",
     wpPageHint = "Desliza a la izquierda para fondos →",
 
     // Verse language source toggle (in Settings)
@@ -1053,10 +1069,16 @@ val itStrings = AppStrings(
     autoWorkerOn = "Attivato! Lo sfondo cambierà in base all'intervallo impostato.",
     autoWorkerOff = "Cambio automatico disattivato.",
     colorPickerTitle = "Seleziona colore",
+    colorPickerBrightness = "Luminosità",
+    colorPickerVerseColor = "Colore del versetto",
+
+    // Wallpaper target
     wallpaperTargetLabel = "Applica sfondo su",
     wallpaperTargetLock = "Blocco",
     wallpaperTargetHome = "Home",
     wallpaperTargetBoth = "Entrambi",
+
+    // Verse database section
     vdbTitle = "Database di versetti",
     vdbSubtitle = "Crea, importa o esporta raccolte",
     vdbManage = "Gestisci",
@@ -1165,14 +1187,14 @@ val itStrings = AppStrings(
     wpDayStart = "Il giorno inizia",
     wpDayEnd = "Il giorno finisce",
 
-    wpViewAll = "View all",
-    wpViewAllTitle = "All wallpapers",
-    wpSelectMode = "Select",
-    wpDeleteSelected = "Delete selected",
-    wpSelected = "selected",
-    wpDeleteAllConfirm = "Delete selected wallpapers?",
-    wpDeleteAllConfirmDesc = "The selected wallpapers will be permanently removed from the app.",
-    wpPageHint = "Scorvi a sinistra per gli sfondi →",
+    wpViewAll = "Vedi tutti",
+    wpViewAllTitle = "Tutti gli sfondi",
+    wpSelectMode = "Seleziona",
+    wpDeleteSelected = "Elimina selezionati",
+    wpSelected = "selezionati",
+    wpDeleteAllConfirm = "Eliminare gli sfondi selezionati?",
+    wpDeleteAllConfirmDesc = "Gli sfondi selezionati verranno rimossi definitivamente dall'app.",
+    wpPageHint = "Scorri a sinistra per gli sfondi →",
 
     // Verse language source toggle (in Settings)
     vdbSourceDefault = "Predefinite",
@@ -1268,10 +1290,16 @@ val frStrings = AppStrings(
     autoWorkerOn = "Activé ! Le fond changera selon l'intervalle configuré.",
     autoWorkerOff = "Changement automatique désactivé.",
     colorPickerTitle = "Choisir une couleur",
+    colorPickerBrightness = "Luminosité",
+    colorPickerVerseColor = "Couleur du verset",
+
+    // Wallpaper target
     wallpaperTargetLabel = "Appliquer le fond sur",
     wallpaperTargetLock = "Verrouillage",
     wallpaperTargetHome = "Accueil",
     wallpaperTargetBoth = "Les deux",
+
+    // Verse database section
     vdbTitle = "Bases de données de versets",
     vdbSubtitle = "Crée, importe ou exporte des collections",
     vdbManage = "Gérer",
@@ -1380,13 +1408,13 @@ val frStrings = AppStrings(
     wpDayStart = "Le jour commence",
     wpDayEnd = "Le jour finit",
 
-    wpViewAll = "View all",
-    wpViewAllTitle = "All wallpapers",
-    wpSelectMode = "Select",
-    wpDeleteSelected = "Delete selected",
-    wpSelected = "selected",
-    wpDeleteAllConfirm = "Delete selected wallpapers?",
-    wpDeleteAllConfirmDesc = "The selected wallpapers will be permanently removed from the app.",
+    wpViewAll = "Tout voir",
+    wpViewAllTitle = "Tous les fonds",
+    wpSelectMode = "Sélectionner",
+    wpDeleteSelected = "Supprimer sélectionnés",
+    wpSelected = "sélectionnés",
+    wpDeleteAllConfirm = "Supprimer fonds sélectionnés ?",
+    wpDeleteAllConfirmDesc = "Les fonds sélectionnés seront définitivement supprimés de l'app.",
     wpPageHint = "Glissez à gauche pour les fonds d'écran →",
 
     // Verse language source toggle (in Settings)
@@ -1483,10 +1511,16 @@ val deStrings = AppStrings(
     autoWorkerOn = "Aktiviert! Das Hintergrundbild wechselt nach dem eingestellten Intervall.",
     autoWorkerOff = "Automatischer Wechsel deaktiviert.",
     colorPickerTitle = "Farbe auswählen",
+    colorPickerBrightness = "Helligkeit",
+    colorPickerVerseColor = "Versfarbe",
+
+    // Wallpaper target
     wallpaperTargetLabel = "Hintergrundbild anwenden auf",
     wallpaperTargetLock = "Sperrbildschirm",
     wallpaperTargetHome = "Startbildschirm",
     wallpaperTargetBoth = "Beide",
+
+    // Verse database section
     vdbTitle = "Vers-Datenbanken",
     vdbSubtitle = "Erstelle, importiere oder exportiere Sammlungen",
     vdbManage = "Verwalten",
@@ -1595,13 +1629,13 @@ val deStrings = AppStrings(
     wpDayStart = "Tag beginnt",
     wpDayEnd = "Tag endet",
 
-    wpViewAll = "View all",
-    wpViewAllTitle = "All wallpapers",
-    wpSelectMode = "Select",
-    wpDeleteSelected = "Delete selected",
-    wpSelected = "selected",
-    wpDeleteAllConfirm = "Delete selected wallpapers?",
-    wpDeleteAllConfirmDesc = "The selected wallpapers will be permanently removed from the app.",
+    wpViewAll = "Alle ansehen",
+    wpViewAllTitle = "Alle Hintergrundbilder",
+    wpSelectMode = "Auswählen",
+    wpDeleteSelected = "Ausgewählte löschen",
+    wpSelected = "ausgewählt",
+    wpDeleteAllConfirm = "Ausgewählte Hintergrundbilder löschen?",
+    wpDeleteAllConfirmDesc = "Die ausgewählten Hintergrundbilder werden dauerhaft aus der App entfernt.",
     wpPageHint = "Wische nach links für Hintergrundbilder →",
 
     // Verse language source toggle (in Settings)
@@ -1699,10 +1733,16 @@ val huStrings = AppStrings(
     autoWorkerOn = "Bekapcsolva! A háttérkép a beállított időközönként változik.",
     autoWorkerOff = "Automatikus csere kikapcsolva.",
     colorPickerTitle = "Szín kiválasztása",
+    colorPickerBrightness = "Fényerő",
+    colorPickerVerseColor = "Ige színe",
+
+    // Wallpaper target
     wallpaperTargetLabel = "Háttérkép alkalmazása",
     wallpaperTargetLock = "Zárolás",
     wallpaperTargetHome = "Főképernyő",
     wallpaperTargetBoth = "Mindkettő",
+
+    // Verse database section
     vdbTitle = "Igevers-adatbázisok",
     vdbSubtitle = "Hozz létre, importálj vagy exportálj gyűjteményeket",
     vdbManage = "Kezelés",
@@ -1811,13 +1851,13 @@ val huStrings = AppStrings(
     wpDayStart = "Nappal kezdete",
     wpDayEnd = "Nappal vége",
 
-    wpViewAll = "View all",
-    wpViewAllTitle = "All wallpapers",
-    wpSelectMode = "Select",
-    wpDeleteSelected = "Delete selected",
-    wpSelected = "selected",
-    wpDeleteAllConfirm = "Delete selected wallpapers?",
-    wpDeleteAllConfirmDesc = "The selected wallpapers will be permanently removed from the app.",
+    wpViewAll = "Összes megtekintése",
+    wpViewAllTitle = "Minden háttérkép",
+    wpSelectMode = "Kiválasztás",
+    wpDeleteSelected = "Kijelöltek törlése",
+    wpSelected = "kijelölve",
+    wpDeleteAllConfirm = "Kijelölt háttérképek törlése?",
+    wpDeleteAllConfirmDesc = "A kijelölt háttérképek véglegesen el lesznek távolítva az appból.",
     wpPageHint = "Húzd balra a háttérképekért →",
 
     // Verse language source toggle (in Settings)
@@ -1915,6 +1955,8 @@ val plStrings = AppStrings(
     autoWorkerOn = "Włączone! Tapeta zmieni się zgodnie z ustawionym interwałem.",
     autoWorkerOff = "Automatyczna zmiana wyłączona.",
     colorPickerTitle = "Wybierz kolor",
+    colorPickerBrightness = "Jasność",
+    colorPickerVerseColor = "Kolor wersetu",
     wallpaperTargetLabel = "Zastosuj tapetę na",
     wallpaperTargetLock = "Ekran blokady",
     wallpaperTargetHome = "Ekran główny",
@@ -5050,6 +5092,11 @@ fun ColorPickerRow(selectedColor: Int, strings: AppStrings, onColorSelected: (In
                             modifier = Modifier.weight(1f),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
+                            Text(
+                                text = strings.colorPickerVerseColor,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -5079,7 +5126,7 @@ fun ColorPickerRow(selectedColor: Int, strings: AppStrings, onColorSelected: (In
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = "Brightness",
+                            text = strings.colorPickerBrightness,
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.width(70.dp)

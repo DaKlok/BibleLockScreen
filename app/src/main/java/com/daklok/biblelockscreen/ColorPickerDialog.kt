@@ -107,6 +107,7 @@ private val PRESETS = listOf(
 @Composable
 fun ColorPickerDialog(
     initialColor: Color = Color.White,
+    strings: AppStrings,
     onDismiss: () -> Unit,
     onColorSelected: (Color) -> Unit
 ) {
@@ -158,7 +159,7 @@ fun ColorPickerDialog(
 
                 // Title
                 Text(
-                    text       = "Verse color",
+                    text       = strings.colorPickerVerseColor,
                     style      = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Medium
                 )
@@ -250,7 +251,7 @@ fun ColorPickerDialog(
                     horizontalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     Text(
-                        text      = "Brightness",
+                        text      = strings.colorPickerBrightness,
                         fontSize  = 12.sp,
                         color     = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier  = Modifier.width(72.dp)
@@ -377,8 +378,8 @@ fun ColorPickerDialog(
                     horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
                     modifier              = Modifier.fillMaxWidth()
                 ) {
-                    TextButton(onClick = onDismiss) { Text("Cancel") }
-                    Button(onClick = { onColorSelected(currentColor); onDismiss() }) { Text("Apply") }
+                    TextButton(onClick = onDismiss) { Text(strings.cancel) }
+                    Button(onClick = { onColorSelected(currentColor); onDismiss() }) { Text(strings.applyCustom) }
                 }
             }
         }
