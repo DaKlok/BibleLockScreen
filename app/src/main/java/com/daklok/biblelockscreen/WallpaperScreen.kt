@@ -6,6 +6,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
@@ -32,9 +33,11 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.IntOffset
 import coil.compose.AsyncImage
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Wallpaper Screen — the second page of the main HorizontalPager.
@@ -59,6 +62,10 @@ fun WallpaperScreen(
     var activeId by remember { mutableStateOf(prefs.getString("active_wallpaper_id", null) ?: "") }
     var settings by remember { mutableStateOf(WallpaperSettings.load(prefs)) }
     var deleteTarget by remember { mutableStateOf<WallpaperManager.Wallpaper?>(null) }
+    var showViewAll by remember { mutableStateOf(false) }
+    var selectMode by remember { mutableStateOf(false) }
+    var selectedIds by remember { mutableStateOf<Set<String>>(emptySet()) }
+    var showBulkDeleteConfirm by remember { mutableStateOf(false) }
 
     // Refresh the gallery every time this composable enters composition
     // (i.e. when the user swipes to the wallpaper page). This catches
@@ -283,21 +290,41 @@ fun WallpaperScreen(
                 }
                 // Add button
                 Spacer(Modifier.height(8.dp))
-                OutlinedButton(
-                    onClick = {
-                        haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                        photoPicker.launch("image/*")
-                    },
-                    modifier = Modifier.fillMaxWidth().height(48.dp),
-                    shape = RoundedCornerShape(14.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
-                    ),
-                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Icon(Icons.Default.Add, null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
-                    Spacer(Modifier.width(8.dp))
-                    Text(strings.wpAdd, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
+                    OutlinedButton(
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            photoPicker.launch("image/*")
+                        },
+                        modifier = Modifier.weight(1f).height(48.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
+                        ),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
+                    ) {
+                        Icon(Icons.Default.Add, null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                        Spacer(Modifier.width(6.dp))
+                        Text(strings.wpAdd, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
+                    }
+                    if (wallpapers.isNotEmpty()) {
+                        OutlinedButton(
+                            onClick = {
+                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                showViewAll = true
+                            },
+                            modifier = Modifier.weight(1f).height(48.dp),
+                            shape = RoundedCornerShape(14.dp),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                        ) {
+                            Icon(Icons.Default.GridView, null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                            Spacer(Modifier.width(6.dp))
+                            Text(strings.wpViewAll, fontWeight = FontWeight.Medium)
+                        }
+                    }
                 }
             }
         }
@@ -428,7 +455,10 @@ fun WallpaperScreen(
                                     value = sliderIndex,
                                     onValueChange = { v ->
                                         val hours = intervalSteps[v.toInt()]
-                                        saveSettings(settings.copy(cycleIntervalHours = hours))
+                                        if (hours != settings.cycleIntervalHours) {
+                                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                            saveSettings(settings.copy(cycleIntervalHours = hours))
+                                        }
                                     },
                                     valueRange = 0f..(intervalSteps.size - 1).toFloat(),
                                     steps = intervalSteps.size - 2,
@@ -436,6 +466,11 @@ fun WallpaperScreen(
                                 )
                                 // Daily hour — for 12h and 24h intervals
                                 AnimatedVisibility(visible = settings.cycleIntervalHours == 12 || settings.cycleIntervalHours == 24) {
+                                    val is12h = settings.cycleIntervalHours == 12
+                                    val maxHour = if (is12h) 11 else 23
+                                    val sliderSteps = if (is12h) 10 else 22
+                                    val displayHour = if (is12h) settings.cycleDailyHour % 12 else settings.cycleDailyHour
+                                    val secondHour = if (is12h) (displayHour + 12) % 24 else displayHour
                                     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                         Row(
                                             modifier = Modifier.fillMaxWidth(),
@@ -451,7 +486,8 @@ fun WallpaperScreen(
                                                 color = MaterialTheme.colorScheme.primaryContainer
                                             ) {
                                                 Text(
-                                                    String.format("%02d:00", settings.cycleDailyHour),
+                                                    if (is12h) String.format("%02d:00 / %02d:00", displayHour, secondHour)
+                                                    else String.format("%02d:00", settings.cycleDailyHour),
                                                     style = MaterialTheme.typography.labelSmall,
                                                     fontWeight = FontWeight.Bold,
                                                     color = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -460,12 +496,16 @@ fun WallpaperScreen(
                                             }
                                         }
                                         Slider(
-                                            value = settings.cycleDailyHour.toFloat(),
+                                            value = displayHour.toFloat(),
                                             onValueChange = { v ->
-                                                saveSettings(settings.copy(cycleDailyHour = v.toInt()))
+                                                val newHour = v.toInt()
+                                                if (newHour != displayHour) {
+                                                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                                }
+                                                saveSettings(settings.copy(cycleDailyHour = newHour))
                                             },
-                                            valueRange = 0f..23f,
-                                            steps = 22,
+                                            valueRange = 0f..maxHour.toFloat(),
+                                            steps = sliderSteps,
                                             modifier = Modifier.fillMaxWidth()
                                         )
                                     }
@@ -523,6 +563,330 @@ fun WallpaperScreen(
                                                 color = MaterialTheme.colorScheme.onErrorContainer
                                             )
                                         }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        // ── Bulk delete confirmation dialog ────────────────────────────
+        if (showBulkDeleteConfirm) {
+            AlertDialog(
+                onDismissRequest = { showBulkDeleteConfirm = false },
+                icon = { Icon(Icons.Outlined.DeleteForever, null, tint = MaterialTheme.colorScheme.error) },
+                title = { Text(strings.wpDeleteAllConfirm) },
+                text = { Text(strings.wpDeleteAllConfirmDesc, color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            selectedIds.forEach { id ->
+                                WallpaperManager.deleteWallpaper(context, id)
+                                if (id == activeId) {
+                                    val remaining = wallpapers.filter { it.id !in selectedIds }
+                                    if (remaining.isNotEmpty()) {
+                                        setActive(remaining.first())
+                                    } else {
+                                        prefs.edit().remove("active_wallpaper_id").apply()
+                                        prefs.edit().remove("bg_uri").apply()
+                                        activeId = ""
+                                        val legacyFile = java.io.File(context.filesDir, "user_wallpaper.jpg")
+                                        if (legacyFile.exists()) legacyFile.delete()
+                                        onWallpaperChanged()
+                                    }
+                                }
+                            }
+                            refresh()
+                            selectedIds = emptySet()
+                            selectMode = false
+                            showBulkDeleteConfirm = false
+                            showViewAll = false
+                            showNotification(strings.wpDelete, NotificationType.INFO)
+                        },
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error,
+                            contentColor = MaterialTheme.colorScheme.onError
+                        )
+                    ) { Text(strings.wpDeleteSelected) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showBulkDeleteConfirm = false }) { Text(strings.cancel) }
+                }
+            )
+        }
+
+        // ── View All full-screen dialog ────────────────────────────────
+        if (showViewAll) {
+            // Normal sheet behaviour restored — it can be partially expanded /
+            // dragged up and down like any bottom sheet. We don't fight that.
+            // Instead, the bin button (further down) reads sheetState.requireOffset()
+            // every frame and cancels out exactly however far the sheet has been
+            // dragged, so the button itself stays glued to the real screen corner
+            // even while the sheet — and the grid inside it — slides around.
+            val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+            ModalBottomSheet(
+                onDismissRequest = {
+                    showViewAll = false
+                    selectMode = false
+                    selectedIds = emptySet()
+                },
+                sheetState = sheetState,
+                dragHandle = { BottomSheetDefaults.DragHandle() },
+            ) {
+                // Root Box for the bottom sheet content — strict, EXPLICIT bounds.
+                // A concrete dp height (computed from the real screen height)
+                // gives the bin button a stable baseline position to anchor to
+                // when the sheet is fully expanded.
+                val configuration = androidx.compose.ui.platform.LocalConfiguration.current
+                val sheetHeight = (configuration.screenHeightDp * 0.92f).dp
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(sheetHeight)
+                ) {
+                    // BACKGROUND LAYER: Header and Grid
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 16.dp)
+                    ) {
+                        // Header — title + select button + selected count
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Text(
+                                strings.wpViewAllTitle,
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                modifier = Modifier.weight(1f)
+                            )
+                            // Selected count badge (next to select button)
+                            if (selectMode && selectedIds.isNotEmpty()) {
+                                Surface(
+                                    shape = RoundedCornerShape(16.dp),
+                                    color = MaterialTheme.colorScheme.primaryContainer
+                                ) {
+                                    Text(
+                                        "${selectedIds.size}",
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = FontWeight.Bold,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                        modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                    )
+                                }
+                            }
+                            // Select button (larger, pill-shaped)
+                            OutlinedButton(
+                                onClick = {
+                                    selectMode = !selectMode
+                                    if (!selectMode) selectedIds = emptySet()
+                                },
+                                shape = RoundedCornerShape(24.dp),
+                                border = androidx.compose.foundation.BorderStroke(
+                                    if (selectMode) 2.dp else 1.dp,
+                                    if (selectMode) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+                                ),
+                                colors = if (selectMode) ButtonDefaults.outlinedButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.primaryContainer,
+                                    contentColor = MaterialTheme.colorScheme.onPrimaryContainer
+                                ) else ButtonDefaults.outlinedButtonColors(),
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+                                modifier = Modifier.height(44.dp)
+                            ) {
+                                Icon(
+                                    if (selectMode) Icons.Default.CheckCircle else Icons.Default.CheckBox,
+                                    null,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Text(
+                                    if (selectMode) strings.cancel else strings.wpSelectMode,
+                                    style = MaterialTheme.typography.labelLarge,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
+
+                        // Grid Container
+                        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                            LazyVerticalGrid(
+                                columns = GridCells.Fixed(3),
+                                verticalArrangement = Arrangement.spacedBy(8.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                // Bottom padding so the last row isn't covered by the floating delete button
+                                contentPadding = PaddingValues(bottom = 100.dp)
+                            ) {
+                                items(wallpapers) { wp ->
+                                    val isSelected = wp.id in selectedIds
+                                    Box(
+                                        modifier = Modifier
+                                            .aspectRatio(9f / 16f)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                                            .border(
+                                                width = if (selectMode && isSelected) 3.dp
+                                                else if (selectMode) 1.dp
+                                                else 0.dp,
+                                                color = if (selectMode && isSelected) MaterialTheme.colorScheme.primary
+                                                else if (selectMode) MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+                                                else Color.Transparent,
+                                                shape = RoundedCornerShape(12.dp)
+                                            )
+                                            .clickable {
+                                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                                if (selectMode) {
+                                                    selectedIds = if (wp.id in selectedIds) {
+                                                        selectedIds - wp.id
+                                                    } else {
+                                                        selectedIds + wp.id
+                                                    }
+                                                } else {
+                                                    setActive(wp)
+                                                }
+                                            }
+                                    ) {
+                                        coil.compose.AsyncImage(
+                                            model = coil.request.ImageRequest.Builder(context)
+                                                .data(wp.file)
+                                                .memoryCachePolicy(coil.request.CachePolicy.DISABLED)
+                                                .crossfade(false)
+                                                .build(),
+                                            contentDescription = null,
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier.fillMaxSize()
+                                        )
+
+                                        // Dim overlay when in select mode and not selected
+                                        if (selectMode && !isSelected) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxSize()
+                                                    .background(Color.Black.copy(alpha = 0.25f))
+                                            )
+                                        }
+
+                                        // Active badge (hidden in select mode)
+                                        if (!selectMode && wp.id == activeId) {
+                                            Surface(
+                                                shape = RoundedCornerShape(6.dp),
+                                                color = MaterialTheme.colorScheme.primary,
+                                                modifier = Modifier
+                                                    .align(Alignment.TopStart)
+                                                    .padding(4.dp)
+                                            ) {
+                                                Text(
+                                                    strings.wpActiveBadge,
+                                                    style = MaterialTheme.typography.labelSmall,
+                                                    fontWeight = FontWeight.Bold,
+                                                    color = MaterialTheme.colorScheme.onPrimary,
+                                                    modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+                                                )
+                                            }
+                                        }
+
+                                        // Checkbox (only in select mode)
+                                        if (selectMode) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .align(Alignment.TopEnd)
+                                                    .padding(6.dp)
+                                                    .size(24.dp)
+                                                    .clip(RoundedCornerShape(percent = 35))
+                                                    .background(
+                                                        if (isSelected) MaterialTheme.colorScheme.primary
+                                                        else Color.White.copy(alpha = 0.7f)
+                                                    )
+                                                    .border(
+                                                        width = 2.dp,
+                                                        color = if (isSelected) MaterialTheme.colorScheme.primary
+                                                        else MaterialTheme.colorScheme.outline.copy(alpha = 0.6f),
+                                                        shape = RoundedCornerShape(percent = 35)
+                                                    ),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                if (isSelected) {
+                                                    Icon(
+                                                        Icons.Default.Check, null,
+                                                        tint = MaterialTheme.colorScheme.onPrimary,
+                                                        modifier = Modifier.size(16.dp)
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    // FOREGROUND LAYER: Floating Delete Button
+                    // Anchored strictly to the bottom right of the screen (the rigid root Box)
+                    if (selectMode && selectedIds.isNotEmpty()) {
+                        Box(
+                            modifier = Modifier
+                                // The sheet's own Surface gets translated vertically as it's
+                                // dragged (partially expanded = translated down = "half
+                                // invisible"). Everything inside it inherits that translation.
+                                // Here we cancel it out by shifting this button by the exact
+                                // opposite amount every frame, so visually it never moves —
+                                // it stays pinned to the real screen corner no matter how far
+                                // up or down the sheet/grid underneath has been dragged.
+                                .offset {
+                                    val sheetOffsetPx = try {
+                                        sheetState.requireOffset()
+                                    } catch (e: Exception) {
+                                        0f
+                                    }
+                                    IntOffset(0, -sheetOffsetPx.roundToInt())
+                                }
+                                .align(Alignment.BottomEnd)
+                                .padding(end = 24.dp, bottom = 12.dp)
+                        ) {
+                            // Badge on the outside so it doesn't get clipped
+                            BadgedBox(
+                                badge = {
+                                    Surface(
+                                        shape = RoundedCornerShape(percent = 50),
+                                        color = MaterialTheme.colorScheme.onError,
+                                        shadowElevation = 2.dp
+                                    ) {
+                                        Text(
+                                            text = "${selectedIds.size}",
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = FontWeight.Bold,
+                                            color = MaterialTheme.colorScheme.error,
+                                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                        )
+                                    }
+                                }
+                            ) {
+                                Surface(
+                                    shape = RoundedCornerShape(percent = 35),
+                                    color = MaterialTheme.colorScheme.error,
+                                    shadowElevation = 8.dp,
+                                    modifier = Modifier
+                                        .size(64.dp)
+                                        .clickable {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            showBulkDeleteConfirm = true
+                                        }
+                                ) {
+                                    Box(
+                                        modifier = Modifier.fillMaxSize(),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Delete, null,
+                                            tint = MaterialTheme.colorScheme.onError,
+                                            modifier = Modifier.size(32.dp)
+                                        )
                                     }
                                 }
                             }

@@ -302,6 +302,14 @@ data class AppStrings(
     val wpDualLockWarning: String = "Zmena tapety pri vypnutom displeji môže trvať až 3 sekundy.",
     val wpDayStart: String = "Začiatok dňa",
     val wpDayEnd: String = "Koniec dňa",
+
+    val wpViewAll: String = "Zobraziť všetky",
+    val wpViewAllTitle: String = "Všetky tapety",
+    val wpSelectMode: String = "Vybrať",
+    val wpDeleteSelected: String = "Odstrániť vybrané",
+    val wpSelected: String = "vybraných",
+    val wpDeleteAllConfirm: String = "Odstrániť vybrané tapety?",
+    val wpDeleteAllConfirmDesc: String = "Vybrané tapety budú natrvalo odstránené z aplikácie.",
     val wpPageHint: String = "Potiahni doľava pre tapety →",
 
     // Verse language source toggle (in Settings)
@@ -511,6 +519,14 @@ val enStrings = AppStrings(
     wpDualLockWarning = "It could take up to 3 seconds to update wallpaper while screen is off.",
     wpDayStart = "Day starts",
     wpDayEnd = "Day ends",
+
+    wpViewAll = "View all",
+    wpViewAllTitle = "All wallpapers",
+    wpSelectMode = "Select",
+    wpDeleteSelected = "Delete selected",
+    wpSelected = "selected",
+    wpDeleteAllConfirm = "Delete selected wallpapers?",
+    wpDeleteAllConfirmDesc = "The selected wallpapers will be permanently removed from the app.",
     wpPageHint = "Swipe left for wallpapers →",
 
     // Verse language source toggle (in Settings)
@@ -718,6 +734,14 @@ val czStrings = AppStrings(
     wpDualLockWarning = "Změna tapety při vypnutém displeji může trvat až 3 sekundy.",
     wpDayStart = "Začátek dne",
     wpDayEnd = "Konec dne",
+
+    wpViewAll = "View all",
+    wpViewAllTitle = "All wallpapers",
+    wpSelectMode = "Select",
+    wpDeleteSelected = "Delete selected",
+    wpSelected = "selected",
+    wpDeleteAllConfirm = "Delete selected wallpapers?",
+    wpDeleteAllConfirmDesc = "The selected wallpapers will be permanently removed from the app.",
     wpPageHint = "Potáhni doleva pro tapety →",
 
     // Verse language source toggle (in Settings)
@@ -925,6 +949,14 @@ val esStrings = AppStrings(
     wpDualLockWarning = "El cambio de fondo con la pantalla apagada puede tardar hasta 3 segundos.",
     wpDayStart = "El día empieza",
     wpDayEnd = "El día termina",
+
+    wpViewAll = "View all",
+    wpViewAllTitle = "All wallpapers",
+    wpSelectMode = "Select",
+    wpDeleteSelected = "Delete selected",
+    wpSelected = "selected",
+    wpDeleteAllConfirm = "Delete selected wallpapers?",
+    wpDeleteAllConfirmDesc = "The selected wallpapers will be permanently removed from the app.",
     wpPageHint = "Desliza a la izquierda para fondos →",
 
     // Verse language source toggle (in Settings)
@@ -1132,6 +1164,14 @@ val itStrings = AppStrings(
     wpDualLockWarning = "Il cambio sfondo a schermo spento può richiedere fino a 3 secondi.",
     wpDayStart = "Il giorno inizia",
     wpDayEnd = "Il giorno finisce",
+
+    wpViewAll = "View all",
+    wpViewAllTitle = "All wallpapers",
+    wpSelectMode = "Select",
+    wpDeleteSelected = "Delete selected",
+    wpSelected = "selected",
+    wpDeleteAllConfirm = "Delete selected wallpapers?",
+    wpDeleteAllConfirmDesc = "The selected wallpapers will be permanently removed from the app.",
     wpPageHint = "Scorvi a sinistra per gli sfondi →",
 
     // Verse language source toggle (in Settings)
@@ -1339,6 +1379,14 @@ val frStrings = AppStrings(
     wpDualLockWarning = "Le changement de fond écran éteint peut prendre jusqu'à 3 secondes.",
     wpDayStart = "Le jour commence",
     wpDayEnd = "Le jour finit",
+
+    wpViewAll = "View all",
+    wpViewAllTitle = "All wallpapers",
+    wpSelectMode = "Select",
+    wpDeleteSelected = "Delete selected",
+    wpSelected = "selected",
+    wpDeleteAllConfirm = "Delete selected wallpapers?",
+    wpDeleteAllConfirmDesc = "The selected wallpapers will be permanently removed from the app.",
     wpPageHint = "Glissez à gauche pour les fonds d'écran →",
 
     // Verse language source toggle (in Settings)
@@ -1546,6 +1594,14 @@ val deStrings = AppStrings(
     wpDualLockWarning = "Der Hintergrundwechsel bei ausgeschaltetem Bildschirm kann bis zu 3 Sekunden dauern.",
     wpDayStart = "Tag beginnt",
     wpDayEnd = "Tag endet",
+
+    wpViewAll = "View all",
+    wpViewAllTitle = "All wallpapers",
+    wpSelectMode = "Select",
+    wpDeleteSelected = "Delete selected",
+    wpSelected = "selected",
+    wpDeleteAllConfirm = "Delete selected wallpapers?",
+    wpDeleteAllConfirmDesc = "The selected wallpapers will be permanently removed from the app.",
     wpPageHint = "Wische nach links für Hintergrundbilder →",
 
     // Verse language source toggle (in Settings)
@@ -1754,6 +1810,14 @@ val huStrings = AppStrings(
     wpDualLockWarning = "A háttérkép váltása kikapcsolt képernyőnél akár 3 másodpercet is igénybe vehet.",
     wpDayStart = "Nappal kezdete",
     wpDayEnd = "Nappal vége",
+
+    wpViewAll = "View all",
+    wpViewAllTitle = "All wallpapers",
+    wpSelectMode = "Select",
+    wpDeleteSelected = "Delete selected",
+    wpSelected = "selected",
+    wpDeleteAllConfirm = "Delete selected wallpapers?",
+    wpDeleteAllConfirmDesc = "The selected wallpapers will be permanently removed from the app.",
     wpPageHint = "Húzd balra a háttérképekért →",
 
     // Verse language source toggle (in Settings)
@@ -1962,6 +2026,14 @@ val plStrings = AppStrings(
     wpDualLockWarning = "Zmiana tapety przy wyłączonym ekranie może potrwać do 3 sekund.",
     wpDayStart = "Dzień zaczyna się",
     wpDayEnd = "Dzień kończy się",
+
+    wpViewAll = "View all",
+    wpViewAllTitle = "All wallpapers",
+    wpSelectMode = "Select",
+    wpDeleteSelected = "Delete selected",
+    wpSelected = "selected",
+    wpDeleteAllConfirm = "Delete selected wallpapers?",
+    wpDeleteAllConfirmDesc = "The selected wallpapers will be permanently removed from the app.",
     wpPageHint = "Przesuń w lewo dla tapet →",
 
     vdbSourceDefault = "Wbudowane",
@@ -2855,9 +2927,9 @@ fun MainScreen(
                                 }
                             }
 
-                            // ── TIME OF DAY ROW (only for 24 h, non screen-off) ──
+                            // ── TIME OF DAY ROW (for 12h and 24h, non screen-off) ──
                             AnimatedVisibility(
-                                visible = autoIntervalHours == 24 && !changeOnScreenOff,
+                                visible = (autoIntervalHours == 12 || autoIntervalHours == 24) && !changeOnScreenOff,
                                 enter = expandVertically(spring(dampingRatio = Spring.DampingRatioMediumBouncy)) + fadeIn(tween(200)),
                                 exit = shrinkVertically(tween(180)) + fadeOut(tween(180))
                             ) {
@@ -2867,6 +2939,9 @@ fun MainScreen(
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
+                                        val is12h = autoIntervalHours == 12
+                                        val displayHour = if (is12h) dailyHour % 12 else dailyHour
+                                        val secondHour = if (is12h) (displayHour + 12) % 24 else displayHour
                                         Row(
                                             modifier = Modifier.fillMaxWidth(),
                                             verticalAlignment = Alignment.CenterVertically,
@@ -2886,7 +2961,8 @@ fun MainScreen(
                                                     .padding(horizontal = 12.dp, vertical = 4.dp)
                                             ) {
                                                 Text(
-                                                    text = String.format("%02d:00", dailyHour),
+                                                    text = if (is12h) String.format("%02d:00 / %02d:00", displayHour, secondHour)
+                                                    else String.format("%02d:00", dailyHour),
                                                     style = MaterialTheme.typography.labelMedium,
                                                     fontWeight = FontWeight.Bold,
                                                     color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -2895,13 +2971,16 @@ fun MainScreen(
                                         }
                                         Spacer(Modifier.height(12.dp))
                                         Slider(
-                                            value = dailyHour.toFloat(),
+                                            value = displayHour.toFloat(),
                                             onValueChange = {
-                                                dailyHour = it.roundToInt()
-                                                performHaptic(HapticFeedbackType.TextHandleMove)
+                                                val newHour = it.roundToInt()
+                                                if (newHour != displayHour) {
+                                                    performHaptic(HapticFeedbackType.TextHandleMove)
+                                                }
+                                                dailyHour = newHour
                                             },
-                                            valueRange = 0f..23f,
-                                            steps = 22,
+                                            valueRange = 0f..(if (is12h) 11f else 23f),
+                                            steps = if (is12h) 10 else 22,
                                             colors = SliderDefaults.colors(
                                                 thumbColor = MaterialTheme.colorScheme.primary,
                                                 activeTrackColor = MaterialTheme.colorScheme.primary,
@@ -2911,8 +2990,8 @@ fun MainScreen(
                                         )
                                         LaunchedEffect(dailyHour) {
                                             prefs.edit().putInt("daily_hour", dailyHour).apply()
-                                            if (isDailyActive && autoIntervalHours == 24 && !changeOnScreenOff) {
-                                                scheduleDailyWallpaper(context, dailyHour)
+                                            if (isDailyActive && (autoIntervalHours == 12 || autoIntervalHours == 24) && !changeOnScreenOff) {
+                                                scheduleAutoWallpaper(context, autoIntervalHours, dailyHour)
                                             }
                                         }
                                     }
