@@ -3,9 +3,12 @@ package com.daklok.biblelockscreen
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.Build
+import androidx.annotation.RequiresApi
 
 class ScreenOffReceiver : BroadcastReceiver() {
 
+    @RequiresApi(Build.VERSION_CODES.P)
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Intent.ACTION_SCREEN_OFF) return
 
@@ -30,11 +33,14 @@ class ScreenOffReceiver : BroadcastReceiver() {
             prefs.edit().putInt("screen_off_verse_index", currentIndex + 1).apply()
         }
 
-        // Try file-based cache first (faster than full render), fall back to full render
         val pendingResult = goAsync()
         Thread {
             try {
-                val cachedBitmap = WallpaperCacheManager.loadCache(context)
+                val cachedBitmap = if (WallpaperCacheManager.isCacheValid(context, prefs)) {
+                    WallpaperCacheManager.loadCache(context)
+                } else {
+                    null
+                }
                 if (cachedBitmap != null) {
                     applyBitmap(context, prefs, cachedBitmap)
                     cachedBitmap.recycle()
@@ -79,6 +85,7 @@ class ScreenOffReceiver : BroadcastReceiver() {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.P)
     private fun renderFull(
         context: Context,
         prefs: android.content.SharedPreferences

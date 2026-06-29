@@ -9,16 +9,12 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import java.io.File
 
-/**
- * Pre-renders the next wallpaper bitmap (image + verse text + styling) and
- * caches it as a PNG file. When the screen turns off, [ScreenOffReceiver]
- * just loads the cached PNG and calls setBitmap — no rendering needed.
- *
- * This makes the wallpaper swap nearly instant (~200ms instead of ~2-3s).
- */
+
 object WallpaperCacheManager {
 
     private const val CACHE_FILE = "next_wallpaper_cache.png"
+
+    private const val CACHE_SOURCE_KEY = "cache_source_uri"
 
     fun cacheFile(context: Context): File =
         File(context.filesDir, CACHE_FILE)
@@ -26,29 +22,46 @@ object WallpaperCacheManager {
     fun hasCache(context: Context): Boolean =
         cacheFile(context).exists()
 
-    /**
-     * Pre-renders the next wallpaper+verse bitmap and saves it as a PNG.
-     * Call this after every successful wallpaper render so the next swap
-     * is instant.
-     *
-     * Steps:
-     * 1. Peek at the next wallpaper (without setting it active)
-     * 2. Load the current verse (same verse — screen-off doesn't change it
-     *    unless verse cycling is also on)
-     * 3. Render the bitmap
-     * 4. Save as PNG to cache file
-     */
+    // ─────────────────────────────────────────────────────────────────────
+    // Image source resolution
+    // ─────────────────────────────────────────────────────────────────────
+
+    private fun nextImageSourceUri(
+        context: Context,
+        prefs: android.content.SharedPreferences
+    ): String? {
+        val wpSettings = WallpaperSettings.load(prefs)
+        val cycleWallpaperOnScreenOff = wpSettings.cycleEnabled &&
+                wpSettings.cycleMode == WallpaperManager.CYCLE_ON_SCREEN_OFF
+
+        if (cycleWallpaperOnScreenOff) {
+            val wallpapers = WallpaperManager.listWallpapers(context)
+            if (wallpapers.size >= 2) {
+                val currentId = prefs.getString("active_wallpaper_id", null)
+                val currentIndex = wallpapers.indexOfFirst { it.id == currentId }
+                val nextIndex = (currentIndex + 1).coerceAtLeast(0) % wallpapers.size
+                return Uri.fromFile(wallpapers[nextIndex].file).toString()
+            }
+        }
+
+        // Wallpaper cycling is OFF (or fewer than 2 wallpapers to cycle) —
+        // use the active wallpaper image so we DON'T accidentally rotate
+        // the background photo when only the verse is supposed to change.
+        val active = WallpaperManager.activeWallpaperFile(context)
+        if (active.exists()) return Uri.fromFile(active).toString()
+        // Legacy fallback: bg_uri from prefs (used before any managed
+        // wallpaper was set as active).
+        return prefs.getString("bg_uri", null)
+    }
+
+    // ─────────────────────────────────────────────────────────────────────
+    // Pre-render
+    // ─────────────────────────────────────────────────────────────────────
+
     @RequiresApi(Build.VERSION_CODES.P)
     fun prerenderNext(context: Context, prefs: android.content.SharedPreferences) {
         try {
-            val wallpapers = WallpaperManager.listWallpapers(context)
-            if (wallpapers.size < 2) return
-
-            // Find the next wallpaper (peek, don't set active)
-            val currentId = prefs.getString("active_wallpaper_id", null)
-            val currentIndex = wallpapers.indexOfFirst { it.id == currentId }
-            val nextIndex = (currentIndex + 1).coerceAtLeast(0) % wallpapers.size
-            val nextWallpaper = wallpapers[nextIndex]
+            val imageUriStr = nextImageSourceUri(context, prefs) ?: return
 
             // Load styling settings
             val bgBlurRadius = prefs.getFloat("bg_blur", 0f)
@@ -93,10 +106,10 @@ object WallpaperCacheManager {
                 }
             }
 
-            // Render the bitmap using the NEXT wallpaper's image
+            // Render the bitmap using the image determined above
             val bitmap = WallpaperUtils.createBitmapWithText(
                 context = context,
-                imageUri = Uri.fromFile(nextWallpaper.file),
+                imageUri = Uri.parse(imageUriStr),
                 verse = verseData.first,
                 ref = verseData.second,
                 textSizeMultiplier = textSizeMult,
@@ -117,16 +130,38 @@ object WallpaperCacheManager {
                     bitmap.compress(Bitmap.CompressFormat.PNG, 100, out)
                 }
                 bitmap.recycle()
+
+                prefs.edit().putString(CACHE_SOURCE_KEY, imageUriStr).apply()
             }
         } catch (e: Exception) {
             e.printStackTrace()
         }
     }
 
-    /**
-     * Loads the cached bitmap. Returns null if cache doesn't exist or
-     * can't be decoded.
-     */
+    // ─────────────────────────────────────────────────────────────────────
+    // Cache validation & loading
+    // ─────────────────────────────────────────────────────────────────────
+
+    fun isCacheValid(context: Context, prefs: android.content.SharedPreferences): Boolean {
+        val cache = cacheFile(context)
+        if (!cache.exists()) return false
+
+        val expectedUri = nextImageSourceUri(context, prefs) ?: return false
+        val storedUri = prefs.getString(CACHE_SOURCE_KEY, null) ?: return false
+        if (storedUri != expectedUri) return false
+
+        val activeFile = WallpaperManager.activeWallpaperFile(context)
+        val expectedActiveUri = Uri.fromFile(activeFile).toString()
+        if (expectedUri == expectedActiveUri && activeFile.exists()) {
+            if (activeFile.lastModified() > cache.lastModified()) {
+                return false
+            }
+        }
+
+        return true
+    }
+
+
     fun loadCache(context: Context): Bitmap? {
         val file = cacheFile(context)
         if (!file.exists()) return null
@@ -137,9 +172,7 @@ object WallpaperCacheManager {
         }
     }
 
-    /**
-     * Clears the cache.
-     */
+
     fun clearCache(context: Context) {
         val file = cacheFile(context)
         if (file.exists()) file.delete()
