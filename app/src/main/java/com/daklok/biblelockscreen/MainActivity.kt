@@ -2109,7 +2109,6 @@ val availableLanguages = listOf(
     "EN" to "English",
     "SK" to "Slovenčina",
     "CZ" to "Čeština",
-
     "ES" to "Español",
     "IT" to "Italiano",
     "FR" to "Français",
