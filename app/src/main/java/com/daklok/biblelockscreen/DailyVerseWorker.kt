@@ -15,6 +15,21 @@ class DailyVerseWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
     override suspend fun doWork(): Result {
         val prefs = applicationContext.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
 
+        // ── Wallpaper cycling (ONLY if this is a wallpaper-cycling worker) ──
+        // The verse worker ("DailyBibleWallpaper") must NOT cycle wallpapers.
+        // The wallpaper worker ("WallpaperCycling") and ScreenOffReceiver
+        // DO cycle. We distinguish them via the "source" input key.
+        val source = inputData.getString("source") ?: "verse"
+        val isWallpaperWorker = source == "wallpaper"
+
+        if (isWallpaperWorker) {
+            val wpSettings = WallpaperSettings.load(prefs)
+            if (wpSettings.cycleEnabled && wpSettings.cycleMode != com.daklok.biblelockscreen.WallpaperManager.CYCLE_ON_SCREEN_OFF) {
+                com.daklok.biblelockscreen.WallpaperManager.cycleToNext(applicationContext, prefs)
+            }
+        }
+
+        // ── Load the active wallpaper image ─────────────────────────────
         val localFile = java.io.File(applicationContext.filesDir, "user_wallpaper.jpg")
         val uriString = if (localFile.exists()) {
             Uri.fromFile(localFile).toString()
@@ -22,9 +37,11 @@ class DailyVerseWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
             prefs.getString("bg_uri", null)
         }
 
+        // If there's no wallpaper image at all, we can't render — bail out
+        // gracefully instead of clearing the wallpaper.
         if (uriString == null) return Result.failure()
 
-        // Načítanie všetkých nastavení
+        // ── Load verse ──────────────────────────────────────────────────
         val bgBlurRadius = prefs.getFloat("bg_blur", 0f)
         val textSizeMult = prefs.getFloat("text_size_mult", 1.0f)
         val textWidthMult = prefs.getFloat("text_width_mult", 1.0f)
@@ -36,7 +53,6 @@ class DailyVerseWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
         val fontFamilyStr = prefs.getString("font_family", "sans-serif") ?: "sans-serif"
         val bgDarkness = prefs.getFloat("bg_darkness", 0.23f)
 
-        // Skontrolujeme, či užívateľ nemá nastavený vlastný text
         val useCustomVerse = prefs.getBoolean("use_custom_verse", false)
         val customVerseText = prefs.getString("custom_verse_text", null)
         val customVerseRef = prefs.getString("custom_verse_ref", null)
@@ -57,6 +73,7 @@ class DailyVerseWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
             }
         }
 
+        // ── Render and apply ────────────────────────────────────────────
         val finalBitmap = WallpaperUtils.createBitmapWithText(
             context = applicationContext,
             imageUri = Uri.parse(uriString),
@@ -76,7 +93,6 @@ class DailyVerseWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
 
         if (finalBitmap != null) {
             val wallpaperManager = WallpaperManager.getInstance(applicationContext)
-            // 0 = lock only, 1 = home only, 2 = both
             val target = prefs.getInt("wallpaper_target", 0)
             val flag = when (target) {
                 1    -> WallpaperManager.FLAG_SYSTEM
@@ -84,12 +100,9 @@ class DailyVerseWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
                 else -> WallpaperManager.FLAG_LOCK
             }
             try {
-                wallpaperManager.setBitmap(
-                    finalBitmap,
-                    null,
-                    true,
-                    flag
-                )
+                wallpaperManager.setBitmap(finalBitmap, null, true, flag)
+                // Pre-render the next wallpaper for instant screen-off swaps
+                WallpaperCacheManager.prerenderNext(applicationContext, prefs)
                 return Result.success()
             } catch (e: Exception) {
                 e.printStackTrace()

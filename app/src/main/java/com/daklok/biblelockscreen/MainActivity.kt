@@ -23,6 +23,8 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -76,6 +78,9 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.work.*
 import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
+import coil.size.Precision
+import coil.request.CachePolicy
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import com.daklok.biblelockscreen.ui.theme.BibleLockScreenTheme
@@ -182,6 +187,8 @@ data class AppStrings(
 
     // Color picker
     val colorPickerTitle: String = "Vybrať farbu",
+    val colorPickerBrightness: String = "Jas",
+    val colorPickerVerseColor: String = "Farba verša",
 
     // Wallpaper target
     val wallpaperTargetLabel: String = "Použiť tapetu na",
@@ -260,6 +267,52 @@ data class AppStrings(
     val backupImportFailed: String = "Obnova zlyhala",
     val backupConfirmTitle: String = "Obnoviť zo zálohy?",
     val backupConfirmDesc: String = "Toto nahradí všetky tvoje aktuálne nastavenia, tapetu a databázy. Akciu nie je možné vrátiť späť.",
+
+    // Wallpaper gallery screen
+    val wpScreenTitle: String = "Tapety",
+    val wpScreenSubtitle: String = "Spravuj svoje tapety a automatické striedanie",
+    val wpGalleryEmpty: String = "Žiadne tapety",
+    val wpGalleryEmptyDesc: String = "Pridaj svoju prvú tapetu — vyber fotku z galérie.",
+    val wpAdd: String = "Pridať tapetu",
+    val wpSetActive: String = "Použiť",
+    val wpActive: String = "Aktívna",
+    val wpDelete: String = "Odstrániť",
+    val wpDeleteConfirm: String = "Odstrániť túto tapetu?",
+    val wpDeleteConfirmDesc: String = "Tapeta bude natrvalo odstránená z aplikácie.",
+    val wpCycleTitle: String = "Automatické striedanie",
+    val wpCycleDesc: String = "Striedaj tapety automaticky podľa intervalu",
+    val wpCycleInterval: String = "Interval striedania",
+    val wpCycleDailyHour: String = "Čas dennej zmeny",
+    val wpCycleOnScreenOff: String = "Pri zamknutí",
+    val wpCycleOnScreenOffDesc: String = "Zmení tapetu pri každom zamknutí telefónu",
+    val wpNightMode: String = "Nočný režim",
+    val wpNightModeDesc: String = "Použiť inú tapetu v noci",
+    val wpNightStart: String = "Začiatok noci",
+    val wpNightEnd: String = "Koniec noci",
+    val wpActiveBadge: String = "Aktívna",
+    val wpNightBadge: String = "Nočná",
+    val wpCycleModeVerse: String = "Pri zmene verša",
+    val wpCycleModeInterval: String = "Vlastný interval",
+    val wpCycleModeScreenOff: String = "Pri zamknutí",
+    val wpCycleModeDayNight: String = "Deň / Noc",
+    val wpCycleModeVerseDesc: String = "Tapeta sa zmení spolu s veršom",
+    val wpCycleModeDayNightDesc: String = "Automaticky prepínať medzi dennou a nočnou tapetou",
+    val wpCycleDayWallpaper: String = "Denná tapeta",
+    val wpCycleNightWallpaper: String = "Nočná tapeta",
+    val wpCycleModeIntervalDesc: String = "Zmena v pevných intervaloch",
+    val wpCycleModeScreenOffDesc: String = "Zmena pri každom zamknutí",
+    val wpDualLockWarning: String = "Zmena tapety pri vypnutom displeji môže trvať až 3 sekundy.",
+    val wpDayStart: String = "Začiatok dňa",
+    val wpDayEnd: String = "Koniec dňa",
+
+    val wpViewAll: String = "Zobraziť všetky",
+    val wpViewAllTitle: String = "Všetky tapety",
+    val wpSelectMode: String = "Vybrať",
+    val wpDeleteSelected: String = "Odstrániť vybrané",
+    val wpSelected: String = "vybraných",
+    val wpDeleteAllConfirm: String = "Odstrániť vybrané tapety?",
+    val wpDeleteAllConfirmDesc: String = "Vybrané tapety budú natrvalo odstránené z aplikácie.",
+    val wpPageHint: String = "Potiahni doľava pre tapety →",
 
     // Verse language source toggle (in Settings)
     val vdbSourceDefault: String = "Vstavané",
@@ -357,6 +410,8 @@ val enStrings = AppStrings(
     autoWorkerOn = "Enabled! Wallpaper will change based on your interval.",
     autoWorkerOff = "Automatic change disabled.",
     colorPickerTitle = "Select color",
+    colorPickerBrightness = "Brightness",
+    colorPickerVerseColor = "Verse color",
     wallpaperTargetLabel = "Apply wallpaper to",
     wallpaperTargetLock = "Lock screen",
     wallpaperTargetHome = "Home screen",
@@ -431,6 +486,52 @@ val enStrings = AppStrings(
     backupImportFailed = "Restore failed",
     backupConfirmTitle = "Restore from backup?",
     backupConfirmDesc = "This will replace all your current settings, wallpaper, and databases. This cannot be undone.",
+
+    // Wallpaper gallery screen
+    wpScreenTitle = "Wallpapers",
+    wpScreenSubtitle = "Manage your wallpapers and auto-cycling",
+    wpGalleryEmpty = "No wallpapers",
+    wpGalleryEmptyDesc = "Add your first wallpaper — pick a photo from your gallery.",
+    wpAdd = "Add wallpaper",
+    wpSetActive = "Set active",
+    wpActive = "Active",
+    wpDelete = "Remove",
+    wpDeleteConfirm = "Remove this wallpaper?",
+    wpDeleteConfirmDesc = "The wallpaper will be permanently removed from the app.",
+    wpCycleTitle = "Auto-cycling",
+    wpCycleDesc = "Automatically cycle through wallpapers on a schedule",
+    wpCycleInterval = "Cycle interval",
+    wpCycleDailyHour = "Daily change time",
+    wpCycleOnScreenOff = "On lock",
+    wpCycleOnScreenOffDesc = "Change wallpaper every time you lock the phone",
+    wpNightMode = "Night mode",
+    wpNightModeDesc = "Use a different wallpaper at night",
+    wpNightStart = "Night starts",
+    wpNightEnd = "Night ends",
+    wpActiveBadge = "Active",
+    wpNightBadge = "Night",
+    wpCycleModeVerse = "On verse change",
+    wpCycleModeInterval = "Custom interval",
+    wpCycleModeScreenOff = "On every lock",
+    wpCycleModeDayNight = "Day / Night",
+    wpCycleModeVerseDesc = "Wallpaper changes with the verse",
+    wpCycleModeDayNightDesc = "Automatically switch between day and night wallpaper",
+    wpCycleDayWallpaper = "Day wallpaper",
+    wpCycleNightWallpaper = "Night wallpaper",
+    wpCycleModeIntervalDesc = "Change at fixed intervals",
+    wpCycleModeScreenOffDesc = "Change on every screen lock",
+    wpDualLockWarning = "It could take up to 3 seconds to update wallpaper while screen is off.",
+    wpDayStart = "Day starts",
+    wpDayEnd = "Day ends",
+
+    wpViewAll = "View all",
+    wpViewAllTitle = "All wallpapers",
+    wpSelectMode = "Select",
+    wpDeleteSelected = "Delete selected",
+    wpSelected = "selected",
+    wpDeleteAllConfirm = "Delete selected wallpapers?",
+    wpDeleteAllConfirmDesc = "The selected wallpapers will be permanently removed from the app.",
+    wpPageHint = "Swipe left for wallpapers →",
 
     // Verse language source toggle (in Settings)
     vdbSourceDefault = "Default",
@@ -526,10 +627,16 @@ val czStrings = AppStrings(
     autoWorkerOn = "Zapnuto! Tapeta se změní dle nastaveného intervalu.",
     autoWorkerOff = "Automatická změna byla vypnuta.",
     colorPickerTitle = "Vybrat barvu",
+    colorPickerBrightness = "Jas",
+    colorPickerVerseColor = "Barva verše",
+
+    // Wallpaper target
     wallpaperTargetLabel = "Použít tapetu na",
     wallpaperTargetLock = "Zamčená",
     wallpaperTargetHome = "Domů",
-    wallpaperTargetBoth = "Oboje",
+    wallpaperTargetBoth= "Oboje",
+
+    // Verse database section
     vdbTitle = "Databáze veršů",
     vdbSubtitle = "Vytvoř, importuj nebo exportuj kolekce",
     vdbManage = "Spravovat",
@@ -600,6 +707,52 @@ val czStrings = AppStrings(
     backupImportFailed = "Obnova selhala",
     backupConfirmTitle = "Obnovit ze zálohy?",
     backupConfirmDesc = "Toto nahradí všechna tvá aktuální nastavení, tapetu a databáze. Akci nelze vrátit zpět.",
+
+    // Wallpaper gallery screen
+    wpScreenTitle = "Tapety",
+    wpScreenSubtitle = "Spravuj své tapety a automatické střídání",
+    wpGalleryEmpty = "Žádné tapety",
+    wpGalleryEmptyDesc = "Přidej svou první tapetu — vyber fotku z galerie.",
+    wpAdd = "Přidat tapetu",
+    wpSetActive = "Použít",
+    wpActive = "Aktivní",
+    wpDelete = "Odstranit",
+    wpDeleteConfirm = "Odstranit tuto tapetu?",
+    wpDeleteConfirmDesc = "Tapeta bude trvale odstraněna z aplikace.",
+    wpCycleTitle = "Automatické střídání",
+    wpCycleDesc = "Strídej tapety automaticky podle intervalu",
+    wpCycleInterval = "Interval střídání",
+    wpCycleDailyHour = "Čas denní změny",
+    wpCycleOnScreenOff = "Při zamčení",
+    wpCycleOnScreenOffDesc = "Změní tapetu při každém zamčení telefonu",
+    wpNightMode = "Noční režim",
+    wpNightModeDesc = "Použít jinou tapetu v noci",
+    wpNightStart = "Začátek noci",
+    wpNightEnd = "Konec noci",
+    wpActiveBadge = "Aktivní",
+    wpNightBadge = "Noční",
+    wpCycleModeVerse = "Při změně verše",
+    wpCycleModeInterval = "Vlastní interval",
+    wpCycleModeScreenOff = "Při zamčení",
+    wpCycleModeDayNight = "Den / Noc",
+    wpCycleModeVerseDesc = "Tapeta se změní spolu s veršem",
+    wpCycleModeDayNightDesc = "Automaticky přepínat mezi denní a noční tapetou",
+    wpCycleDayWallpaper = "Denní tapeta",
+    wpCycleNightWallpaper = "Noční tapeta",
+    wpCycleModeIntervalDesc = "Změna v pevných intervalech",
+    wpCycleModeScreenOffDesc = "Změna při každém zamčení",
+    wpDualLockWarning = "Změna tapety při vypnutém displeji může trvat až 3 sekundy.",
+    wpDayStart = "Začátek dne",
+    wpDayEnd = "Konec dne",
+
+    wpViewAll = "Zobrazit vše",
+    wpViewAllTitle = "Všechny tapety",
+    wpSelectMode = "Vybrat",
+    wpDeleteSelected = "Smazat vybrané",
+    wpSelected = "vybraných",
+    wpDeleteAllConfirm = "Smazat vybrané tapety?",
+    wpDeleteAllConfirmDesc = "Vybrané tapety budou trvale odstraněny z aplikace.",
+    wpPageHint = "Potáhni doleva pro tapety →",
 
     // Verse language source toggle (in Settings)
     vdbSourceDefault = "Vestavěné",
@@ -695,10 +848,16 @@ val esStrings = AppStrings(
     autoWorkerOn = "¡Activado! El fondo cambiará según el intervalo configurado.",
     autoWorkerOff = "Cambio automático desactivado.",
     colorPickerTitle = "Seleccionar color",
+    colorPickerBrightness = "Brillo",
+    colorPickerVerseColor = "Color del versículo",
+
+    // Wallpaper target
     wallpaperTargetLabel = "Aplicar fondo en",
     wallpaperTargetLock = "Bloqueo",
     wallpaperTargetHome = "Inicio",
     wallpaperTargetBoth = "Ambos",
+
+    // Verse database section
     vdbTitle = "Bases de datos de versículos",
     vdbSubtitle = "Crea, importa o exporta colecciones",
     vdbManage = "Gestionar",
@@ -753,7 +912,7 @@ val esStrings = AppStrings(
     vdbExporting = "Guardando en Descargas…",
     vdbExportDone = "Guardado en Descargas",
     vdbExportFailed = "Error al exportar",
-    vdbJsonFormat = "Formato JSON",
+    vdbJsonFormat = "Formát JSON",
 
     // Backup & Restore
     backupTitle = "Copia de seguridad y restauración",
@@ -769,6 +928,52 @@ val esStrings = AppStrings(
     backupImportFailed = "La restauración falló",
     backupConfirmTitle = "¿Restaurar desde copia de seguridad?",
     backupConfirmDesc = "Esto reemplazará todos tus ajustes, fondo de pantalla y bases de datos actuales. No se puede deshacer.",
+
+    // Wallpaper gallery screen
+    wpScreenTitle = "Fondos de pantalla",
+    wpScreenSubtitle = "Gestiona tus fondos y la rotación automática",
+    wpGalleryEmpty = "Sin fondos de pantalla",
+    wpGalleryEmptyDesc = "Añade tu primer fondo — elige una foto de la galería.",
+    wpAdd = "Añadir fondo",
+    wpSetActive = "Usar",
+    wpActive = "Activo",
+    wpDelete = "Eliminar",
+    wpDeleteConfirm = "¿Eliminar este fondo?",
+    wpDeleteConfirmDesc = "El fondo se eliminará permanentemente de la app.",
+    wpCycleTitle = "Rotación automática",
+    wpCycleDesc = "Cambia los fondos automáticamente según un intervalo",
+    wpCycleInterval = "Intervalo de rotación",
+    wpCycleDailyHour = "Hora de cambio diario",
+    wpCycleOnScreenOff = "Al bloquear",
+    wpCycleOnScreenOffDesc = "Cambia el fondo cada vez que bloqueas el teléfono",
+    wpNightMode = "Modo nocturno",
+    wpNightModeDesc = "Usar un fondo diferente por la noche",
+    wpNightStart = "Inicio de la noche",
+    wpNightEnd = "Fin de la noche",
+    wpActiveBadge = "Activo",
+    wpNightBadge = "Noche",
+    wpCycleModeVerse = "Al cambiar versículo",
+    wpCycleModeInterval = "Intervalo personalizado",
+    wpCycleModeScreenOff = "Al bloquear",
+    wpCycleModeDayNight = "Día / Noc",
+    wpCycleModeVerseDesc = "El fondo cambia con el versículo",
+    wpCycleModeDayNightDesc = "Cambiar automáticamente entre fondo de día y de noche",
+    wpCycleDayWallpaper = "Fondo de día",
+    wpCycleNightWallpaper = "Fondo de noche",
+    wpCycleModeIntervalDesc = "Cambiar en intervalos fijos",
+    wpCycleModeScreenOffDesc = "Cambiar en cada bloqueo",
+    wpDualLockWarning = "El cambio de fondo con la pantalla apagada puede tardar hasta 3 segundos.",
+    wpDayStart = "El día empieza",
+    wpDayEnd = "El día termina",
+
+    wpViewAll = "Ver todo",
+    wpViewAllTitle = "Todos los fondos",
+    wpSelectMode = "Seleccionar",
+    wpDeleteSelected = "Eliminar seleccionados",
+    wpSelected = "seleccionados",
+    wpDeleteAllConfirm = "¿Eliminar fondos seleccionados?",
+    wpDeleteAllConfirmDesc = "Los fondos seleccionados se eliminarán permanentemente de la app.",
+    wpPageHint = "Desliza a la izquierda para fondos →",
 
     // Verse language source toggle (in Settings)
     vdbSourceDefault = "Predeterminadas",
@@ -864,10 +1069,16 @@ val itStrings = AppStrings(
     autoWorkerOn = "Attivato! Lo sfondo cambierà in base all'intervallo impostato.",
     autoWorkerOff = "Cambio automatico disattivato.",
     colorPickerTitle = "Seleziona colore",
+    colorPickerBrightness = "Luminosità",
+    colorPickerVerseColor = "Colore del versetto",
+
+    // Wallpaper target
     wallpaperTargetLabel = "Applica sfondo su",
     wallpaperTargetLock = "Blocco",
     wallpaperTargetHome = "Home",
     wallpaperTargetBoth = "Entrambi",
+
+    // Verse database section
     vdbTitle = "Database di versetti",
     vdbSubtitle = "Crea, importa o esporta raccolte",
     vdbManage = "Gestisci",
@@ -938,6 +1149,52 @@ val itStrings = AppStrings(
     backupImportFailed = "Ripristino fallito",
     backupConfirmTitle = "Ripristinare dal backup?",
     backupConfirmDesc = "Verranno sostituite tutte le impostazioni, lo sfondo e i database attuali. Operazione irreversibile.",
+
+    // Wallpaper gallery screen
+    wpScreenTitle = "Sfondi",
+    wpScreenSubtitle = "Gestisci i tuoi sfondi e la rotazione automatica",
+    wpGalleryEmpty = "Nessuno sfondo",
+    wpGalleryEmptyDesc = "Aggiungi il tuo primo sfondo — scegli una foto dalla galleria.",
+    wpAdd = "Aggiungi sfondo",
+    wpSetActive = "Usa",
+    wpActive = "Attivo",
+    wpDelete = "Rimuovi",
+    wpDeleteConfirm = "Rimuovere questo sfondo?",
+    wpDeleteConfirmDesc = "Lo sfondo verrà rimosso definitivamente dall'app.",
+    wpCycleTitle = "Rotazione automatica",
+    wpCycleDesc = "Cambia sfondo automaticamente secondo un intervallo",
+    wpCycleInterval = "Intervallo di rotazione",
+    wpCycleDailyHour = "Ora cambio giornaliero",
+    wpCycleOnScreenOff = "Al blocco",
+    wpCycleOnScreenOffDesc = "Cambia sfondo ogni volta che blocchi il telefono",
+    wpNightMode = "Modalità notturna",
+    wpNightModeDesc = "Usa uno sfondo diverso di notte",
+    wpNightStart = "Inizio notte",
+    wpNightEnd = "Fine notte",
+    wpActiveBadge = "Attivo",
+    wpNightBadge = "Notte",
+    wpCycleModeVerse = "Al cambio versetto",
+    wpCycleModeInterval = "Intervallo personalizzato",
+    wpCycleModeScreenOff = "Ad ogni blocco",
+    wpCycleModeDayNight = "Giorno / Notte",
+    wpCycleModeVerseDesc = "Lo sfondo cambia con il versetto",
+    wpCycleModeDayNightDesc = "Cambia automaticamente tra sfondo di giorno e di notte",
+    wpCycleDayWallpaper = "Sfondo di giorno",
+    wpCycleNightWallpaper = "Sfondo di notte",
+    wpCycleModeIntervalDesc = "Cambia a intervalli fissi",
+    wpCycleModeScreenOffDesc = "Cambia ad ogni blocco",
+    wpDualLockWarning = "Il cambio sfondo a schermo spento può richiedere fino a 3 secondi.",
+    wpDayStart = "Il giorno inizia",
+    wpDayEnd = "Il giorno finisce",
+
+    wpViewAll = "Vedi tutti",
+    wpViewAllTitle = "Tutti gli sfondi",
+    wpSelectMode = "Seleziona",
+    wpDeleteSelected = "Elimina selezionati",
+    wpSelected = "selezionati",
+    wpDeleteAllConfirm = "Eliminare gli sfondi selezionati?",
+    wpDeleteAllConfirmDesc = "Gli sfondi selezionati verranno rimossi definitivamente dall'app.",
+    wpPageHint = "Scorri a sinistra per gli sfondi →",
 
     // Verse language source toggle (in Settings)
     vdbSourceDefault = "Predefinite",
@@ -1033,10 +1290,16 @@ val frStrings = AppStrings(
     autoWorkerOn = "Activé ! Le fond changera selon l'intervalle configuré.",
     autoWorkerOff = "Changement automatique désactivé.",
     colorPickerTitle = "Choisir une couleur",
+    colorPickerBrightness = "Luminosité",
+    colorPickerVerseColor = "Couleur du verset",
+
+    // Wallpaper target
     wallpaperTargetLabel = "Appliquer le fond sur",
     wallpaperTargetLock = "Verrouillage",
     wallpaperTargetHome = "Accueil",
     wallpaperTargetBoth = "Les deux",
+
+    // Verse database section
     vdbTitle = "Bases de données de versets",
     vdbSubtitle = "Crée, importe ou exporte des collections",
     vdbManage = "Gérer",
@@ -1107,6 +1370,52 @@ val frStrings = AppStrings(
     backupImportFailed = "Échec de la restauration",
     backupConfirmTitle = "Restaurer depuis une sauvegarde ?",
     backupConfirmDesc = "Cela remplacera tous vos paramètres, fond d'écran et bases de données actuels. Action irréversible.",
+
+    // Wallpaper gallery screen
+    wpScreenTitle = "Fonds d'écran",
+    wpScreenSubtitle = "Gérez vos fonds d'écran et la rotation automatique",
+    wpGalleryEmpty = "Aucun fond d'écran",
+    wpGalleryEmptyDesc = "Ajoutez votre premier fond — choisissez une photo de la galerie.",
+    wpAdd = "Ajouter un fond",
+    wpSetActive = "Utiliser",
+    wpActive = "Actif",
+    wpDelete = "Supprimer",
+    wpDeleteConfirm = "Supprimer ce fond d'écran ?",
+    wpDeleteConfirmDesc = "Le fond d'écran sera définitivement supprimé de l'app.",
+    wpCycleTitle = "Rotation automatique",
+    wpCycleDesc = "Change les fonds d'écran automatiquement selon un intervalle",
+    wpCycleInterval = "Intervalle de rotation",
+    wpCycleDailyHour = "Heure du changement quotidien",
+    wpCycleOnScreenOff = "Au verrouillage",
+    wpCycleOnScreenOffDesc = "Change le fond d'écran à chaque verrouillage du téléphone",
+    wpNightMode = "Mode nuit",
+    wpNightModeDesc = "Utiliser un fond d'écran différent la nuit",
+    wpNightStart = "Début de la nuit",
+    wpNightEnd = "Fin de la nuit",
+    wpActiveBadge = "Actif",
+    wpNightBadge = "Nuit",
+    wpCycleModeVerse = "Au changement de verset",
+    wpCycleModeInterval = "Intervalle personnalisé",
+    wpCycleModeScreenOff = "À chaque verrouillage",
+    wpCycleModeDayNight = "Jour / Nuit",
+    wpCycleModeVerseDesc = "Le fond change avec le verset",
+    wpCycleModeDayNightDesc = "Basculer automatiquement entre le fond de jour et de nuit",
+    wpCycleDayWallpaper = "Fond de jour",
+    wpCycleNightWallpaper = "Fond de nuit",
+    wpCycleModeIntervalDesc = "Changer à intervalles fixes",
+    wpCycleModeScreenOffDesc = "Changer à chaque verrouillage",
+    wpDualLockWarning = "Le changement de fond écran éteint peut prendre jusqu'à 3 secondes.",
+    wpDayStart = "Le jour commence",
+    wpDayEnd = "Le jour finit",
+
+    wpViewAll = "Tout voir",
+    wpViewAllTitle = "Tous les fonds",
+    wpSelectMode = "Sélectionner",
+    wpDeleteSelected = "Supprimer sélectionnés",
+    wpSelected = "sélectionnés",
+    wpDeleteAllConfirm = "Supprimer fonds sélectionnés ?",
+    wpDeleteAllConfirmDesc = "Les fonds sélectionnés seront définitivement supprimés de l'app.",
+    wpPageHint = "Glissez à gauche pour les fonds d'écran →",
 
     // Verse language source toggle (in Settings)
     vdbSourceDefault = "Intégrées",
@@ -1202,10 +1511,16 @@ val deStrings = AppStrings(
     autoWorkerOn = "Aktiviert! Das Hintergrundbild wechselt nach dem eingestellten Intervall.",
     autoWorkerOff = "Automatischer Wechsel deaktiviert.",
     colorPickerTitle = "Farbe auswählen",
+    colorPickerBrightness = "Helligkeit",
+    colorPickerVerseColor = "Versfarbe",
+
+    // Wallpaper target
     wallpaperTargetLabel = "Hintergrundbild anwenden auf",
     wallpaperTargetLock = "Sperrbildschirm",
     wallpaperTargetHome = "Startbildschirm",
     wallpaperTargetBoth = "Beide",
+
+    // Verse database section
     vdbTitle = "Vers-Datenbanken",
     vdbSubtitle = "Erstelle, importiere oder exportiere Sammlungen",
     vdbManage = "Verwalten",
@@ -1276,6 +1591,52 @@ val deStrings = AppStrings(
     backupImportFailed = "Wiederherstellung fehlgeschlagen",
     backupConfirmTitle = "Aus Sicherung wiederherstellen?",
     backupConfirmDesc = "Dies ersetzt alle deine aktuellen Einstellungen, das Hintergrundbild und die Datenbanken. Vorgang nicht umkehrbar.",
+
+    // Wallpaper gallery screen
+    wpScreenTitle = "Hintergrundbilder",
+    wpScreenSubtitle = "Verwalte deine Hintergrundbilder und automatische Rotation",
+    wpGalleryEmpty = "Keine Hintergrundbilder",
+    wpGalleryEmptyDesc = "Füge dein erstes Hintergrundbild hinzu — wähle ein Foto aus der Galerie.",
+    wpAdd = "Hintergrundbild hinzufügen",
+    wpSetActive = "Verwenden",
+    wpActive = "Aktiv",
+    wpDelete = "Entfernen",
+    wpDeleteConfirm = "Dieses Hintergrundbild entfernen?",
+    wpDeleteConfirmDesc = "Das Hintergrundbild wird dauerhaft aus der App entfernt.",
+    wpCycleTitle = "Automatische Rotation",
+    wpCycleDesc = "Wechselt Hintergrundbilder automatisch nach einem Intervall",
+    wpCycleInterval = "Rotationsintervall",
+    wpCycleDailyHour = "Tägliche Wechselzeit",
+    wpCycleOnScreenOff = "Beim Sperren",
+    wpCycleOnScreenOffDesc = "Wechselt das Hintergrundbild bei jedem Sperren des Telefons",
+    wpNightMode = "Nachtmodus",
+    wpNightModeDesc = "Nachts ein anderes Hintergrundbild verwenden",
+    wpNightStart = "Nacht beginnt",
+    wpNightEnd = "Nacht endet",
+    wpActiveBadge = "Aktiv",
+    wpNightBadge = "Nacht",
+    wpCycleModeVerse = "Bei Verswechsel",
+    wpCycleModeInterval = "Eigenes Intervall",
+    wpCycleModeScreenOff = "Bei jedem Sperren",
+    wpCycleModeDayNight = "Tag / Nacht",
+    wpCycleModeVerseDesc = "Hintergrundbild wechselt mit dem Vers",
+    wpCycleModeDayNightDesc = "Automatisch zwischen Tag- und Nachthintergrund wechseln",
+    wpCycleDayWallpaper = "Tag-Hintergrund",
+    wpCycleNightWallpaper = "Nacht-Hintergrund",
+    wpCycleModeIntervalDesc = "Wechsel in festen Intervallen",
+    wpCycleModeScreenOffDesc = "Wechsel bei jedem Sperren",
+    wpDualLockWarning = "Der Hintergrundwechsel bei ausgeschaltetem Bildschirm kann bis zu 3 Sekunden dauern.",
+    wpDayStart = "Tag beginnt",
+    wpDayEnd = "Tag endet",
+
+    wpViewAll = "Alle ansehen",
+    wpViewAllTitle = "Alle Hintergrundbilder",
+    wpSelectMode = "Auswählen",
+    wpDeleteSelected = "Ausgewählte löschen",
+    wpSelected = "ausgewählt",
+    wpDeleteAllConfirm = "Ausgewählte Hintergrundbilder löschen?",
+    wpDeleteAllConfirmDesc = "Die ausgewählten Hintergrundbilder werden dauerhaft aus der App entfernt.",
+    wpPageHint = "Wische nach links für Hintergrundbilder →",
 
     // Verse language source toggle (in Settings)
     vdbSourceDefault = "Standard",
@@ -1372,10 +1733,16 @@ val huStrings = AppStrings(
     autoWorkerOn = "Bekapcsolva! A háttérkép a beállított időközönként változik.",
     autoWorkerOff = "Automatikus csere kikapcsolva.",
     colorPickerTitle = "Szín kiválasztása",
+    colorPickerBrightness = "Fényerő",
+    colorPickerVerseColor = "Ige színe",
+
+    // Wallpaper target
     wallpaperTargetLabel = "Háttérkép alkalmazása",
     wallpaperTargetLock = "Zárolás",
     wallpaperTargetHome = "Főképernyő",
     wallpaperTargetBoth = "Mindkettő",
+
+    // Verse database section
     vdbTitle = "Igevers-adatbázisok",
     vdbSubtitle = "Hozz létre, importálj vagy exportálj gyűjteményeket",
     vdbManage = "Kezelés",
@@ -1446,6 +1813,52 @@ val huStrings = AppStrings(
     backupImportFailed = "A visszaállítás sikertelen",
     backupConfirmTitle = "Visszaállítás mentésből?",
     backupConfirmDesc = "Ez lecseréli az összes jelenlegi beállításodat, háttérképedet és adatbázisodat. A művelet nem visszavonható.",
+
+    // Wallpaper gallery screen
+    wpScreenTitle = "Háttérképek",
+    wpScreenSubtitle = "Kezeld a háttérképeidet és az automatikus váltást",
+    wpGalleryEmpty = "Nincs háttérkép",
+    wpGalleryEmptyDesc = "Add hozzá az első háttérképet — válassz egy fotót a galériából.",
+    wpAdd = "Háttérkép hozzáadása",
+    wpSetActive = "Használ",
+    wpActive = "Aktív",
+    wpDelete = "Eltávolít",
+    wpDeleteConfirm = "Eltávolítod ezt a háttérképet?",
+    wpDeleteConfirmDesc = "A háttérkép véglegesen el lesz távolítva az appból.",
+    wpCycleTitle = "Automatikus váltás",
+    wpCycleDesc = "A háttérképek automatikusan váltanak egy intervallum szerint",
+    wpCycleInterval = "Váltási intervallum",
+    wpCycleDailyHour = "Napi váltás ideje",
+    wpCycleOnScreenOff = "Záráskor",
+    wpCycleOnScreenOffDesc = "Háttérkép váltás minden telefonzáráskor",
+    wpNightMode = "Éjszakai mód",
+    wpNightModeDesc = "Éjjel másik háttérképet használ",
+    wpNightStart = "Éjszaka kezdete",
+    wpNightEnd = "Éjszaka vége",
+    wpActiveBadge = "Aktív",
+    wpNightBadge = "Éjszaka",
+    wpCycleModeVerse = "Vers váltáskor",
+    wpCycleModeInterval = "Egyéni intervallum",
+    wpCycleModeScreenOff = "Minden záráskor",
+    wpCycleModeDayNight = "Nappal / Éjszaka",
+    wpCycleModeVerseDesc = "A háttérkép a verssel együtt vált",
+    wpCycleModeDayNightDesc = "Automatikus váltás nappali és éjszakai háttérkép között",
+    wpCycleDayWallpaper = "Nappali háttérkép",
+    wpCycleNightWallpaper = "Éjszakai háttérkép",
+    wpCycleModeIntervalDesc = "Váltás fix intervallumonként",
+    wpCycleModeScreenOffDesc = "Váltás minden záráskor",
+    wpDualLockWarning = "A háttérkép váltása kikapcsolt képernyőnél akár 3 másodpercet is igénybe vehet.",
+    wpDayStart = "Nappal kezdete",
+    wpDayEnd = "Nappal vége",
+
+    wpViewAll = "Összes megtekintése",
+    wpViewAllTitle = "Minden háttérkép",
+    wpSelectMode = "Kiválasztás",
+    wpDeleteSelected = "Kijelöltek törlése",
+    wpSelected = "kijelölve",
+    wpDeleteAllConfirm = "Kijelölt háttérképek törlése?",
+    wpDeleteAllConfirmDesc = "A kijelölt háttérképek véglegesen el lesznek távolítva az appból.",
+    wpPageHint = "Húzd balra a háttérképekért →",
 
     // Verse language source toggle (in Settings)
     vdbSourceDefault = "Beépített",
@@ -1542,6 +1955,8 @@ val plStrings = AppStrings(
     autoWorkerOn = "Włączone! Tapeta zmieni się zgodnie z ustawionym interwałem.",
     autoWorkerOff = "Automatyczna zmiana wyłączona.",
     colorPickerTitle = "Wybierz kolor",
+    colorPickerBrightness = "Jasność",
+    colorPickerVerseColor = "Kolor wersetu",
     wallpaperTargetLabel = "Zastosuj tapetę na",
     wallpaperTargetLock = "Ekran blokady",
     wallpaperTargetHome = "Ekran główny",
@@ -1617,7 +2032,52 @@ val plStrings = AppStrings(
     backupConfirmTitle = "Przywrócić z kopii zapasowej?",
     backupConfirmDesc = "To zastąpi wszystkie Twoje obecne ustawienia, tapetę i bazy danych. Tej czynności nie można cofnąć.",
 
-    // Verse language source toggle (in Settings)
+    // Wallpaper gallery screen
+    wpScreenTitle = "Tapety",
+    wpScreenSubtitle = "Zarządzaj tapetami i automatyczną zmianą",
+    wpGalleryEmpty = "Brak tapet",
+    wpGalleryEmptyDesc = "Dodaj swoją pierwszą tapetę — wybierz zdjęcie z galerii.",
+    wpAdd = "Dodaj tapetę",
+    wpSetActive = "Użyj",
+    wpActive = "Aktywna",
+    wpDelete = "Usuń",
+    wpDeleteConfirm = "Usunąć tę tapetę?",
+    wpDeleteConfirmDesc = "Tapeta zostanie trwale usunięta z aplikacji.",
+    wpCycleTitle = "Automatyczna zmiana",
+    wpCycleDesc = "Zmieniaj tapety automatycznie według interwału",
+    wpCycleInterval = "Interwał zmiany",
+    wpCycleDailyHour = "Czas codziennej zmiany",
+    wpCycleOnScreenOff = "Przy blokadzie",
+    wpCycleOnScreenOffDesc = "Zmienia tapetę przy każdym zablokowaniu telefonu",
+    wpNightMode = "Tryb nocny",
+    wpNightModeDesc = "Używaj innej tapety w nocy",
+    wpNightStart = "Początek nocy",
+    wpNightEnd = "Koniec nocy",
+    wpActiveBadge = "Aktywna",
+    wpNightBadge = "Noc",
+    wpCycleModeVerse = "Przy zmianie wersetu",
+    wpCycleModeInterval = "Własny interwał",
+    wpCycleModeScreenOff = "Przy każdej blokadzie",
+    wpCycleModeDayNight = "Dzień / Noc",
+    wpCycleModeVerseDesc = "Tapeta zmienia się z wersetem",
+    wpCycleModeDayNightDesc = "Automatyczne przełączanie między tapetą dzienną i nocną",
+    wpCycleDayWallpaper = "Tapeta dzienna",
+    wpCycleNightWallpaper = "Tapeta nocna",
+    wpCycleModeIntervalDesc = "Zmiana w stałych odstępach",
+    wpCycleModeScreenOffDesc = "Zmiana przy każdej blokadzie",
+    wpDualLockWarning = "Zmiana tapety przy wyłączonym ekranie może potrwać do 3 sekund.",
+    wpDayStart = "Dzień zaczyna się",
+    wpDayEnd = "Dzień kończy się",
+
+    wpViewAll = "View all",
+    wpViewAllTitle = "All wallpapers",
+    wpSelectMode = "Select",
+    wpDeleteSelected = "Delete selected",
+    wpSelected = "selected",
+    wpDeleteAllConfirm = "Delete selected wallpapers?",
+    wpDeleteAllConfirmDesc = "The selected wallpapers will be permanently removed from the app.",
+    wpPageHint = "Przesuń w lewo dla tapet →",
+
     vdbSourceDefault = "Wbudowane",
     vdbSourceCustom = "Własne",
     vdbEmptyCustom = "Brak własnych baz danych",
@@ -1649,7 +2109,6 @@ val availableLanguages = listOf(
     "EN" to "English",
     "SK" to "Slovenčina",
     "CZ" to "Čeština",
-
     "ES" to "Español",
     "IT" to "Italiano",
     "FR" to "Français",
@@ -1953,6 +2412,19 @@ fun MainScreen(
     }
 
     LaunchedEffect(Unit) {
+        // One-time migration: if the user already has a user_wallpaper.jpg
+        // (from the old single-wallpaper system) but the gallery is empty,
+        // import it into the managed wallpapers/ folder so it shows up in
+        // the wallpaper screen and gets included in backups.
+        val existingActive = java.io.File(context.filesDir, "user_wallpaper.jpg")
+        val gallery = WallpaperManager.listWallpapers(context)
+        if (existingActive.exists() && gallery.isEmpty()) {
+            val id = "wp_${System.currentTimeMillis()}"
+            val target = java.io.File(java.io.File(context.filesDir, "wallpapers").also { it.mkdirs() }, "$id.jpg")
+            existingActive.copyTo(target, overwrite = true)
+            prefs.edit().putString("active_wallpaper_id", id).apply()
+        }
+
         // Initial setup and background worker observer check
         reloadPreviewData()
     }
@@ -1999,6 +2471,17 @@ fun MainScreen(
         uri?.let { sourceUri ->
             scope.launch(Dispatchers.IO) {
                 try {
+                    // Import the picked photo into the managed wallpapers/
+                    // gallery so it survives even if the user deletes the
+                    // original from storage. Returns the new wallpaper id.
+                    val newId = WallpaperManager.addWallpaper(context, sourceUri)
+                    if (newId != null) {
+                        // Set it as the active wallpaper (copies to user_wallpaper.jpg)
+                        WallpaperManager.setActiveWallpaper(context, newId)
+                        prefs.edit().putString("active_wallpaper_id", newId).apply()
+                    }
+
+                    // Also keep the legacy copy for backward compatibility
                     val fileName = "user_wallpaper.jpg"
                     val destinationFile = java.io.File(context.filesDir, fileName)
 
@@ -2039,6 +2522,11 @@ fun MainScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
+        // Horizontal pager: page 0 = main screen, page 1 = wallpaper gallery
+        val pagerState = rememberPagerState(initialPage = 0, pageCount = { 2 })
+        // Sync pager page when user swipes — used by the page indicator
+        val scope2 = rememberCoroutineScope()
+
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -2085,6 +2573,9 @@ fun MainScreen(
             snackbarHost = { },
             containerColor = MaterialTheme.colorScheme.background
         ) { padding ->
+            // ── Main scrollable Column (NOT inside a pager) ──────────────
+            // Only the preview area swipes horizontally; the settings below
+            // stay in place and scroll vertically with the rest of the page.
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -2095,51 +2586,143 @@ fun MainScreen(
                     .verticalScroll(scrollState),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // 1. DYNAMICKÝ PREVIEW CARD (Parallax efekt)
-                Box(
+                // 1. PREVIEW AREA — wrapped in a HorizontalPager so swiping
+                //    left/right switches between the lock-screen preview and
+                //    the wallpaper gallery. Only this area swipes; the
+                //    settings below do not.
+                HorizontalPager(
+                    state = pagerState,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 8.dp)
-                        .graphicsLayer {
-                            val scrollOffset = scrollState.value.toFloat()
-                            val scale = (1f - (scrollOffset / 1500f)).coerceIn(0.6f, 1f)
-                            val alphaVal = (1f - (scrollOffset / 900f)).coerceIn(0.5f, 1f)
-                            scaleX = scale
-                            scaleY = scale
-                            alpha = alphaVal
-                            translationY = scrollOffset * 0.5f
-                        }
-                ) {
-                    Pixel6LockScreenPreview(
-                        uri = imageUri,
-                        verseText = versePair?.first ?: strings.loading,
-                        verseReference = versePair?.second ?: "",
-                        textSizeMult = textSizeMult,
-                        textWidthMult = textWidthMult,
-                        verticalOffset = verticalOffset,
-                        textColor = textColor,
-                        textAlpha = textAlpha,
-                        bgBlur = bgBlur,
-                        bgDarkness = bgDarkness,
-                        isBold = isBold,
-                        useShadow = useShadow,
-                        fontFamilyStr = fontFamilyStr,
-                        showEditHint = true, // Ukazuje obrys s ceruzkou
-                        strings = strings,
-                        showBubbleHint = imageUri != null && !hasSeenEditHint,
-                        onClick = {
-                            performHaptic(HapticFeedbackType.LongPress)
-                            launcher.launch("image/*")
-                        },
-                        onEditClick = {
-                            performHaptic(HapticFeedbackType.LongPress)
-                            isEditing = true
-                            if (!hasSeenEditHint) {
-                                hasSeenEditHint = true
-                                prefs.edit().putBoolean("has_seen_edit_hint", true).apply()
+                        .animateContentSize(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioLowBouncy,
+                                stiffness = Spring.StiffnessLow
+                            )
+                        )
+                ) { page ->
+                    if (page == 0) {
+                        // Parallax zoom-out on the preview only — the wallpaper
+                        // screen (page 1) scrolls normally without this effect.
+                        Box(
+                            modifier = Modifier.graphicsLayer {
+                                val scrollOffset = scrollState.value.toFloat()
+                                val scale = (1f - (scrollOffset / 1500f)).coerceIn(0.6f, 1f)
+                                val alphaVal = (1f - (scrollOffset / 900f)).coerceIn(0.5f, 1f)
+                                scaleX = scale
+                                scaleY = scale
+                                alpha = alphaVal
+                                translationY = scrollOffset * 0.5f
                             }
+                        ) {
+                            Pixel6LockScreenPreview(
+                                uri = imageUri,
+                                verseText = versePair?.first ?: strings.loading,
+                                verseReference = versePair?.second ?: "",
+                                textSizeMult = textSizeMult,
+                                textWidthMult = textWidthMult,
+                                verticalOffset = verticalOffset,
+                                textColor = textColor,
+                                textAlpha = textAlpha,
+                                bgBlur = bgBlur,
+                                bgDarkness = bgDarkness,
+                                isBold = isBold,
+                                useShadow = useShadow,
+                                fontFamilyStr = fontFamilyStr,
+                                showEditHint = true,
+                                strings = strings,
+                                showBubbleHint = imageUri != null && !hasSeenEditHint,
+                                onClick = {
+                                    performHaptic(HapticFeedbackType.LongPress)
+                                    launcher.launch("image/*")
+                                },
+                                onEditClick = {
+                                    performHaptic(HapticFeedbackType.LongPress)
+                                    isEditing = true
+                                    if (!hasSeenEditHint) {
+                                        hasSeenEditHint = true
+                                        prefs.edit().putBoolean("has_seen_edit_hint", true).apply()
+                                    }
+                                }
+                            )
                         }
+                    } else {
+                        WallpaperScreen(
+                            strings = strings,
+                            showNotification = showNotification,
+                            onWallpaperChanged = {
+                                imageUri = WallpaperManager.activeWallpaperUri(context)
+                                reloadPreviewData()
+                            }
+                        )
+                    }
+                }
+
+                // ── Page indicator dots (under the preview) ──────────────
+                Row(
+                    modifier = Modifier
+                        .padding(top = 4.dp, bottom = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    repeat(2) { index ->
+                        val isSelected = pagerState.currentPage == index
+                        val width by animateDpAsState(
+                            targetValue = if (isSelected) 24.dp else 8.dp,
+                            animationSpec = spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMedium),
+                            label = "dot_$index"
+                        )
+                        Box(
+                            modifier = Modifier
+                                .size(width = width, height = 8.dp)
+                                .clip(CircleShape)
+                                .background(
+                                    if (isSelected) MaterialTheme.colorScheme.primary
+                                    else MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
+                                )
+                                .clickable {
+                                    scope2.launch {
+                                        pagerState.animateScrollToPage(index)
+                                    }
+                                }
+                        )
+                    }
+                }
+
+                // ── Swipe hint (shows on page 0 until user swipes once) ──
+                AnimatedVisibility(
+                    visible = pagerState.currentPage == 0 && !hasSeenSwipeHint,
+                    enter = fadeIn(tween(250)) + slideInVertically(
+                        initialOffsetY = { it / 2 },
+                        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium)
+                    ),
+                    exit = fadeOut(tween(200)) + slideOutVertically(
+                        targetOffsetY = { -it / 2 },
+                        animationSpec = tween(200)
                     )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .padding(bottom = 4.dp)
+                            .clip(RoundedCornerShape(20.dp))
+                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.9f))
+                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.ArrowForward, null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            strings.wpPageHint,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -2385,9 +2968,9 @@ fun MainScreen(
                                 }
                             }
 
-                            // ── TIME OF DAY ROW (only for 24 h, non screen-off) ──
+                            // ── TIME OF DAY ROW (for 12h and 24h, non screen-off) ──
                             AnimatedVisibility(
-                                visible = autoIntervalHours == 24 && !changeOnScreenOff,
+                                visible = (autoIntervalHours == 12 || autoIntervalHours == 24) && !changeOnScreenOff,
                                 enter = expandVertically(spring(dampingRatio = Spring.DampingRatioMediumBouncy)) + fadeIn(tween(200)),
                                 exit = shrinkVertically(tween(180)) + fadeOut(tween(180))
                             ) {
@@ -2397,6 +2980,9 @@ fun MainScreen(
                                     modifier = Modifier.fillMaxWidth()
                                 ) {
                                     Column(modifier = Modifier.padding(horizontal = 20.dp, vertical = 16.dp)) {
+                                        val is12h = autoIntervalHours == 12
+                                        val displayHour = if (is12h) dailyHour % 12 else dailyHour
+                                        val secondHour = if (is12h) (displayHour + 12) % 24 else displayHour
                                         Row(
                                             modifier = Modifier.fillMaxWidth(),
                                             verticalAlignment = Alignment.CenterVertically,
@@ -2416,7 +3002,8 @@ fun MainScreen(
                                                     .padding(horizontal = 12.dp, vertical = 4.dp)
                                             ) {
                                                 Text(
-                                                    text = String.format("%02d:00", dailyHour),
+                                                    text = if (is12h) String.format("%02d:00 / %02d:00", displayHour, secondHour)
+                                                    else String.format("%02d:00", dailyHour),
                                                     style = MaterialTheme.typography.labelMedium,
                                                     fontWeight = FontWeight.Bold,
                                                     color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -2425,13 +3012,16 @@ fun MainScreen(
                                         }
                                         Spacer(Modifier.height(12.dp))
                                         Slider(
-                                            value = dailyHour.toFloat(),
+                                            value = displayHour.toFloat(),
                                             onValueChange = {
-                                                dailyHour = it.roundToInt()
-                                                performHaptic(HapticFeedbackType.TextHandleMove)
+                                                val newHour = it.roundToInt()
+                                                if (newHour != displayHour) {
+                                                    performHaptic(HapticFeedbackType.TextHandleMove)
+                                                }
+                                                dailyHour = newHour
                                             },
-                                            valueRange = 0f..23f,
-                                            steps = 22,
+                                            valueRange = 0f..(if (is12h) 11f else 23f),
+                                            steps = if (is12h) 10 else 22,
                                             colors = SliderDefaults.colors(
                                                 thumbColor = MaterialTheme.colorScheme.primary,
                                                 activeTrackColor = MaterialTheme.colorScheme.primary,
@@ -2441,8 +3031,8 @@ fun MainScreen(
                                         )
                                         LaunchedEffect(dailyHour) {
                                             prefs.edit().putInt("daily_hour", dailyHour).apply()
-                                            if (isDailyActive && autoIntervalHours == 24 && !changeOnScreenOff) {
-                                                scheduleDailyWallpaper(context, dailyHour)
+                                            if (isDailyActive && (autoIntervalHours == 12 || autoIntervalHours == 24) && !changeOnScreenOff) {
+                                                scheduleAutoWallpaper(context, autoIntervalHours, dailyHour)
                                             }
                                         }
                                     }
@@ -2508,6 +3098,40 @@ fun MainScreen(
                                             }
                                         }
                                     )
+                                }
+                                // Warning when verse-on-lock is enabled (animated)
+                                AnimatedVisibility(
+                                    visible = changeOnScreenOff,
+                                    enter = expandVertically(
+                                        animationSpec = spring(
+                                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                                            stiffness = Spring.StiffnessMediumLow
+                                        )
+                                    ) + fadeIn(tween(250)),
+                                    exit = shrinkVertically(tween(200)) + fadeOut(tween(200))
+                                ) {
+                                    Surface(
+                                        shape = RoundedCornerShape(12.dp),
+                                        color = MaterialTheme.colorScheme.errorContainer,
+                                        modifier = Modifier.fillMaxWidth()
+                                    ) {
+                                        Row(
+                                            modifier = Modifier.padding(12.dp),
+                                            verticalAlignment = Alignment.Top,
+                                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Warning, null,
+                                                tint = MaterialTheme.colorScheme.onErrorContainer,
+                                                modifier = Modifier.size(18.dp)
+                                            )
+                                            Text(
+                                                strings.wpDualLockWarning,
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onErrorContainer
+                                            )
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -2841,7 +3465,15 @@ fun MainScreen(
                         }
                     }
                     Spacer(modifier = Modifier.height(80.dp))
-                }
+                } // end settings Column
+            } // end main Column
+        } // end Scaffold content lambda
+
+        // Mark swipe hint as seen when user leaves page 0
+        LaunchedEffect(pagerState.currentPage) {
+            if (pagerState.currentPage != 0 && !hasSeenSwipeHint) {
+                hasSeenSwipeHint = true
+                prefs.edit().putBoolean("has_seen_swipe_hint", true).apply()
             }
         }
 
@@ -3582,6 +4214,7 @@ fun FullScreenEditor(
     performHaptic: (HapticFeedbackType) -> Unit
 ) {
     val density = LocalDensity.current
+    val context = LocalContext.current
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
 
     // Lokálny stav
@@ -3655,7 +4288,14 @@ fun FullScreenEditor(
         if (uri != null) {
 
             Image(
-                painter = rememberAsyncImagePainter(uri),
+                painter = rememberAsyncImagePainter(
+                    ImageRequest.Builder(context)
+                        .data(uri)
+                        .memoryCachePolicy(CachePolicy.DISABLED)
+                        .diskCachePolicy(CachePolicy.DISABLED)
+                        .crossfade(false)
+                        .build()
+                ),
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
@@ -3985,6 +4625,7 @@ fun Pixel6LockScreenPreview(
     onEditClick: () -> Unit
 ) {
     val density = LocalDensity.current
+    val context = LocalContext.current
     val screenHeight = LocalConfiguration.current.screenHeightDp.dp
     val previewHeight = (screenHeight * 0.75f)
 
@@ -4018,7 +4659,13 @@ fun Pixel6LockScreenPreview(
             // Pozadie
             if (uri != null) {
                 Image(
-                    painter = rememberAsyncImagePainter(uri),
+                    painter = rememberAsyncImagePainter(
+                        ImageRequest.Builder(context)
+                            .data(uri)
+                            .precision(Precision.INEXACT)
+                            .crossfade(false)
+                            .build()
+                    ),
                     contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
@@ -4444,6 +5091,11 @@ fun ColorPickerRow(selectedColor: Int, strings: AppStrings, onColorSelected: (In
                             modifier = Modifier.weight(1f),
                             verticalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
+                            Text(
+                                text = strings.colorPickerVerseColor,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -4473,7 +5125,7 @@ fun ColorPickerRow(selectedColor: Int, strings: AppStrings, onColorSelected: (In
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         Text(
-                            text = "Brightness",
+                            text = strings.colorPickerBrightness,
                             fontSize = 12.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.width(70.dp)
@@ -4791,4 +5443,65 @@ fun runOneTimeWorker(context: Context) {
         .setExpedited(OutOfQuotaPolicy.RUN_AS_NON_EXPEDITED_WORK_REQUEST)
         .build()
     WorkManager.getInstance(context).enqueue(req)
+}
+
+/**
+ * Schedules or cancels the wallpaper cycling worker.
+ *
+ * If wallpaper cycling is enabled and the mode requires a periodic worker
+ * (ON_VERSE_CHANGE or CUSTOM_INTERVAL), schedules a periodic worker under a
+ * unique name "WallpaperCycling". If disabled or in ON_SCREEN_OFF / DAY_NIGHT
+ * mode, cancels any existing cycling worker.
+ *
+ * This is separate from the verse cycling worker ("DailyBibleWallpaper") so
+ * both can run independently.
+ */
+fun scheduleWallpaperCycling(context: Context) {
+    val prefs = context.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
+    val settings = WallpaperSettings.load(prefs)
+    val workManager = WorkManager.getInstance(context)
+
+    if (!settings.cycleEnabled) {
+        workManager.cancelUniqueWork("WallpaperCycling")
+        return
+    }
+
+    when (settings.cycleMode) {
+        com.daklok.biblelockscreen.WallpaperManager.CYCLE_ON_SCREEN_OFF -> {
+            // No periodic worker needed — ScreenOffReceiver handles it
+            workManager.cancelUniqueWork("WallpaperCycling")
+        }
+        else -> {
+            // CUSTOM_INTERVAL — schedule a periodic worker (independent of verse cycling)
+            val intervalHours = settings.cycleIntervalHours
+            val wallpaperData = androidx.work.workDataOf("source" to "wallpaper")
+            if (intervalHours == 12 || intervalHours == 24) {
+                val now = java.util.Calendar.getInstance()
+                val target = java.util.Calendar.getInstance().apply {
+                    set(java.util.Calendar.HOUR_OF_DAY, settings.cycleDailyHour)
+                    set(java.util.Calendar.MINUTE, 0)
+                    set(java.util.Calendar.SECOND, 0)
+                    if (timeInMillis <= now.timeInMillis) {
+                        add(java.util.Calendar.HOUR_OF_DAY, intervalHours)
+                    }
+                }
+                val initialDelay = target.timeInMillis - now.timeInMillis
+                val req = PeriodicWorkRequestBuilder<DailyVerseWorker>(intervalHours.toLong(), TimeUnit.HOURS)
+                    .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
+                    .setInputData(wallpaperData)
+                    .build()
+                workManager.enqueueUniquePeriodicWork("WallpaperCycling", ExistingPeriodicWorkPolicy.REPLACE, req)
+            } else {
+                val nowEpochHours = System.currentTimeMillis() / (1000L * 60 * 60)
+                val nextSlot = (nowEpochHours / intervalHours + 1) * intervalHours
+                val nextSlotMs = nextSlot * 60L * 60L * 1000L
+                val initialDelayMs = nextSlotMs - System.currentTimeMillis()
+                val req = PeriodicWorkRequestBuilder<DailyVerseWorker>(intervalHours.toLong(), TimeUnit.HOURS)
+                    .setInitialDelay(initialDelayMs, TimeUnit.MILLISECONDS)
+                    .setInputData(wallpaperData)
+                    .build()
+                workManager.enqueueUniquePeriodicWork("WallpaperCycling", ExistingPeriodicWorkPolicy.REPLACE, req)
+            }
+        }
+    }
 }

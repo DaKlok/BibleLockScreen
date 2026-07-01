@@ -31,9 +31,20 @@ object WallpaperUtils {
     ): Bitmap? {
         try {
             // 1. Získanie rozmerov obrazovky
+            // Always render the wallpaper in portrait dimensions,
+            // regardless of the device's *current* orientation. The
+            // lock screen is always portrait on phones, so if the
+            // wallpaper is regenerated while the user is in landscape
+            // (e.g. watching YouTube), we must still emit a portrait
+            // bitmap — otherwise the system crops/stretches the
+            // landscape bitmap and the wallpaper looks broken on the
+            // lock screen. Using min/max guarantees width < height
+            // on every device.
             val metrics = context.resources.displayMetrics
-            val screenW = metrics.widthPixels
-            val screenH = metrics.heightPixels
+            val rawW = metrics.widthPixels
+            val rawH = metrics.heightPixels
+            val screenW = minOf(rawW, rawH)
+            val screenH = maxOf(rawW, rawH)
 
             val source = ImageDecoder.createSource(context.contentResolver, imageUri)
             val original = ImageDecoder.decodeBitmap(source) { decoder, _, _ ->

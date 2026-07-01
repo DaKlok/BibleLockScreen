@@ -31,10 +31,12 @@ object SettingsBackupManager {
     private const val PREFS_NAME = "bible_app_prefs"
     private const val WALLPAPER_FILENAME = "user_wallpaper.jpg"
     private const val DB_DIR = "verse_databases"
+    private const val WALLPAPER_GALLERY_DIR = "wallpapers"
 
     private const val PREFS_ENTRY = "prefs.json"
     private const val WALLPAPER_ENTRY = "wallpaper.jpg"
     private const val DB_PREFIX = "databases/"
+    private const val WALLPAPER_GALLERY_PREFIX = "wallpapers/"
 
     data class BackupSummary(
         val prefsCount: Int,
@@ -50,9 +52,13 @@ object SettingsBackupManager {
         return try {
             val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
+            // Serialize every pref entry with explicit type info so we can
+            // restore the exact type on import (Gson alone would lose Int vs
+            // Long vs Float distinctions).
             val prefsJson = JsonObject()
             var prefsCount = 0
-
+            // prefs.all returns Map<String, *> — cast to Map<String, Any?> so
+            // the when-branches can smart-cast value to Boolean/Int/etc.
             val allPrefs: Map<String, Any?> = prefs.all
             for ((key, value) in allPrefs) {
                 val entry = JsonObject()
@@ -97,6 +103,12 @@ object SettingsBackupManager {
                 dbDir.listFiles { f -> f.name.endsWith(".json") }?.toList() ?: emptyList()
             } else emptyList()
 
+            // Wallpaper gallery (all managed wallpapers)
+            val wallpaperGalleryDir = File(context.filesDir, WALLPAPER_GALLERY_DIR)
+            val galleryFiles: List<File> = if (wallpaperGalleryDir.exists()) {
+                wallpaperGalleryDir.listFiles { f -> f.name.startsWith("wp_") && f.name.endsWith(".jpg") }?.toList() ?: emptyList()
+            } else emptyList()
+
             context.contentResolver.openOutputStream(outputUri)?.use { os ->
                 ZipOutputStream(os).use { zos ->
                     // prefs.json
@@ -105,10 +117,17 @@ object SettingsBackupManager {
                     zos.write(prettyJson.toByteArray(Charsets.UTF_8))
                     zos.closeEntry()
 
-                    // wallpaper.jpg (if the user has set one)
+                    // wallpaper.jpg — the active wallpaper (legacy)
                     if (hasWallpaper) {
                         zos.putNextEntry(ZipEntry(WALLPAPER_ENTRY))
                         wallpaperFile.inputStream().use { it.copyTo(zos) }
+                        zos.closeEntry()
+                    }
+
+                    // wallpapers/wp_*.jpg — all managed gallery wallpapers
+                    for (wpFile in galleryFiles) {
+                        zos.putNextEntry(ZipEntry("$WALLPAPER_GALLERY_PREFIX${wpFile.name}"))
+                        wpFile.inputStream().use { it.copyTo(zos) }
                         zos.closeEntry()
                     }
 
@@ -147,7 +166,10 @@ object SettingsBackupManager {
                                 val content = zis.readBytes().toString(Charsets.UTF_8)
                                 val prefsJson = JsonParser.parseString(content).asJsonObject
                                 val editor = prefs.edit()
-
+                                // Clear existing prefs first so the restore is
+                                // a true replacement, not a merge. This prevents
+                                // stale keys from lingering (e.g. an old
+                                // verse_lang that the backup doesn't contain).
                                 editor.clear()
                                 for ((key, valueEntry) in prefsJson.entrySet()) {
                                     val obj = valueEntry.asJsonObject
@@ -173,6 +195,15 @@ object SettingsBackupManager {
                                 val wallpaperFile = File(context.filesDir, WALLPAPER_FILENAME)
                                 wallpaperFile.outputStream().use { out -> zis.copyTo(out) }
                                 hasWallpaper = true
+                            }
+
+                            entry.name.startsWith(WALLPAPER_GALLERY_PREFIX) -> {
+                                val galleryDir = File(context.filesDir, WALLPAPER_GALLERY_DIR).also { it.mkdirs() }
+                                val filename = entry.name.removePrefix(WALLPAPER_GALLERY_PREFIX)
+                                if (filename.isNotBlank() && filename.endsWith(".jpg")) {
+                                    val wpFile = File(galleryDir, filename)
+                                    wpFile.outputStream().use { out -> zis.copyTo(out) }
+                                }
                             }
 
                             entry.name.startsWith(DB_PREFIX) -> {
