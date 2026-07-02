@@ -14,12 +14,9 @@ class DailyVerseWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
     @RequiresApi(Build.VERSION_CODES.P)
     override suspend fun doWork(): Result {
         val prefs = applicationContext.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
-
-        // ── Wallpaper cycling (ONLY if this is a wallpaper-cycling worker) ──
-        // The verse worker ("DailyBibleWallpaper") must NOT cycle wallpapers.
-        // The wallpaper worker ("WallpaperCycling") and ScreenOffReceiver
-        // DO cycle. We distinguish them via the "source" input key.
         val source = inputData.getString("source") ?: "verse"
+
+        AppLogger.i(applicationContext, "Worker", "doWork() started (source: $source)")
         val isWallpaperWorker = source == "wallpaper"
 
         if (isWallpaperWorker) {
@@ -39,7 +36,10 @@ class DailyVerseWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
 
         // If there's no wallpaper image at all, we can't render — bail out
         // gracefully instead of clearing the wallpaper.
-        if (uriString == null) return Result.failure()
+        if (uriString == null) {
+            AppLogger.e(applicationContext, "Worker", "Error: No wallpaper URI found")
+            return Result.failure()
+        }
 
         // ── Load verse ──────────────────────────────────────────────────
         val bgBlurRadius = prefs.getFloat("bg_blur", 0f)
@@ -103,10 +103,14 @@ class DailyVerseWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
                 wallpaperManager.setBitmap(finalBitmap, null, true, flag)
                 // Pre-render the next wallpaper for instant screen-off swaps
                 WallpaperCacheManager.prerenderNext(applicationContext, prefs)
+                AppLogger.i(applicationContext, "Worker", "Success: Wallpaper applied ($verseData)")
                 return Result.success()
             } catch (e: Exception) {
+                AppLogger.e(applicationContext, "Worker", "Error applying bitmap: ${e.message}")
                 e.printStackTrace()
             }
+        } else {
+            AppLogger.e(applicationContext, "Worker", "Error: Rendered bitmap is null")
         }
         return Result.failure()
     }

@@ -61,11 +61,13 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.text.TextStyle
@@ -2105,6 +2107,8 @@ fun getDefaultAppLanguage(): String {
     }
 }
 
+
+
 val availableLanguages = listOf(
     "EN" to "English",
     "SK" to "Slovenčina",
@@ -2131,6 +2135,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Installs a crash handler and detects + logs whether the previous
+        // session ended cleanly or was killed by the system / crashed.
+        AppLogger.installCrashHandler(this)
+        AppLogger.onAppStart(this)
 
         // Register screen-off receiver dynamically (required for ACTION_SCREEN_OFF on API 26+)
         screenOffReceiver = ScreenOffReceiver()
@@ -2177,11 +2185,31 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onStop() {
+        super.onStop()
+        // Refresh the "last known alive" timestamp so that if the process
+        // gets killed while backgrounded, the next launch can report
+        // roughly how long ago that happened.
+        AppLogger.heartbeat(this)
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         try { unregisterReceiver(screenOffReceiver) } catch (e: Exception) { /* already unregistered */ }
+
+        if (isFinishing) {
+            // A real, user-initiated close (back/swipe from recents) — mark
+            // this session as having shut down cleanly.
+            AppLogger.onAppCleanExit(this)
+        } else {
+            // Being torn down for a config change / process recreation, not
+            // an actual close — don't clear the "session open" flag.
+            AppLogger.onAppConfigChangeDestroy(this)
+        }
     }
 }
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -2277,6 +2305,7 @@ fun MainScreen(
     // Edit Mode a Settings
     var isEditing by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
+    var showDevMenu by remember { mutableStateOf(false) }
     // Verse-database sheet state — driven by both the "Manage" button in the
     // Verse databases section and the "Create new database" CTA inside the
     // VerseLanguagePicker (when the custom list is empty).
@@ -2308,6 +2337,34 @@ fun MainScreen(
         scope.launch {
             kotlinx.coroutines.delay(3000)
             activeNotification = null
+        }
+    }
+
+    // One-time-per-launch diagnostic: report the state of the scheduled
+    // wallpaper WorkManager jobs to the Developer Logs. If auto-wallpaper is
+    // supposed to be running but WorkManager has no record of it (or it's
+    // CANCELLED), that's a strong sign the system cleared the scheduled job.
+    LaunchedEffect(Unit) {
+        withContext(Dispatchers.IO) {
+            try {
+                val workManager = WorkManager.getInstance(context)
+                val dailyInfos = workManager.getWorkInfosForUniqueWork("DailyBibleWallpaper").get()
+                if (dailyInfos.isEmpty()) {
+                    if (isDailyActive) {
+                        AppLogger.w(context, "WorkManager", "Auto-wallpaper is enabled but no scheduled work exists — the system may have cleared it.")
+                    }
+                } else {
+                    dailyInfos.forEach { info ->
+                        AppLogger.i(context, "WorkManager", "DailyBibleWallpaper: state=${info.state}, runAttempts=${info.runAttemptCount}")
+                    }
+                }
+                val cyclingInfos = workManager.getWorkInfosForUniqueWork("WallpaperCycling").get()
+                cyclingInfos.forEach { info ->
+                    AppLogger.i(context, "WorkManager", "WallpaperCycling: state=${info.state}, runAttempts=${info.runAttemptCount}")
+                }
+            } catch (e: Exception) {
+                AppLogger.e(context, "WorkManager", "Failed to read scheduled work status: ${e.message}")
+            }
         }
     }
 
@@ -2512,9 +2569,10 @@ fun MainScreen(
 
     val settingsSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    BackHandler(enabled = isEditing || showSettings || showDbSheet) {
+    BackHandler(enabled = isEditing || showSettings || showDbSheet || showDevMenu) {
         if (isEditing) isEditing = false
         else if (showDbSheet) showDbSheet = false
+        else if (showDevMenu) showDevMenu = false
         else if (showSettings) scope.launch {
             settingsSheetState.hide()
             showSettings = false
@@ -2532,22 +2590,13 @@ fun MainScreen(
                 TopAppBar(
                     title = {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(34.dp)
-                                    .background(
-                                        MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f),
-                                        RoundedCornerShape(10.dp)
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    Icons.Outlined.MenuBook,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
+                            DevMenuTriggerIcon(
+                                onTriggered = {
+                                    performHaptic(HapticFeedbackType.LongPress)
+                                    showDevMenu = true
+                                },
+                                onHoldStart = { performHaptic(HapticFeedbackType.LongPress) }
+                            )
                             Spacer(Modifier.width(10.dp))
                             Text(strings.appName, fontWeight = FontWeight.Bold)
                         }
@@ -3956,6 +4005,17 @@ fun MainScreen(
             )
         }
 
+        // Developer log sheet — opened by holding the book icon in the top
+        // bar for 3 seconds. Shows AppLogger's on-disk log, including any
+        // warning about the previous session having been killed by the
+        // system rather than closed cleanly.
+        if (showDevMenu) {
+            DeveloperLogSheet(
+                onDismiss = { showDevMenu = false },
+                onClear = { AppLogger.clearLogs(context) }
+            )
+        }
+
         // Expressive Full-Screen Editor s animáciou
         AnimatedVisibility(
             visible = isEditing,
@@ -4105,8 +4165,11 @@ fun MainScreen(
                 }
             }
         }
+
     }
 }
+
+
 
 // --- KOMPONENTY ---
 
@@ -4152,8 +4215,11 @@ fun LanguageDropdown(
                 expanded = false
             }
         )
+
     }
 }
+
+
 
 @Composable
 fun SettingsSectionHeader(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String) {
@@ -4174,8 +4240,11 @@ fun SettingsSectionHeader(icon: androidx.compose.ui.graphics.vector.ImageVector,
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.Bold
         )
+
     }
 }
+
+
 
 @Composable
 fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
@@ -4190,8 +4259,11 @@ fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
             modifier = Modifier.padding(16.dp),
             content = content
         )
+
     }
 }
+
+
 
 @Composable
 fun FullScreenEditor(
@@ -4556,8 +4628,11 @@ fun FullScreenEditor(
                 }
             }
         }
+
     }
 }
+
+
 
 @Composable
 fun EditHintBubble(text: String, modifier: Modifier = Modifier) {
@@ -4600,8 +4675,11 @@ fun EditHintBubble(text: String, modifier: Modifier = Modifier) {
                 .size(40.dp)
                 .offset(y = (-14).dp) // Overlap to seamlessly connect to the bubble
         )
+
     }
 }
+
+
 
 @Composable
 fun Pixel6LockScreenPreview(
@@ -4867,8 +4945,11 @@ fun Pixel6LockScreenPreview(
                 }
             }
         }
+
     }
 }
+
+
 
 @Composable
 fun FontPickerRow(selectedFont: String, strings: AppStrings, onFontSelected: (String) -> Unit) {
@@ -4897,8 +4978,11 @@ fun FontPickerRow(selectedFont: String, strings: AppStrings, onFontSelected: (St
                 } else null
             )
         }
+
     }
 }
+
+
 
 val TextStyleWithShadow = TextStyle(
     shadow = androidx.compose.ui.graphics.Shadow(
@@ -4916,6 +5000,8 @@ fun getComposeFontFamily(fontFamilyStr: String): FontFamily {
     }
 }
 
+
+
 fun getComposeFontWeight(fontFamilyStr: String, isBold: Boolean): FontWeight {
     if (isBold) return FontWeight.Bold
     return when (fontFamilyStr) {
@@ -4923,6 +5009,8 @@ fun getComposeFontWeight(fontFamilyStr: String, isBold: Boolean): FontWeight {
         else -> FontWeight.Normal
     }
 }
+
+
 
 // ── Color picker helpers ──────────────────────────────────────────────────────
 
@@ -5290,8 +5378,11 @@ fun ColorPickerRow(selectedColor: Int, strings: AppStrings, onColorSelected: (In
         ) {
             Icon(Icons.Default.ColorLens, "Custom Color", tint = Color.White, modifier = Modifier.size(20.dp))
         }
+
     }
 }
+
+
 
 @Composable
 fun EnhancedSlider(
@@ -5360,8 +5451,352 @@ fun EnhancedSlider(
             ),
             modifier = Modifier.padding(top = 0.dp)
         )
+
     }
 }
+
+/**
+ * The small "book" icon shown next to the app name in the top bar. Holding
+ * it down for 3 full seconds opens the Developer Logs sheet — a quick M3
+ * radial progress ring fills in around the icon while held, so it's clear
+ * something is happening and roughly how much longer to hold.
+ */
+@Composable
+fun DevMenuTriggerIcon(
+    onTriggered: () -> Unit,
+    onHoldStart: () -> Unit,
+    holdDurationMs: Int = 3000
+) {
+    val scope = rememberCoroutineScope()
+    var isHolding by remember { mutableStateOf(false) }
+    val holdProgress = remember { Animatable(0f) }
+
+    Box(
+        modifier = Modifier
+            .size(34.dp)
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onPress = {
+                        isHolding = true
+                        onHoldStart()
+                        var triggered = false
+                        val animJob = scope.launch {
+                            holdProgress.snapTo(0f)
+                            holdProgress.animateTo(1f, tween(holdDurationMs, easing = LinearEasing))
+                            triggered = true
+                            onTriggered()
+                        }
+                        tryAwaitRelease()
+                        isHolding = false
+                        animJob.cancel()
+                        if (!triggered) {
+                            scope.launch { holdProgress.animateTo(0f, tween(150)) }
+                        } else {
+                            scope.launch { holdProgress.snapTo(0f) }
+                        }
+                    }
+                )
+            }
+            .background(
+                MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f),
+                RoundedCornerShape(10.dp)
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            Icons.Outlined.MenuBook,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+            modifier = Modifier.size(18.dp)
+        )
+        if (isHolding) {
+            CircularProgressIndicator(
+                progress = holdProgress.value,
+                modifier = Modifier
+                    .matchParentSize()
+                    .padding(2.dp),
+                strokeWidth = 2.dp,
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = Color.Transparent
+            )
+        }
+    }
+}
+
+private fun levelAccentColor(level: LogLevel, scheme: ColorScheme): Color = when (level) {
+    LogLevel.ERROR -> scheme.error
+    LogLevel.WARN -> scheme.tertiary
+    LogLevel.INFO -> scheme.primary
+    LogLevel.DEBUG -> scheme.onSurfaceVariant
+}
+
+private fun levelContainerColor(level: LogLevel, scheme: ColorScheme): Color = when (level) {
+    LogLevel.ERROR -> scheme.errorContainer.copy(alpha = 0.55f)
+    LogLevel.WARN -> scheme.tertiaryContainer.copy(alpha = 0.55f)
+    LogLevel.INFO -> scheme.surfaceVariant.copy(alpha = 0.45f)
+    LogLevel.DEBUG -> scheme.surfaceVariant.copy(alpha = 0.25f)
+}
+
+private fun levelIcon(level: LogLevel): ImageVector = when (level) {
+    LogLevel.ERROR -> Icons.Filled.ErrorOutline
+    LogLevel.WARN -> Icons.Filled.WarningAmber
+    LogLevel.INFO -> Icons.Filled.Info
+    LogLevel.DEBUG -> Icons.Filled.Circle
+}
+
+/**
+ * A simplified, on-device "logcat" — shows what AppLogger has recorded,
+ * newest first, with severity color-coding and level filtering. Because
+ * AppLogger writes straight to disk, this still shows the full history
+ * even after the app has been force-closed or killed by the system; a
+ * warning entry logged on the *next* launch will explain when that happened.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DeveloperLogSheet(onDismiss: () -> Unit, onClear: () -> Unit) {
+    val context = LocalContext.current
+    var entries by remember { mutableStateOf(AppLogger.getLogEntries(context)) }
+    var activeFilter by remember { mutableStateOf<LogLevel?>(null) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+    val scope = rememberCoroutineScope()
+    val clipboard = LocalClipboardManager.current
+
+    // Logs are written to disk from background threads (receivers, workers)
+    // that don't know this sheet is open, so we can't rely on state changes
+    // to trigger a refresh. Poll instead, while the sheet is visible, so
+    // new entries (e.g. "Wallpaper set successfully") show up live instead
+    // of only appearing the next time the sheet is reopened.
+    LaunchedEffect(Unit) {
+        while (true) {
+            kotlinx.coroutines.delay(1000)
+            val fresh = AppLogger.getLogEntries(context)
+            if (fresh != entries) entries = fresh
+        }
+    }
+
+    val filteredEntries = remember(entries, activeFilter) {
+        if (activeFilter == null) entries else entries.filter { it.level == activeFilter }
+    }
+    val errorCount = remember(entries) { entries.count { it.level == LogLevel.ERROR } }
+    val warnCount = remember(entries) { entries.count { it.level == LogLevel.WARN } }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        dragHandle = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    BottomSheetDefaults.DragHandle()
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 24.dp, end = 8.dp, top = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "Developer Logs",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Surface(
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                shape = RoundedCornerShape(6.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(6.dp)
+                                            .background(MaterialTheme.colorScheme.primary, CircleShape)
+                                    )
+                                    Spacer(Modifier.width(4.dp))
+                                    Text(
+                                        text = "Live",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                }
+                            }
+                        }
+                        Text(
+                            text = if (entries.isEmpty()) {
+                                "Nothing logged yet"
+                            } else {
+                                "${entries.size} entries · $warnCount warnings · $errorCount errors"
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Row {
+                        IconButton(onClick = {
+                            val text = (if (activeFilter == null) entries else filteredEntries)
+                                .joinToString("\n") { it.raw }
+                            clipboard.setText(AnnotatedString(text))
+                        }) {
+                            Icon(Icons.Default.ContentCopy, contentDescription = "Copy logs")
+                        }
+                        IconButton(onClick = {
+                            onClear()
+                            entries = emptyList()
+                        }) {
+                            Icon(Icons.Default.DeleteSweep, contentDescription = "Clear logs")
+                        }
+                        IconButton(onClick = {
+                            scope.launch {
+                                sheetState.hide()
+                                onDismiss()
+                            }
+                        }) {
+                            Icon(Icons.Outlined.Close, contentDescription = "Close")
+                        }
+                    }
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(start = 24.dp, end = 16.dp, top = 8.dp, bottom = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        selected = activeFilter == null,
+                        onClick = { activeFilter = null },
+                        label = { Text("All") }
+                    )
+                    listOf(LogLevel.ERROR, LogLevel.WARN, LogLevel.INFO, LogLevel.DEBUG).forEach { level ->
+                        FilterChip(
+                            selected = activeFilter == level,
+                            onClick = { activeFilter = if (activeFilter == level) null else level },
+                            label = { Text(level.label) },
+                            leadingIcon = {
+                                Icon(
+                                    levelIcon(level),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = levelAccentColor(level, MaterialTheme.colorScheme)
+                                )
+                            }
+                        )
+                    }
+                }
+            }
+        },
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+    ) {
+        if (entries.isEmpty()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 48.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(
+                    Icons.Outlined.MenuBook,
+                    contentDescription = null,
+                    modifier = Modifier.size(40.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "No logs yet — use the app for a bit and check back here.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 32.dp)
+                )
+            }
+        } else if (filteredEntries.isEmpty()) {
+            Text(
+                "No entries match this filter.",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(32.dp),
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        } else {
+            androidx.compose.foundation.lazy.LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                contentPadding = PaddingValues(bottom = 32.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                items(filteredEntries.size) { index ->
+                    val entry = filteredEntries[index]
+                    val accent = levelAccentColor(entry.level, MaterialTheme.colorScheme)
+                    val icon = if (entry.tag == "Wallpaper") Icons.Filled.Wallpaper else levelIcon(entry.level)
+                    Surface(
+                        color = levelContainerColor(entry.level, MaterialTheme.colorScheme),
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .drawBehind {
+                                    drawRect(
+                                        color = accent,
+                                        size = androidx.compose.ui.geometry.Size(3.dp.toPx(), size.height)
+                                    )
+                                }
+                                .padding(start = 10.dp, top = 8.dp, bottom = 8.dp, end = 10.dp),
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Icon(
+                                icon,
+                                contentDescription = entry.level.label,
+                                tint = accent,
+                                modifier = Modifier
+                                    .padding(top = 1.dp)
+                                    .size(14.dp)
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = entry.tag,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = accent
+                                    )
+                                    Spacer(Modifier.width(6.dp))
+                                    Text(
+                                        text = entry.timestampRaw,
+                                        style = TextStyle(
+                                            fontFamily = FontFamily.Monospace,
+                                            fontSize = 10.sp
+                                        ),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                    )
+                                }
+                                Spacer(Modifier.height(2.dp))
+                                Text(
+                                    text = entry.message,
+                                    style = TextStyle(
+                                        fontFamily = FontFamily.Monospace,
+                                        fontSize = 11.sp
+                                    ),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
 
 // --- WORKER LOGIC ---
 
