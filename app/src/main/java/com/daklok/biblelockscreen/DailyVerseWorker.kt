@@ -7,14 +7,51 @@ import android.net.Uri
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.work.CoroutineWorker
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.WorkManager
 import androidx.work.WorkerParameters
+import java.util.concurrent.TimeUnit
 
 class DailyVerseWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, params) {
+    private fun rescheduleNext(uniqueWorkName: String, source: String) {
+        val prefs = applicationContext.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
+
+        val initialDelayMs: Long = if (uniqueWorkName == "WallpaperCycling") {
+            val wpSettings = WallpaperSettings.load(prefs)
+            val intervalHours = wpSettings.cycleIntervalHours
+            if (intervalHours == 12 || intervalHours == 24) {
+                computeDailyCycleInitialDelayMs(wpSettings.cycleDailyHour, intervalHours)
+            } else {
+                computeSlotInitialDelayMs(intervalHours)
+            }
+        } else {
+            val intervalHours = prefs.getInt("auto_interval_hours", 24)
+            val dailyHour = prefs.getInt("daily_hour", 6)
+            if (intervalHours == 24) {
+                computeDailyInitialDelayMs(dailyHour)
+            } else {
+                computeSlotInitialDelayMs(intervalHours)
+            }
+        }
+
+        val inputData = androidx.work.workDataOf("source" to source)
+        val nextRequest = OneTimeWorkRequestBuilder<DailyVerseWorker>()
+            .setInitialDelay(initialDelayMs, TimeUnit.MILLISECONDS)
+            .setInputData(inputData)
+            .build()
+
+        WorkManager.getInstance(applicationContext)
+            .enqueueUniqueWork(uniqueWorkName, ExistingWorkPolicy.REPLACE, nextRequest)
+
+        AppLogger.i(applicationContext, "Worker", "Rescheduled '$uniqueWorkName' in ${initialDelayMs / 1000}s")
+    }
 
     @RequiresApi(Build.VERSION_CODES.P)
     override suspend fun doWork(): Result {
         val prefs = applicationContext.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
         val source = inputData.getString("source") ?: "verse"
+        val uniqueWorkName = if (source == "wallpaper") "WallpaperCycling" else "DailyBibleWallpaper"
 
         AppLogger.i(applicationContext, "Worker", "doWork() started (source: $source)")
         val isWallpaperWorker = source == "wallpaper"
@@ -38,6 +75,7 @@ class DailyVerseWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
         // gracefully instead of clearing the wallpaper.
         if (uriString == null) {
             AppLogger.e(applicationContext, "Worker", "Error: No wallpaper URI found")
+            rescheduleNext(uniqueWorkName, source)
             return Result.failure()
         }
 
@@ -104,6 +142,7 @@ class DailyVerseWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
                 // Pre-render the next wallpaper for instant screen-off swaps
                 WallpaperCacheManager.prerenderNext(applicationContext, prefs)
                 AppLogger.i(applicationContext, "Worker", "Success: Wallpaper applied ($verseData)")
+                rescheduleNext(uniqueWorkName, source)
                 return Result.success()
             } catch (e: Exception) {
                 AppLogger.e(applicationContext, "Worker", "Error applying bitmap: ${e.message}")
@@ -112,6 +151,7 @@ class DailyVerseWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
         } else {
             AppLogger.e(applicationContext, "Worker", "Error: Rendered bitmap is null")
         }
+        rescheduleNext(uniqueWorkName, source)
         return Result.failure()
     }
 }

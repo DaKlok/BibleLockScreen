@@ -5800,32 +5800,75 @@ fun DeveloperLogSheet(onDismiss: () -> Unit, onClear: () -> Unit) {
 
 // --- WORKER LOGIC ---
 
-fun scheduleDailyWallpaper(context: Context, hour: Int) {
-    val workManager = WorkManager.getInstance(context)
-
+/**
+ * Computes the delay (ms) until the next exact hour-of-day boundary for a
+ * 24h cycle, e.g. always lands on hh:00:00 instead of drifting later and
+ * later. If `hour` is already passed today, targets tomorrow at `hour`.
+ */
+fun computeDailyInitialDelayMs(hour: Int): Long {
     val currentDate = Calendar.getInstance()
     val dueDate = Calendar.getInstance().apply {
         set(Calendar.HOUR_OF_DAY, hour)
         set(Calendar.MINUTE, 0)
         set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
     }
 
-    if (dueDate.before(currentDate)) {
+    if (!dueDate.after(currentDate)) {
         dueDate.add(Calendar.HOUR_OF_DAY, 24)
     }
 
-    val initialDelay = dueDate.timeInMillis - currentDate.timeInMillis
+    return dueDate.timeInMillis - currentDate.timeInMillis
+}
 
-    val dailyWorkRequest = PeriodicWorkRequestBuilder<DailyVerseWorker>(24, TimeUnit.HOURS)
+/**
+ * Computes the delay (ms) until the next UTC slot boundary for a given
+ * interval, e.g. every 6h → 00:00, 06:00, 12:00, 18:00 UTC exactly, never
+ * drifting to e.g. 20:43. All devices on the same interval land on the same
+ * slot because epoch_hours / intervalHours is identical worldwide at a given
+ * UTC instant.
+ */
+fun computeSlotInitialDelayMs(intervalHours: Int): Long {
+    val now = System.currentTimeMillis()
+    val nowEpochHours = now / (1000L * 60 * 60)
+    val nextSlot = (nowEpochHours / intervalHours + 1) * intervalHours
+    val nextSlotMs = nextSlot * 60L * 60L * 1000L
+    return nextSlotMs - now
+}
+
+/**
+ * Like computeDailyInitialDelayMs, but for wallpaper-cycling intervals of
+ * 12h/24h: targets the next occurrence of `hour` (today or, if passed,
+ * `intervalHours` later) on an exact hh:00:00 boundary.
+ */
+fun computeDailyCycleInitialDelayMs(hour: Int, intervalHours: Int): Long {
+    val now = Calendar.getInstance()
+    val target = Calendar.getInstance().apply {
+        set(Calendar.HOUR_OF_DAY, hour)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+        if (!after(now)) {
+            add(Calendar.HOUR_OF_DAY, intervalHours)
+        }
+    }
+    return target.timeInMillis - now.timeInMillis
+}
+
+fun scheduleDailyWallpaper(context: Context, hour: Int) {
+    val workManager = WorkManager.getInstance(context)
+    val initialDelay = computeDailyInitialDelayMs(hour)
+
+    val dailyWorkRequest = OneTimeWorkRequestBuilder<DailyVerseWorker>()
         .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
         .setConstraints(Constraints.Builder()
             .setRequiredNetworkType(NetworkType.NOT_REQUIRED)
             .build())
         .build()
 
-    workManager.enqueueUniquePeriodicWork(
+    workManager.enqueueUniqueWork(
         "DailyBibleWallpaper",
-        ExistingPeriodicWorkPolicy.REPLACE,
+        ExistingWorkPolicy.REPLACE,
         dailyWorkRequest
     )
 }
@@ -5835,6 +5878,11 @@ fun scheduleDailyWallpaper(context: Context, hour: Int) {
  * For 24h, aligns to the user-chosen time-of-day (cross-device sync via UTC epoch slot).
  * For shorter intervals, uses the interval directly — all devices on same slot because
  * epoch_hours / intervalHours gives the same slot number worldwide at the same UTC time.
+ *
+ * Implemented as a self-rescheduling chain of OneTimeWorkRequests (instead of a
+ * PeriodicWorkRequest) so every run recomputes the exact delay to the next hour
+ * boundary — this is what keeps the fire time pinned to hh:00:00 instead of
+ * drifting later with every execution (see DailyVerseWorker.rescheduleNext).
  */
 fun scheduleAutoWallpaper(context: Context, intervalHours: Int, dailyHour: Int) {
     val workManager = WorkManager.getInstance(context)
@@ -5846,21 +5894,18 @@ fun scheduleAutoWallpaper(context: Context, intervalHours: Int, dailyHour: Int) 
 
     // For sub-day intervals: align initial delay to the next slot boundary
     // so all devices with the same interval are in sync (e.g. every 6h → 0,6,12,18 UTC)
-    val nowEpochHours = System.currentTimeMillis() / (1000L * 60 * 60)
-    val nextSlot = (nowEpochHours / intervalHours + 1) * intervalHours
-    val nextSlotMs = nextSlot * 60L * 60L * 1000L
-    val initialDelayMs = nextSlotMs - System.currentTimeMillis()
+    val initialDelayMs = computeSlotInitialDelayMs(intervalHours)
 
-    val workRequest = PeriodicWorkRequestBuilder<DailyVerseWorker>(intervalHours.toLong(), TimeUnit.HOURS)
+    val workRequest = OneTimeWorkRequestBuilder<DailyVerseWorker>()
         .setInitialDelay(initialDelayMs, TimeUnit.MILLISECONDS)
         .setConstraints(Constraints.Builder()
             .setRequiredNetworkType(NetworkType.NOT_REQUIRED)
             .build())
         .build()
 
-    workManager.enqueueUniquePeriodicWork(
+    workManager.enqueueUniqueWork(
         "DailyBibleWallpaper",
-        ExistingPeriodicWorkPolicy.REPLACE,
+        ExistingWorkPolicy.REPLACE,
         workRequest
     )
 }
@@ -5907,36 +5952,23 @@ fun scheduleWallpaperCycling(context: Context) {
             workManager.cancelUniqueWork("WallpaperCycling")
         }
         else -> {
-            // CUSTOM_INTERVAL — schedule a periodic worker (independent of verse cycling)
+            // CUSTOM_INTERVAL — schedule a self-rescheduling one-time worker
+            // (independent of verse cycling). Using OneTimeWorkRequest chained
+            // via rescheduleNext() (instead of PeriodicWorkRequest) keeps every
+            // run pinned to the exact hour boundary instead of drifting later
+            // with each execution.
             val intervalHours = settings.cycleIntervalHours
             val wallpaperData = androidx.work.workDataOf("source" to "wallpaper")
-            if (intervalHours == 12 || intervalHours == 24) {
-                val now = java.util.Calendar.getInstance()
-                val target = java.util.Calendar.getInstance().apply {
-                    set(java.util.Calendar.HOUR_OF_DAY, settings.cycleDailyHour)
-                    set(java.util.Calendar.MINUTE, 0)
-                    set(java.util.Calendar.SECOND, 0)
-                    if (timeInMillis <= now.timeInMillis) {
-                        add(java.util.Calendar.HOUR_OF_DAY, intervalHours)
-                    }
-                }
-                val initialDelay = target.timeInMillis - now.timeInMillis
-                val req = PeriodicWorkRequestBuilder<DailyVerseWorker>(intervalHours.toLong(), TimeUnit.HOURS)
-                    .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
-                    .setInputData(wallpaperData)
-                    .build()
-                workManager.enqueueUniquePeriodicWork("WallpaperCycling", ExistingPeriodicWorkPolicy.REPLACE, req)
+            val initialDelayMs = if (intervalHours == 12 || intervalHours == 24) {
+                computeDailyCycleInitialDelayMs(settings.cycleDailyHour, intervalHours)
             } else {
-                val nowEpochHours = System.currentTimeMillis() / (1000L * 60 * 60)
-                val nextSlot = (nowEpochHours / intervalHours + 1) * intervalHours
-                val nextSlotMs = nextSlot * 60L * 60L * 1000L
-                val initialDelayMs = nextSlotMs - System.currentTimeMillis()
-                val req = PeriodicWorkRequestBuilder<DailyVerseWorker>(intervalHours.toLong(), TimeUnit.HOURS)
-                    .setInitialDelay(initialDelayMs, TimeUnit.MILLISECONDS)
-                    .setInputData(wallpaperData)
-                    .build()
-                workManager.enqueueUniquePeriodicWork("WallpaperCycling", ExistingPeriodicWorkPolicy.REPLACE, req)
+                computeSlotInitialDelayMs(intervalHours)
             }
+            val req = OneTimeWorkRequestBuilder<DailyVerseWorker>()
+                .setInitialDelay(initialDelayMs, TimeUnit.MILLISECONDS)
+                .setInputData(wallpaperData)
+                .build()
+            workManager.enqueueUniqueWork("WallpaperCycling", ExistingWorkPolicy.REPLACE, req)
         }
     }
 }
