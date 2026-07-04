@@ -7,13 +7,21 @@ import android.net.Uri
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.work.CoroutineWorker
-import androidx.work.ExistingWorkPolicy
-import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkManager
 import androidx.work.WorkerParameters
-import java.util.concurrent.TimeUnit
 
 class DailyVerseWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, params) {
+
+    /**
+     * Re-arms the exact alarm for this worker's next run. Called at the end
+     * of doWork() (success or failure) instead of relying on a
+     * PeriodicWorkRequest or a plain delayed WorkManager job, whose fire time
+     * can drift later and later (e.g. 20:43 instead of 20:00, or even 03:18
+     * instead of 03:00) because Doze/battery throttling only ever adds delay
+     * and never removes it. Using an exact AlarmManager alarm — and
+     * recomputing the delay to the next hour boundary fresh every time —
+     * keeps every run pinned to hh:00:00 and prevents drift from
+     * accumulating.
+     */
     private fun rescheduleNext(uniqueWorkName: String, source: String) {
         val prefs = applicationContext.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
 
@@ -35,15 +43,7 @@ class DailyVerseWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
             }
         }
 
-        val inputData = androidx.work.workDataOf("source" to source)
-        val nextRequest = OneTimeWorkRequestBuilder<DailyVerseWorker>()
-            .setInitialDelay(initialDelayMs, TimeUnit.MILLISECONDS)
-            .setInputData(inputData)
-            .build()
-
-        WorkManager.getInstance(applicationContext)
-            .enqueueUniqueWork(uniqueWorkName, ExistingWorkPolicy.REPLACE, nextRequest)
-
+        scheduleExactWallpaperAlarm(applicationContext, uniqueWorkName, System.currentTimeMillis() + initialDelayMs, source)
         AppLogger.i(applicationContext, "Worker", "Rescheduled '$uniqueWorkName' in ${initialDelayMs / 1000}s")
     }
 

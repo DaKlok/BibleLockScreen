@@ -1,6 +1,8 @@
 package com.daklok.biblelockscreen
 
 import android.Manifest
+import android.app.AlarmManager
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -2341,29 +2343,24 @@ fun MainScreen(
     }
 
     // One-time-per-launch diagnostic: report the state of the scheduled
-    // wallpaper WorkManager jobs to the Developer Logs. If auto-wallpaper is
-    // supposed to be running but WorkManager has no record of it (or it's
-    // CANCELLED), that's a strong sign the system cleared the scheduled job.
+    // wallpaper alarms to the Developer Logs. If auto-wallpaper is supposed
+    // to be running but no exact alarm is currently armed, that's a strong
+    // sign the system cleared it (e.g. the exact-alarm permission was
+    // revoked, or — before this used AlarmManager — a reboot happened).
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
             try {
-                val workManager = WorkManager.getInstance(context)
-                val dailyInfos = workManager.getWorkInfosForUniqueWork("DailyBibleWallpaper").get()
-                if (dailyInfos.isEmpty()) {
-                    if (isDailyActive) {
-                        AppLogger.w(context, "WorkManager", "Auto-wallpaper is enabled but no scheduled work exists — the system may have cleared it.")
-                    }
-                } else {
-                    dailyInfos.forEach { info ->
-                        AppLogger.i(context, "WorkManager", "DailyBibleWallpaper: state=${info.state}, runAttempts=${info.runAttemptCount}")
+                if (isDailyActive) {
+                    if (!isWallpaperAlarmScheduled(context, "DailyBibleWallpaper")) {
+                        AppLogger.w(context, "Alarm", "Auto-wallpaper is enabled but no exact alarm is armed — the system may have cleared it.")
+                    } else {
+                        AppLogger.i(context, "Alarm", "DailyBibleWallpaper: exact alarm armed")
                     }
                 }
-                val cyclingInfos = workManager.getWorkInfosForUniqueWork("WallpaperCycling").get()
-                cyclingInfos.forEach { info ->
-                    AppLogger.i(context, "WorkManager", "WallpaperCycling: state=${info.state}, runAttempts=${info.runAttemptCount}")
-                }
+                val cyclingArmed = isWallpaperAlarmScheduled(context, "WallpaperCycling")
+                AppLogger.i(context, "Alarm", "WallpaperCycling: exact alarm ${if (cyclingArmed) "armed" else "not armed"}")
             } catch (e: Exception) {
-                AppLogger.e(context, "WorkManager", "Failed to read scheduled work status: ${e.message}")
+                AppLogger.e(context, "Alarm", "Failed to read scheduled alarm status: ${e.message}")
             }
         }
     }
@@ -2519,7 +2516,7 @@ fun MainScreen(
             }
             showNotification(strings.autoWorkerOn, NotificationType.SUCCESS)
         } else {
-            WorkManager.getInstance(context).cancelUniqueWork("DailyBibleWallpaper")
+            cancelExactWallpaperAlarm(context, "DailyBibleWallpaper")
             showNotification(strings.autoWorkerOff, NotificationType.INFO)
         }
     }
@@ -3140,7 +3137,7 @@ fun MainScreen(
                                             performHaptic(HapticFeedbackType.LongPress)
                                             if (isDailyActive) {
                                                 if (enabled) {
-                                                    WorkManager.getInstance(context).cancelUniqueWork("DailyBibleWallpaper")
+                                                    cancelExactWallpaperAlarm(context, "DailyBibleWallpaper")
                                                 } else {
                                                     scheduleAutoWallpaper(context, autoIntervalHours, dailyHour)
                                                 }
@@ -5544,6 +5541,20 @@ private fun levelIcon(level: LogLevel): ImageVector = when (level) {
     LogLevel.DEBUG -> Icons.Filled.Circle
 }
 
+// Vivid Material 3 Expressive green — used to make the actual moment the
+// wallpaper changes visually pop out from the rest of the (mostly grey/blue)
+// log stream, since that's the single most important event in this log.
+private val WallpaperAppliedAccent = Color(0xFF6DFFA8)
+private val WallpaperAppliedContainer = Color(0xFF0F9D58).copy(alpha = 0.50f)
+
+/**
+ * True for the specific log lines that mark the wallpaper actually being
+ * changed on screen (as opposed to scheduling/diagnostic/lifecycle noise).
+ */
+private fun isWallpaperAppliedEntry(entry: LogEntry): Boolean =
+    (entry.tag == "Worker" && entry.message.startsWith("Success: Wallpaper applied")) ||
+            (entry.tag == "Wallpaper" && entry.message.startsWith("✓ Wallpaper set successfully"))
+
 /**
  * A simplified, on-device "logcat" — shows what AppLogger has recorded,
  * newest first, with severity color-coding and level filtering. Because
@@ -5732,10 +5743,12 @@ fun DeveloperLogSheet(onDismiss: () -> Unit, onClear: () -> Unit) {
             ) {
                 items(filteredEntries.size) { index ->
                     val entry = filteredEntries[index]
-                    val accent = levelAccentColor(entry.level, MaterialTheme.colorScheme)
-                    val icon = if (entry.tag == "Wallpaper") Icons.Filled.Wallpaper else levelIcon(entry.level)
+                    val wallpaperApplied = isWallpaperAppliedEntry(entry)
+                    val accent = if (wallpaperApplied) WallpaperAppliedAccent else levelAccentColor(entry.level, MaterialTheme.colorScheme)
+                    val containerColor = if (wallpaperApplied) WallpaperAppliedContainer else levelContainerColor(entry.level, MaterialTheme.colorScheme)
+                    val icon = if (entry.tag == "Wallpaper" || wallpaperApplied) Icons.Filled.Wallpaper else levelIcon(entry.level)
                     Surface(
-                        color = levelContainerColor(entry.level, MaterialTheme.colorScheme),
+                        color = containerColor,
                         shape = RoundedCornerShape(10.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -5855,22 +5868,90 @@ fun computeDailyCycleInitialDelayMs(hour: Int, intervalHours: Int): Long {
     return target.timeInMillis - now.timeInMillis
 }
 
-fun scheduleDailyWallpaper(context: Context, hour: Int) {
-    val workManager = WorkManager.getInstance(context)
-    val initialDelay = computeDailyInitialDelayMs(hour)
+// Request codes for the two independent alarm "channels" so they never
+// overwrite each other's PendingIntent.
+private const val ALARM_REQUEST_CODE_DAILY = 1001
+private const val ALARM_REQUEST_CODE_CYCLING = 1002
 
-    val dailyWorkRequest = OneTimeWorkRequestBuilder<DailyVerseWorker>()
-        .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
-        .setConstraints(Constraints.Builder()
-            .setRequiredNetworkType(NetworkType.NOT_REQUIRED)
-            .build())
+private fun alarmRequestCode(uniqueWorkName: String) =
+    if (uniqueWorkName == "WallpaperCycling") ALARM_REQUEST_CODE_CYCLING else ALARM_REQUEST_CODE_DAILY
+
+private fun buildAlarmPendingIntent(context: Context, uniqueWorkName: String, source: String, create: Boolean): PendingIntent? {
+    val intent = Intent(context, WallpaperAlarmReceiver::class.java).apply {
+        putExtra(WallpaperAlarmReceiver.EXTRA_UNIQUE_WORK_NAME, uniqueWorkName)
+        putExtra(WallpaperAlarmReceiver.EXTRA_SOURCE, source)
+    }
+    val flags = (if (create) PendingIntent.FLAG_UPDATE_CURRENT else PendingIntent.FLAG_NO_CREATE) or
+            PendingIntent.FLAG_IMMUTABLE
+    return PendingIntent.getBroadcast(context, alarmRequestCode(uniqueWorkName), intent, flags)
+}
+
+/**
+ * Schedules an exact wallpaper-change alarm for [triggerAtMillis].
+ *
+ * This is the actual fix for the "wallpaper changes later and later every
+ * time" drift: a WorkManager PeriodicWorkRequest (or even a OneTimeWorkRequest
+ * with setInitialDelay) only guarantees "no earlier than" — Android's Doze
+ * mode and per-app battery/standby throttling are free to push the real
+ * execution back by anywhere from a few minutes to, on some phones,
+ * 15–20+ minutes, and that slack has no reason to shrink back down, so each
+ * run tends to land later than the one before. AlarmManager.
+ * setExactAndAllowWhileIdle is the one API Android grants an explicit
+ * exception to Doze deferral for, which is why it's used here instead.
+ *
+ * If the exact-alarm permission isn't granted (Android 12+, revocable in
+ * Settings → Apps → special access → Alarms & reminders), this falls back to
+ * a WorkManager OneTimeWorkRequest with the same delay so auto-wallpaper still
+ * works — just without the precise-timing guarantee — instead of doing
+ * nothing at all.
+ */
+fun scheduleExactWallpaperAlarm(context: Context, uniqueWorkName: String, triggerAtMillis: Long, source: String) {
+    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+    val pendingIntent = buildAlarmPendingIntent(context, uniqueWorkName, source, create = true)!!
+
+    val canScheduleExact = Build.VERSION.SDK_INT < Build.VERSION_CODES.S || alarmManager.canScheduleExactAlarms()
+
+    if (canScheduleExact) {
+        try {
+            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
+            val whenStr = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.US).format(java.util.Date(triggerAtMillis))
+            AppLogger.i(context, "Alarm", "Exact alarm set for '$uniqueWorkName' at $whenStr")
+            return
+        } catch (e: SecurityException) {
+            AppLogger.e(context, "Alarm", "SecurityException scheduling exact alarm: ${e.message}")
+        }
+    } else {
+        AppLogger.w(context, "Alarm", "Exact-alarm permission not granted — falling back to WorkManager (timing may drift). Enable it in Settings → Apps → Alarms & reminders.")
+    }
+
+    // Fallback: WorkManager one-time request with the same delay.
+    val delay = (triggerAtMillis - System.currentTimeMillis()).coerceAtLeast(0L)
+    val data = androidx.work.workDataOf("source" to source)
+    val request = OneTimeWorkRequestBuilder<DailyVerseWorker>()
+        .setInitialDelay(delay, TimeUnit.MILLISECONDS)
+        .setInputData(data)
         .build()
+    WorkManager.getInstance(context).enqueueUniqueWork(uniqueWorkName, ExistingWorkPolicy.REPLACE, request)
+}
 
-    workManager.enqueueUniqueWork(
-        "DailyBibleWallpaper",
-        ExistingWorkPolicy.REPLACE,
-        dailyWorkRequest
-    )
+/** Cancels both the exact alarm and any WorkManager fallback job for [uniqueWorkName]. */
+fun cancelExactWallpaperAlarm(context: Context, uniqueWorkName: String) {
+    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+    val pendingIntent = buildAlarmPendingIntent(context, uniqueWorkName, "verse", create = false)
+    if (pendingIntent != null) {
+        alarmManager.cancel(pendingIntent)
+        pendingIntent.cancel()
+    }
+    WorkManager.getInstance(context).cancelUniqueWork(uniqueWorkName)
+}
+
+/** True if an exact alarm is currently armed for [uniqueWorkName] (used for the Developer Logs diagnostic). */
+fun isWallpaperAlarmScheduled(context: Context, uniqueWorkName: String): Boolean =
+    buildAlarmPendingIntent(context, uniqueWorkName, "verse", create = false) != null
+
+fun scheduleDailyWallpaper(context: Context, hour: Int) {
+    val initialDelay = computeDailyInitialDelayMs(hour)
+    scheduleExactWallpaperAlarm(context, "DailyBibleWallpaper", System.currentTimeMillis() + initialDelay, "verse")
 }
 
 /**
@@ -5879,14 +5960,13 @@ fun scheduleDailyWallpaper(context: Context, hour: Int) {
  * For shorter intervals, uses the interval directly — all devices on same slot because
  * epoch_hours / intervalHours gives the same slot number worldwide at the same UTC time.
  *
- * Implemented as a self-rescheduling chain of OneTimeWorkRequests (instead of a
- * PeriodicWorkRequest) so every run recomputes the exact delay to the next hour
- * boundary — this is what keeps the fire time pinned to hh:00:00 instead of
- * drifting later with every execution (see DailyVerseWorker.rescheduleNext).
+ * Implemented as a self-rescheduling chain of exact AlarmManager alarms
+ * (see scheduleExactWallpaperAlarm) so every run recomputes the exact delay
+ * to the next hour boundary — this is what keeps the fire time pinned to
+ * hh:00:00 instead of drifting later with every execution (see
+ * DailyVerseWorker.rescheduleNext).
  */
 fun scheduleAutoWallpaper(context: Context, intervalHours: Int, dailyHour: Int) {
-    val workManager = WorkManager.getInstance(context)
-
     if (intervalHours == 24) {
         scheduleDailyWallpaper(context, dailyHour)
         return
@@ -5895,19 +5975,7 @@ fun scheduleAutoWallpaper(context: Context, intervalHours: Int, dailyHour: Int) 
     // For sub-day intervals: align initial delay to the next slot boundary
     // so all devices with the same interval are in sync (e.g. every 6h → 0,6,12,18 UTC)
     val initialDelayMs = computeSlotInitialDelayMs(intervalHours)
-
-    val workRequest = OneTimeWorkRequestBuilder<DailyVerseWorker>()
-        .setInitialDelay(initialDelayMs, TimeUnit.MILLISECONDS)
-        .setConstraints(Constraints.Builder()
-            .setRequiredNetworkType(NetworkType.NOT_REQUIRED)
-            .build())
-        .build()
-
-    workManager.enqueueUniqueWork(
-        "DailyBibleWallpaper",
-        ExistingWorkPolicy.REPLACE,
-        workRequest
-    )
+    scheduleExactWallpaperAlarm(context, "DailyBibleWallpaper", System.currentTimeMillis() + initialDelayMs, "verse")
 }
 
 // Helper to keep boot receiver / legacy code working
@@ -5926,49 +5994,43 @@ fun runOneTimeWorker(context: Context) {
 }
 
 /**
- * Schedules or cancels the wallpaper cycling worker.
+ * Schedules or cancels the wallpaper cycling alarm.
  *
- * If wallpaper cycling is enabled and the mode requires a periodic worker
- * (ON_VERSE_CHANGE or CUSTOM_INTERVAL), schedules a periodic worker under a
- * unique name "WallpaperCycling". If disabled or in ON_SCREEN_OFF / DAY_NIGHT
- * mode, cancels any existing cycling worker.
+ * If wallpaper cycling is enabled and the mode requires a periodic trigger
+ * (CUSTOM_INTERVAL), arms an exact alarm under a unique name "WallpaperCycling".
+ * If disabled or in ON_SCREEN_OFF / DAY_NIGHT mode, cancels any existing
+ * cycling alarm.
  *
- * This is separate from the verse cycling worker ("DailyBibleWallpaper") so
+ * This is separate from the verse cycling alarm ("DailyBibleWallpaper") so
  * both can run independently.
  */
 fun scheduleWallpaperCycling(context: Context) {
     val prefs = context.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
     val settings = WallpaperSettings.load(prefs)
-    val workManager = WorkManager.getInstance(context)
 
     if (!settings.cycleEnabled) {
-        workManager.cancelUniqueWork("WallpaperCycling")
+        cancelExactWallpaperAlarm(context, "WallpaperCycling")
         return
     }
 
     when (settings.cycleMode) {
         com.daklok.biblelockscreen.WallpaperManager.CYCLE_ON_SCREEN_OFF -> {
-            // No periodic worker needed — ScreenOffReceiver handles it
-            workManager.cancelUniqueWork("WallpaperCycling")
+            // No periodic alarm needed — ScreenOffReceiver handles it
+            cancelExactWallpaperAlarm(context, "WallpaperCycling")
         }
         else -> {
-            // CUSTOM_INTERVAL — schedule a self-rescheduling one-time worker
-            // (independent of verse cycling). Using OneTimeWorkRequest chained
-            // via rescheduleNext() (instead of PeriodicWorkRequest) keeps every
-            // run pinned to the exact hour boundary instead of drifting later
-            // with each execution.
+            // CUSTOM_INTERVAL — schedule a self-rescheduling exact alarm
+            // (independent of verse cycling). Chained via rescheduleNext()
+            // (instead of a PeriodicWorkRequest) keeps every run pinned to
+            // the exact hour boundary instead of drifting later with each
+            // execution.
             val intervalHours = settings.cycleIntervalHours
-            val wallpaperData = androidx.work.workDataOf("source" to "wallpaper")
             val initialDelayMs = if (intervalHours == 12 || intervalHours == 24) {
                 computeDailyCycleInitialDelayMs(settings.cycleDailyHour, intervalHours)
             } else {
                 computeSlotInitialDelayMs(intervalHours)
             }
-            val req = OneTimeWorkRequestBuilder<DailyVerseWorker>()
-                .setInitialDelay(initialDelayMs, TimeUnit.MILLISECONDS)
-                .setInputData(wallpaperData)
-                .build()
-            workManager.enqueueUniqueWork("WallpaperCycling", ExistingWorkPolicy.REPLACE, req)
+            scheduleExactWallpaperAlarm(context, "WallpaperCycling", System.currentTimeMillis() + initialDelayMs, "wallpaper")
         }
     }
 }
