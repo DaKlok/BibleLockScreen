@@ -38,8 +38,8 @@ object AppLogger {
 
     // ───────────────────────── Core write / read API ─────────────────────────
 
-    private fun write(context: Context, level: LogLevel, tag: String, message: String) {
-        val timestamp = dateFormat.format(Date())
+    private fun write(context: Context, level: LogLevel, tag: String, message: String, timestampMillis: Long = System.currentTimeMillis()) {
+        val timestamp = dateFormat.format(Date(timestampMillis))
         val logEntry = "[$timestamp] [${level.label}] [$tag] $message\n"
         try {
             val file = File(context.filesDir, LOG_FILE_NAME)
@@ -53,16 +53,16 @@ object AppLogger {
     }
 
     /** Verbose / trace-level detail. */
-    fun d(context: Context, tag: String, message: String) = write(context, LogLevel.DEBUG, tag, message)
+    fun d(context: Context, tag: String, message: String, timestampMillis: Long = System.currentTimeMillis()) = write(context, LogLevel.DEBUG, tag, message, timestampMillis)
 
     /** Normal, expected app behavior. */
-    fun i(context: Context, tag: String, message: String) = write(context, LogLevel.INFO, tag, message)
+    fun i(context: Context, tag: String, message: String, timestampMillis: Long = System.currentTimeMillis()) = write(context, LogLevel.INFO, tag, message, timestampMillis)
 
     /** Something unexpected but non-fatal — e.g. battery optimization is on. */
-    fun w(context: Context, tag: String, message: String) = write(context, LogLevel.WARN, tag, message)
+    fun w(context: Context, tag: String, message: String, timestampMillis: Long = System.currentTimeMillis()) = write(context, LogLevel.WARN, tag, message, timestampMillis)
 
     /** A failure — e.g. wallpaper couldn't be applied. */
-    fun e(context: Context, tag: String, message: String) = write(context, LogLevel.ERROR, tag, message)
+    fun e(context: Context, tag: String, message: String, timestampMillis: Long = System.currentTimeMillis()) = write(context, LogLevel.ERROR, tag, message, timestampMillis)
 
     fun getLogs(context: Context): List<String> {
         return try {
@@ -163,18 +163,52 @@ object AppLogger {
             } else {
                 "an unknown amount of time"
             }
+            // Report this at the moment the process was actually last known
+            // alive, not "now" (i.e. app-reopen time) — otherwise every entry
+            // shows whatever time the user happened to relaunch the app.
+            val eventTimestamp = if (lastHeartbeat > 0L) lastHeartbeat else System.currentTimeMillis()
+
             if (crashed) {
                 w(
                     context, "App",
                     "Previous session ended in a CRASH (see the error above from that session). " +
-                            "Any wallpaper update scheduled during that time was likely skipped."
+                            "Any wallpaper update scheduled during that time was likely skipped.",
+                    eventTimestamp
                 )
             } else {
-                w(
-                    context, "App",
-                    "⚠ App process was KILLED by the system while backgrounded — no clean shutdown occurred. " +
-                            "Last seen active $elapsedStr ago. This is the most likely reason a scheduled wallpaper update didn't run."
-                )
+                // Being killed while backgrounded is normal Android behavior
+                // (the system reclaims memory from cached apps constantly) —
+                // it is NOT, by itself, a sign that something is broken, and
+                // scheduled interval-based wallpaper changes are unaffected:
+                // they run via an exact AlarmManager alarm + a manifest-
+                // registered receiver, both of which fire whether or not this
+                // process is alive. The one feature that genuinely depends on
+                // the process staying alive is "change wallpaper on screen
+                // off", since that's a runtime-registered receiver.
+                val bibleAppPrefs = context.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
+                val changeOnScreenOff = bibleAppPrefs.getBoolean("change_on_screen_off", false)
+                val cyclesOnScreenOff = WallpaperSettings.load(bibleAppPrefs).let {
+                    it.cycleEnabled && it.cycleMode == WallpaperManager.CYCLE_ON_SCREEN_OFF
+                }
+
+                if (changeOnScreenOff || cyclesOnScreenOff) {
+                    w(
+                        context, "App",
+                        "⚠ App process was killed by the system while backgrounded (last active $elapsedStr ago). " +
+                                "Your \"change on screen off\" setting needs the app process to stay alive to catch that " +
+                                "event, so any screen-off swaps were likely missed while it was dead. Scheduled " +
+                                "hourly/interval wallpaper changes are unaffected — those run independently of the app process.",
+                        eventTimestamp
+                    )
+                } else {
+                    i(
+                        context, "App",
+                        "App process was killed by the system while backgrounded (last active $elapsedStr ago) — " +
+                                "this is normal and expected. Scheduled wallpaper changes are unaffected, since they run " +
+                                "via an exact alarm independent of the app process.",
+                        eventTimestamp
+                    )
+                }
             }
         }
 
