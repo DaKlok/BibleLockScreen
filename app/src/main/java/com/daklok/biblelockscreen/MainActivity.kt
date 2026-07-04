@@ -5876,9 +5876,16 @@ fun computeDailyCycleInitialDelayMs(hour: Int, intervalHours: Int): Long {
         set(Calendar.MINUTE, 0)
         set(Calendar.SECOND, 0)
         set(Calendar.MILLISECOND, 0)
-        if (!after(now)) {
-            add(Calendar.HOUR_OF_DAY, intervalHours)
-        }
+    }
+    // A single addition of intervalHours isn't always enough: e.g. anchor
+    // hour=7 with intervalHours=12 has only one fixed candidate per day
+    // (07:00), and if "now" is already past 19:00 (07:00 + 12h), that one
+    // addition still lands in the past — producing a negative delay, which
+    // made AlarmManager fire immediately and re-trigger in a tight loop.
+    // Looping guarantees the result is always in the future regardless of
+    // how many intervals have to be skipped.
+    while (!target.after(now)) {
+        target.add(Calendar.HOUR_OF_DAY, intervalHours)
     }
     return target.timeInMillis - now.timeInMillis
 }
@@ -5922,14 +5929,30 @@ private fun buildAlarmPendingIntent(context: Context, uniqueWorkName: String, so
  */
 fun scheduleExactWallpaperAlarm(context: Context, uniqueWorkName: String, triggerAtMillis: Long, source: String) {
     val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
+    // Safety net: a trigger time that's already in the past (or barely in
+    // the future) would make AlarmManager fire immediately, and if whatever
+    // reschedules the *next* alarm has the same bug, that becomes a tight
+    // refire loop (this happened once from a delay-computation bug — see
+    // computeDailyCycleInitialDelayMs). Clamp to at least 60s out and log
+    // loudly, so a future bug is visibly caught here instead of silently
+    // spinning.
+    val minTriggerAtMillis = System.currentTimeMillis() + 60_000L
+    val safeTriggerAtMillis = if (triggerAtMillis < minTriggerAtMillis) {
+        AppLogger.e(context, "Alarm", "scheduleExactWallpaperAlarm got a non-future trigger time for '$uniqueWorkName' (${triggerAtMillis - System.currentTimeMillis()}ms from now) — clamping to 60s out to prevent a refire loop. This indicates a delay-calculation bug.")
+        minTriggerAtMillis
+    } else {
+        triggerAtMillis
+    }
+
     val pendingIntent = buildAlarmPendingIntent(context, uniqueWorkName, source, create = true)!!
 
     val canScheduleExact = Build.VERSION.SDK_INT < Build.VERSION_CODES.S || alarmManager.canScheduleExactAlarms()
 
     if (canScheduleExact) {
         try {
-            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, triggerAtMillis, pendingIntent)
-            val whenStr = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.US).format(java.util.Date(triggerAtMillis))
+            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, safeTriggerAtMillis, pendingIntent)
+            val whenStr = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.US).format(java.util.Date(safeTriggerAtMillis))
             AppLogger.i(context, "Alarm", "Exact alarm set for '$uniqueWorkName' at $whenStr")
             return
         } catch (e: SecurityException) {
@@ -5940,7 +5963,7 @@ fun scheduleExactWallpaperAlarm(context: Context, uniqueWorkName: String, trigge
     }
 
     // Fallback: WorkManager one-time request with the same delay.
-    val delay = (triggerAtMillis - System.currentTimeMillis()).coerceAtLeast(0L)
+    val delay = (safeTriggerAtMillis - System.currentTimeMillis()).coerceAtLeast(0L)
     val data = androidx.work.workDataOf("source" to source)
     val request = OneTimeWorkRequestBuilder<DailyVerseWorker>()
         .setInitialDelay(delay, TimeUnit.MILLISECONDS)
