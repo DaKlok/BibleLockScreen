@@ -11,15 +11,49 @@ import androidx.work.WorkerParameters
 
 class DailyVerseWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker(ctx, params) {
 
+    /**
+     * Re-arms the exact alarm for this worker's next run. Called at the end
+     * of doWork() (success or failure) instead of relying on a
+     * PeriodicWorkRequest or a plain delayed WorkManager job, whose fire time
+     * can drift later and later (e.g. 20:43 instead of 20:00, or even 03:18
+     * instead of 03:00) because Doze/battery throttling only ever adds delay
+     * and never removes it. Using an exact AlarmManager alarm — and
+     * recomputing the delay to the next hour boundary fresh every time —
+     * keeps every run pinned to hh:00:00 and prevents drift from
+     * accumulating.
+     */
+    private fun rescheduleNext(uniqueWorkName: String, source: String) {
+        val prefs = applicationContext.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
+
+        val initialDelayMs: Long = if (uniqueWorkName == "WallpaperCycling") {
+            val wpSettings = WallpaperSettings.load(prefs)
+            val intervalHours = wpSettings.cycleIntervalHours
+            if (intervalHours == 12 || intervalHours == 24) {
+                computeDailyCycleInitialDelayMs(wpSettings.cycleDailyHour, intervalHours)
+            } else {
+                computeSlotInitialDelayMs(intervalHours)
+            }
+        } else {
+            val intervalHours = prefs.getInt("auto_interval_hours", 24)
+            val dailyHour = prefs.getInt("daily_hour", 6)
+            when (intervalHours) {
+                24 -> computeDailyInitialDelayMs(dailyHour)
+                12 -> computeDailyCycleInitialDelayMs(dailyHour, 12)
+                else -> computeSlotInitialDelayMs(intervalHours)
+            }
+        }
+
+        scheduleExactWallpaperAlarm(applicationContext, uniqueWorkName, System.currentTimeMillis() + initialDelayMs, source)
+        AppLogger.i(applicationContext, "Worker", "Rescheduled '$uniqueWorkName' in ${initialDelayMs / 1000}s")
+    }
+
     @RequiresApi(Build.VERSION_CODES.P)
     override suspend fun doWork(): Result {
         val prefs = applicationContext.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
-
-        // ── Wallpaper cycling (ONLY if this is a wallpaper-cycling worker) ──
-        // The verse worker ("DailyBibleWallpaper") must NOT cycle wallpapers.
-        // The wallpaper worker ("WallpaperCycling") and ScreenOffReceiver
-        // DO cycle. We distinguish them via the "source" input key.
         val source = inputData.getString("source") ?: "verse"
+        val uniqueWorkName = if (source == "wallpaper") "WallpaperCycling" else "DailyBibleWallpaper"
+
+        AppLogger.i(applicationContext, "Worker", "doWork() started (source: $source)")
         val isWallpaperWorker = source == "wallpaper"
 
         if (isWallpaperWorker) {
@@ -39,7 +73,11 @@ class DailyVerseWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
 
         // If there's no wallpaper image at all, we can't render — bail out
         // gracefully instead of clearing the wallpaper.
-        if (uriString == null) return Result.failure()
+        if (uriString == null) {
+            AppLogger.e(applicationContext, "Worker", "Error: No wallpaper URI found")
+            rescheduleNext(uniqueWorkName, source)
+            return Result.failure()
+        }
 
         // ── Load verse ──────────────────────────────────────────────────
         val bgBlurRadius = prefs.getFloat("bg_blur", 0f)
@@ -103,11 +141,17 @@ class DailyVerseWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
                 wallpaperManager.setBitmap(finalBitmap, null, true, flag)
                 // Pre-render the next wallpaper for instant screen-off swaps
                 WallpaperCacheManager.prerenderNext(applicationContext, prefs)
+                AppLogger.i(applicationContext, "Worker", "Success: Wallpaper applied ($verseData)")
+                rescheduleNext(uniqueWorkName, source)
                 return Result.success()
             } catch (e: Exception) {
+                AppLogger.e(applicationContext, "Worker", "Error applying bitmap: ${e.message}")
                 e.printStackTrace()
             }
+        } else {
+            AppLogger.e(applicationContext, "Worker", "Error: Rendered bitmap is null")
         }
+        rescheduleNext(uniqueWorkName, source)
         return Result.failure()
     }
 }

@@ -73,9 +73,16 @@ object LocalBibleProvider {
     }
 
     /**
-     * Returns a verse synced across all devices by dividing the UTC epoch hours
-     * by the interval. Every device in the same UTC slot gets the same verse index.
-     * For 24h intervals this is equivalent to the daily verse (same slot all day).
+     * Returns a verse for the current interval-based time slot.
+     *
+     * The slot index is derived from LOCAL wall-clock time — matching how
+     * the wallpaper-change alarms themselves are now scheduled (see
+     * MainActivity.computeSlotInitialDelayMs / computeDailyCycleInitialDelayMs).
+     * Previously this used raw UTC epoch hours, which could disagree with
+     * the local-time-based alarm schedule: two runs close together in local
+     * time (e.g. changing the anchor hour from 22:00 to 23:00) could still
+     * land in the same UTC slot and show the same verse, since UTC slot
+     * boundaries don't line up with local ones except at a UTC offset of 0.
      */
     fun getVerseForInterval(context: Context, lang: String, intervalHours: Int, source: String = SOURCE_BUILTIN): Pair<String, String> {
         return try {
@@ -88,13 +95,19 @@ object LocalBibleProvider {
             }
 
             val index = if (intervalHours >= 24) {
-                // 📅 DAY-BASED (stable per calendar day)
+                // 📅 DAY-BASED (stable per calendar day, already local)
                 val dayOfYear = Calendar.getInstance().get(Calendar.DAY_OF_YEAR)
                 (dayOfYear - 1) % verses.size
             } else {
-                // ⏱️ HOUR-BASED (stable time slots)
-                val epochHours = System.currentTimeMillis() / (1000L * 60 * 60)
-                val slot = epochHours / intervalHours
+                // ⏱️ HOUR-BASED (stable local time slots)
+                val cal = Calendar.getInstance()
+                val localHourOfDay = cal.get(Calendar.HOUR_OF_DAY)
+                // A simple monotonic local day counter — only needs to be
+                // consistent day-to-day, not calendar-exact, since it's just
+                // feeding a modulo further below.
+                val localDayCount = cal.get(Calendar.YEAR) * 366L + cal.get(Calendar.DAY_OF_YEAR)
+                val totalLocalHours = localDayCount * 24 + localHourOfDay
+                val slot = totalLocalHours / intervalHours
                 (slot % verses.size).toInt()
             }
 

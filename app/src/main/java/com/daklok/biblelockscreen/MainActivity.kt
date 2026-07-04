@@ -1,6 +1,8 @@
 package com.daklok.biblelockscreen
 
 import android.Manifest
+import android.app.AlarmManager
+import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -61,11 +63,13 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.compose.ui.text.TextStyle
@@ -2105,6 +2109,8 @@ fun getDefaultAppLanguage(): String {
     }
 }
 
+
+
 val availableLanguages = listOf(
     "EN" to "English",
     "SK" to "Slovenčina",
@@ -2131,6 +2137,10 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        // Installs a crash handler and detects + logs whether the previous
+        // session ended cleanly or was killed by the system / crashed.
+        AppLogger.installCrashHandler(this)
+        AppLogger.onAppStart(this)
 
         // Register screen-off receiver dynamically (required for ACTION_SCREEN_OFF on API 26+)
         screenOffReceiver = ScreenOffReceiver()
@@ -2177,11 +2187,31 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onStop() {
+        super.onStop()
+        // Refresh the "last known alive" timestamp so that if the process
+        // gets killed while backgrounded, the next launch can report
+        // roughly how long ago that happened.
+        AppLogger.heartbeat(this)
+    }
+
     override fun onDestroy() {
         super.onDestroy()
         try { unregisterReceiver(screenOffReceiver) } catch (e: Exception) { /* already unregistered */ }
+
+        if (isFinishing) {
+            // A real, user-initiated close (back/swipe from recents) — mark
+            // this session as having shut down cleanly.
+            AppLogger.onAppCleanExit(this)
+        } else {
+            // Being torn down for a config change / process recreation, not
+            // an actual close — don't clear the "session open" flag.
+            AppLogger.onAppConfigChangeDestroy(this)
+        }
     }
 }
+
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -2277,6 +2307,7 @@ fun MainScreen(
     // Edit Mode a Settings
     var isEditing by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
+    var showDevMenu by remember { mutableStateOf(false) }
     // Verse-database sheet state — driven by both the "Manage" button in the
     // Verse databases section and the "Create new database" CTA inside the
     // VerseLanguagePicker (when the custom list is empty).
@@ -2308,6 +2339,29 @@ fun MainScreen(
         scope.launch {
             kotlinx.coroutines.delay(3000)
             activeNotification = null
+        }
+    }
+
+    // One-time-per-launch diagnostic: report the state of the scheduled
+    // wallpaper alarms to the Developer Logs. If auto-wallpaper is supposed
+    // to be running but no exact alarm is currently armed, that's a strong
+    // sign the system cleared it (e.g. the exact-alarm permission was
+    // revoked, or — before this used AlarmManager — a reboot happened).
+    LaunchedEffect(Unit) {
+        withContext(Dispatchers.IO) {
+            try {
+                if (isDailyActive) {
+                    if (!isWallpaperAlarmScheduled(context, "DailyBibleWallpaper")) {
+                        AppLogger.w(context, "Alarm", "Auto-wallpaper is enabled but no exact alarm is armed — the system may have cleared it.")
+                    } else {
+                        AppLogger.i(context, "Alarm", "DailyBibleWallpaper: exact alarm armed")
+                    }
+                }
+                val cyclingArmed = isWallpaperAlarmScheduled(context, "WallpaperCycling")
+                AppLogger.i(context, "Alarm", "WallpaperCycling: exact alarm ${if (cyclingArmed) "armed" else "not armed"}")
+            } catch (e: Exception) {
+                AppLogger.e(context, "Alarm", "Failed to read scheduled alarm status: ${e.message}")
+            }
         }
     }
 
@@ -2462,7 +2516,7 @@ fun MainScreen(
             }
             showNotification(strings.autoWorkerOn, NotificationType.SUCCESS)
         } else {
-            WorkManager.getInstance(context).cancelUniqueWork("DailyBibleWallpaper")
+            cancelExactWallpaperAlarm(context, "DailyBibleWallpaper")
             showNotification(strings.autoWorkerOff, NotificationType.INFO)
         }
     }
@@ -2512,9 +2566,10 @@ fun MainScreen(
 
     val settingsSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    BackHandler(enabled = isEditing || showSettings || showDbSheet) {
+    BackHandler(enabled = isEditing || showSettings || showDbSheet || showDevMenu) {
         if (isEditing) isEditing = false
         else if (showDbSheet) showDbSheet = false
+        else if (showDevMenu) showDevMenu = false
         else if (showSettings) scope.launch {
             settingsSheetState.hide()
             showSettings = false
@@ -2532,22 +2587,13 @@ fun MainScreen(
                 TopAppBar(
                     title = {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Box(
-                                modifier = Modifier
-                                    .size(34.dp)
-                                    .background(
-                                        MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f),
-                                        RoundedCornerShape(10.dp)
-                                    ),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    Icons.Outlined.MenuBook,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                            }
+                            DevMenuTriggerIcon(
+                                onTriggered = {
+                                    performHaptic(HapticFeedbackType.LongPress)
+                                    showDevMenu = true
+                                },
+                                onHoldStart = { performHaptic(HapticFeedbackType.LongPress) }
+                            )
                             Spacer(Modifier.width(10.dp))
                             Text(strings.appName, fontWeight = FontWeight.Bold)
                         }
@@ -3091,7 +3137,7 @@ fun MainScreen(
                                             performHaptic(HapticFeedbackType.LongPress)
                                             if (isDailyActive) {
                                                 if (enabled) {
-                                                    WorkManager.getInstance(context).cancelUniqueWork("DailyBibleWallpaper")
+                                                    cancelExactWallpaperAlarm(context, "DailyBibleWallpaper")
                                                 } else {
                                                     scheduleAutoWallpaper(context, autoIntervalHours, dailyHour)
                                                 }
@@ -3956,6 +4002,17 @@ fun MainScreen(
             )
         }
 
+        // Developer log sheet — opened by holding the book icon in the top
+        // bar for 3 seconds. Shows AppLogger's on-disk log, including any
+        // warning about the previous session having been killed by the
+        // system rather than closed cleanly.
+        if (showDevMenu) {
+            DeveloperLogSheet(
+                onDismiss = { showDevMenu = false },
+                onClear = { AppLogger.clearLogs(context) }
+            )
+        }
+
         // Expressive Full-Screen Editor s animáciou
         AnimatedVisibility(
             visible = isEditing,
@@ -4105,8 +4162,11 @@ fun MainScreen(
                 }
             }
         }
+
     }
 }
+
+
 
 // --- KOMPONENTY ---
 
@@ -4152,8 +4212,11 @@ fun LanguageDropdown(
                 expanded = false
             }
         )
+
     }
 }
+
+
 
 @Composable
 fun SettingsSectionHeader(icon: androidx.compose.ui.graphics.vector.ImageVector, title: String) {
@@ -4174,8 +4237,11 @@ fun SettingsSectionHeader(icon: androidx.compose.ui.graphics.vector.ImageVector,
             color = MaterialTheme.colorScheme.primary,
             fontWeight = FontWeight.Bold
         )
+
     }
 }
+
+
 
 @Composable
 fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
@@ -4190,8 +4256,11 @@ fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
             modifier = Modifier.padding(16.dp),
             content = content
         )
+
     }
 }
+
+
 
 @Composable
 fun FullScreenEditor(
@@ -4556,8 +4625,11 @@ fun FullScreenEditor(
                 }
             }
         }
+
     }
 }
+
+
 
 @Composable
 fun EditHintBubble(text: String, modifier: Modifier = Modifier) {
@@ -4600,8 +4672,11 @@ fun EditHintBubble(text: String, modifier: Modifier = Modifier) {
                 .size(40.dp)
                 .offset(y = (-14).dp) // Overlap to seamlessly connect to the bubble
         )
+
     }
 }
+
+
 
 @Composable
 fun Pixel6LockScreenPreview(
@@ -4867,8 +4942,11 @@ fun Pixel6LockScreenPreview(
                 }
             }
         }
+
     }
 }
+
+
 
 @Composable
 fun FontPickerRow(selectedFont: String, strings: AppStrings, onFontSelected: (String) -> Unit) {
@@ -4897,8 +4975,11 @@ fun FontPickerRow(selectedFont: String, strings: AppStrings, onFontSelected: (St
                 } else null
             )
         }
+
     }
 }
+
+
 
 val TextStyleWithShadow = TextStyle(
     shadow = androidx.compose.ui.graphics.Shadow(
@@ -4916,6 +4997,8 @@ fun getComposeFontFamily(fontFamilyStr: String): FontFamily {
     }
 }
 
+
+
 fun getComposeFontWeight(fontFamilyStr: String, isBold: Boolean): FontWeight {
     if (isBold) return FontWeight.Bold
     return when (fontFamilyStr) {
@@ -4923,6 +5006,8 @@ fun getComposeFontWeight(fontFamilyStr: String, isBold: Boolean): FontWeight {
         else -> FontWeight.Normal
     }
 }
+
+
 
 // ── Color picker helpers ──────────────────────────────────────────────────────
 
@@ -5290,8 +5375,11 @@ fun ColorPickerRow(selectedColor: Int, strings: AppStrings, onColorSelected: (In
         ) {
             Icon(Icons.Default.ColorLens, "Custom Color", tint = Color.White, modifier = Modifier.size(20.dp))
         }
+
     }
 }
+
+
 
 @Composable
 fun EnhancedSlider(
@@ -5360,74 +5448,569 @@ fun EnhancedSlider(
             ),
             modifier = Modifier.padding(top = 0.dp)
         )
+
     }
 }
 
+/**
+ * The small "book" icon shown next to the app name in the top bar. Holding
+ * it down for 3 full seconds opens the Developer Logs sheet — a quick M3
+ * radial progress ring fills in around the icon while held, so it's clear
+ * something is happening and roughly how much longer to hold.
+ */
+@Composable
+fun DevMenuTriggerIcon(
+    onTriggered: () -> Unit,
+    onHoldStart: () -> Unit,
+    holdDurationMs: Int = 3000
+) {
+    val scope = rememberCoroutineScope()
+    var isHolding by remember { mutableStateOf(false) }
+    val holdProgress = remember { Animatable(0f) }
+
+    Box(
+        modifier = Modifier
+            .size(34.dp)
+            .pointerInput(Unit) {
+                detectTapGestures(
+                    onPress = {
+                        isHolding = true
+                        onHoldStart()
+                        var triggered = false
+                        val animJob = scope.launch {
+                            holdProgress.snapTo(0f)
+                            holdProgress.animateTo(1f, tween(holdDurationMs, easing = LinearEasing))
+                            triggered = true
+                            onTriggered()
+                        }
+                        tryAwaitRelease()
+                        isHolding = false
+                        animJob.cancel()
+                        if (!triggered) {
+                            scope.launch { holdProgress.animateTo(0f, tween(150)) }
+                        } else {
+                            scope.launch { holdProgress.snapTo(0f) }
+                        }
+                    }
+                )
+            }
+            .background(
+                MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f),
+                RoundedCornerShape(10.dp)
+            ),
+        contentAlignment = Alignment.Center
+    ) {
+        Icon(
+            Icons.Outlined.MenuBook,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+            modifier = Modifier.size(18.dp)
+        )
+        if (isHolding) {
+            CircularProgressIndicator(
+                progress = holdProgress.value,
+                modifier = Modifier
+                    .matchParentSize()
+                    .padding(2.dp),
+                strokeWidth = 2.dp,
+                color = MaterialTheme.colorScheme.primary,
+                trackColor = Color.Transparent
+            )
+        }
+    }
+}
+
+private fun levelAccentColor(level: LogLevel, scheme: ColorScheme): Color = when (level) {
+    LogLevel.ERROR -> scheme.error
+    LogLevel.WARN -> scheme.tertiary
+    LogLevel.INFO -> scheme.primary
+    LogLevel.DEBUG -> scheme.onSurfaceVariant
+}
+
+private fun levelContainerColor(level: LogLevel, scheme: ColorScheme): Color = when (level) {
+    LogLevel.ERROR -> scheme.errorContainer.copy(alpha = 0.55f)
+    LogLevel.WARN -> scheme.tertiaryContainer.copy(alpha = 0.55f)
+    LogLevel.INFO -> scheme.surfaceVariant.copy(alpha = 0.45f)
+    LogLevel.DEBUG -> scheme.surfaceVariant.copy(alpha = 0.25f)
+}
+
+private fun levelIcon(level: LogLevel): ImageVector = when (level) {
+    LogLevel.ERROR -> Icons.Filled.ErrorOutline
+    LogLevel.WARN -> Icons.Filled.WarningAmber
+    LogLevel.INFO -> Icons.Filled.Info
+    LogLevel.DEBUG -> Icons.Filled.Circle
+}
+
+// Vivid Material 3 Expressive green — used to make the actual moment the
+// wallpaper changes visually pop out from the rest of the (mostly grey/blue)
+// log stream, since that's the single most important event in this log.
+private val WallpaperAppliedAccent = Color(0xFF6DFFA8)
+private val WallpaperAppliedContainer = Color(0xFF0F9D58).copy(alpha = 0.50f)
+
+/**
+ * True for the specific log lines that mark the wallpaper actually being
+ * changed on screen (as opposed to scheduling/diagnostic/lifecycle noise).
+ */
+private fun isWallpaperAppliedEntry(entry: LogEntry): Boolean =
+    (entry.tag == "Worker" && entry.message.startsWith("Success: Wallpaper applied")) ||
+            (entry.tag == "Wallpaper" && entry.message.startsWith("✓ Wallpaper set successfully"))
+
+/**
+ * A simplified, on-device "logcat" — shows what AppLogger has recorded,
+ * newest first, with severity color-coding and level filtering. Because
+ * AppLogger writes straight to disk, this still shows the full history
+ * even after the app has been force-closed or killed by the system; a
+ * warning entry logged on the *next* launch will explain when that happened.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DeveloperLogSheet(onDismiss: () -> Unit, onClear: () -> Unit) {
+    val context = LocalContext.current
+    var entries by remember { mutableStateOf(AppLogger.getLogEntries(context)) }
+    var activeFilter by remember { mutableStateOf<LogLevel?>(null) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+    val scope = rememberCoroutineScope()
+    val clipboard = LocalClipboardManager.current
+
+    // Logs are written to disk from background threads (receivers, workers)
+    // that don't know this sheet is open, so we can't rely on state changes
+    // to trigger a refresh. Poll instead, while the sheet is visible, so
+    // new entries (e.g. "Wallpaper set successfully") show up live instead
+    // of only appearing the next time the sheet is reopened.
+    LaunchedEffect(Unit) {
+        while (true) {
+            kotlinx.coroutines.delay(1000)
+            val fresh = AppLogger.getLogEntries(context)
+            if (fresh != entries) entries = fresh
+        }
+    }
+
+    val filteredEntries = remember(entries, activeFilter) {
+        if (activeFilter == null) entries else entries.filter { it.level == activeFilter }
+    }
+    val errorCount = remember(entries) { entries.count { it.level == LogLevel.ERROR } }
+    val warnCount = remember(entries) { entries.count { it.level == LogLevel.WARN } }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismiss,
+        sheetState = sheetState,
+        dragHandle = {
+            Column(modifier = Modifier.fillMaxWidth()) {
+                Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    BottomSheetDefaults.DragHandle()
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 24.dp, end = 8.dp, top = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Column {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(
+                                text = "Developer Logs",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Surface(
+                                color = MaterialTheme.colorScheme.primaryContainer,
+                                shape = RoundedCornerShape(6.dp)
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Box(
+                                        modifier = Modifier
+                                            .size(6.dp)
+                                            .background(MaterialTheme.colorScheme.primary, CircleShape)
+                                    )
+                                    Spacer(Modifier.width(4.dp))
+                                    Text(
+                                        text = "Live",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                                    )
+                                }
+                            }
+                        }
+                        Text(
+                            text = if (entries.isEmpty()) {
+                                "Nothing logged yet"
+                            } else {
+                                "${entries.size} entries · $warnCount warnings · $errorCount errors"
+                            },
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Row {
+                        IconButton(onClick = {
+                            val text = (if (activeFilter == null) entries else filteredEntries)
+                                .joinToString("\n") { it.raw }
+                            clipboard.setText(AnnotatedString(text))
+                        }) {
+                            Icon(Icons.Default.ContentCopy, contentDescription = "Copy logs")
+                        }
+                        IconButton(onClick = {
+                            onClear()
+                            entries = emptyList()
+                        }) {
+                            Icon(Icons.Default.DeleteSweep, contentDescription = "Clear logs")
+                        }
+                        IconButton(onClick = {
+                            scope.launch {
+                                sheetState.hide()
+                                onDismiss()
+                            }
+                        }) {
+                            Icon(Icons.Outlined.Close, contentDescription = "Close")
+                        }
+                    }
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(rememberScrollState())
+                        .padding(start = 24.dp, end = 16.dp, top = 8.dp, bottom = 12.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    FilterChip(
+                        selected = activeFilter == null,
+                        onClick = { activeFilter = null },
+                        label = { Text("All") }
+                    )
+                    listOf(LogLevel.ERROR, LogLevel.WARN, LogLevel.INFO, LogLevel.DEBUG).forEach { level ->
+                        FilterChip(
+                            selected = activeFilter == level,
+                            onClick = { activeFilter = if (activeFilter == level) null else level },
+                            label = { Text(level.label) },
+                            leadingIcon = {
+                                Icon(
+                                    levelIcon(level),
+                                    contentDescription = null,
+                                    modifier = Modifier.size(16.dp),
+                                    tint = levelAccentColor(level, MaterialTheme.colorScheme)
+                                )
+                            }
+                        )
+                    }
+                }
+            }
+        },
+        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
+    ) {
+        if (entries.isEmpty()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 48.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(
+                    Icons.Outlined.MenuBook,
+                    contentDescription = null,
+                    modifier = Modifier.size(40.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                )
+                Spacer(Modifier.height(8.dp))
+                Text(
+                    "No logs yet — use the app for a bit and check back here.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(horizontal = 32.dp)
+                )
+            }
+        } else if (filteredEntries.isEmpty()) {
+            Text(
+                "No entries match this filter.",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(32.dp),
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        } else {
+            androidx.compose.foundation.lazy.LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(horizontal = 16.dp),
+                contentPadding = PaddingValues(bottom = 32.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp)
+            ) {
+                items(filteredEntries.size) { index ->
+                    val entry = filteredEntries[index]
+                    val wallpaperApplied = isWallpaperAppliedEntry(entry)
+                    val accent = if (wallpaperApplied) WallpaperAppliedAccent else levelAccentColor(entry.level, MaterialTheme.colorScheme)
+                    val containerColor = if (wallpaperApplied) WallpaperAppliedContainer else levelContainerColor(entry.level, MaterialTheme.colorScheme)
+                    val icon = if (entry.tag == "Wallpaper" || wallpaperApplied) Icons.Filled.Wallpaper else levelIcon(entry.level)
+                    Surface(
+                        color = containerColor,
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .drawBehind {
+                                    drawRect(
+                                        color = accent,
+                                        size = androidx.compose.ui.geometry.Size(3.dp.toPx(), size.height)
+                                    )
+                                }
+                                .padding(start = 10.dp, top = 8.dp, bottom = 8.dp, end = 10.dp),
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Icon(
+                                icon,
+                                contentDescription = entry.level.label,
+                                tint = accent,
+                                modifier = Modifier
+                                    .padding(top = 1.dp)
+                                    .size(14.dp)
+                            )
+                            Spacer(Modifier.width(8.dp))
+                            Column(modifier = Modifier.weight(1f)) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Text(
+                                        text = entry.tag,
+                                        style = MaterialTheme.typography.labelSmall,
+                                        fontWeight = FontWeight.Bold,
+                                        color = accent
+                                    )
+                                    Spacer(Modifier.width(6.dp))
+                                    Text(
+                                        text = entry.timestampRaw,
+                                        style = TextStyle(
+                                            fontFamily = FontFamily.Monospace,
+                                            fontSize = 10.sp
+                                        ),
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                    )
+                                }
+                                Spacer(Modifier.height(2.dp))
+                                Text(
+                                    text = entry.message,
+                                    style = TextStyle(
+                                        fontFamily = FontFamily.Monospace,
+                                        fontSize = 11.sp
+                                    ),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+
+
 // --- WORKER LOGIC ---
 
-fun scheduleDailyWallpaper(context: Context, hour: Int) {
-    val workManager = WorkManager.getInstance(context)
-
+/**
+ * Computes the delay (ms) until the next exact hour-of-day boundary for a
+ * 24h cycle, e.g. always lands on hh:00:00 instead of drifting later and
+ * later. If `hour` is already passed today, targets tomorrow at `hour`.
+ */
+fun computeDailyInitialDelayMs(hour: Int): Long {
     val currentDate = Calendar.getInstance()
     val dueDate = Calendar.getInstance().apply {
         set(Calendar.HOUR_OF_DAY, hour)
         set(Calendar.MINUTE, 0)
         set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
     }
 
-    if (dueDate.before(currentDate)) {
+    if (!dueDate.after(currentDate)) {
         dueDate.add(Calendar.HOUR_OF_DAY, 24)
     }
 
-    val initialDelay = dueDate.timeInMillis - currentDate.timeInMillis
+    return dueDate.timeInMillis - currentDate.timeInMillis
+}
 
-    val dailyWorkRequest = PeriodicWorkRequestBuilder<DailyVerseWorker>(24, TimeUnit.HOURS)
-        .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
-        .setConstraints(Constraints.Builder()
-            .setRequiredNetworkType(NetworkType.NOT_REQUIRED)
-            .build())
+/**
+ * Delay (ms) until the next LOCAL wall-clock slot boundary for an interval
+ * that evenly divides 24 (1, 2, 3, 4, 6, 8, 12h) — anchored to local
+ * midnight. So "every 3 hours" lands on 00:00, 03:00, 06:00, 09:00, 12:00,
+ * 15:00, 18:00, 21:00 *local* time.
+ *
+ * Previously this aligned to UTC epoch-hour boundaries instead, which drifts
+ * by the device's UTC offset — e.g. on a UTC+2 (CEST) device, "every 3
+ * hours" landed on 02:00, 05:00, ..., 17:00, 20:00, 23:00 local time instead
+ * of the expected 00:00/03:00/.../18:00/21:00.
+ */
+fun computeSlotInitialDelayMs(intervalHours: Int): Long {
+    val now = Calendar.getInstance()
+    val currentHour = now.get(Calendar.HOUR_OF_DAY)
+    val nextSlotHour = ((currentHour / intervalHours) + 1) * intervalHours
+
+    val target = Calendar.getInstance().apply {
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+        if (nextSlotHour >= 24) {
+            add(Calendar.DAY_OF_YEAR, 1)
+            set(Calendar.HOUR_OF_DAY, nextSlotHour - 24)
+        } else {
+            set(Calendar.HOUR_OF_DAY, nextSlotHour)
+        }
+    }
+    return target.timeInMillis - now.timeInMillis
+}
+
+/**
+ * Like computeDailyInitialDelayMs, but for wallpaper-cycling intervals of
+ * 12h/24h: targets the next occurrence of `hour` (today or, if passed,
+ * `intervalHours` later) on an exact hh:00:00 boundary.
+ */
+fun computeDailyCycleInitialDelayMs(hour: Int, intervalHours: Int): Long {
+    val now = Calendar.getInstance()
+    val target = Calendar.getInstance().apply {
+        set(Calendar.HOUR_OF_DAY, hour)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }
+    // A single addition of intervalHours isn't always enough: e.g. anchor
+    // hour=7 with intervalHours=12 has only one fixed candidate per day
+    // (07:00), and if "now" is already past 19:00 (07:00 + 12h), that one
+    // addition still lands in the past — producing a negative delay, which
+    // made AlarmManager fire immediately and re-trigger in a tight loop.
+    // Looping guarantees the result is always in the future regardless of
+    // how many intervals have to be skipped.
+    while (!target.after(now)) {
+        target.add(Calendar.HOUR_OF_DAY, intervalHours)
+    }
+    return target.timeInMillis - now.timeInMillis
+}
+
+// Request codes for the two independent alarm "channels" so they never
+// overwrite each other's PendingIntent.
+private const val ALARM_REQUEST_CODE_DAILY = 1001
+private const val ALARM_REQUEST_CODE_CYCLING = 1002
+
+private fun alarmRequestCode(uniqueWorkName: String) =
+    if (uniqueWorkName == "WallpaperCycling") ALARM_REQUEST_CODE_CYCLING else ALARM_REQUEST_CODE_DAILY
+
+private fun buildAlarmPendingIntent(context: Context, uniqueWorkName: String, source: String, create: Boolean): PendingIntent? {
+    val intent = Intent(context, WallpaperAlarmReceiver::class.java).apply {
+        putExtra(WallpaperAlarmReceiver.EXTRA_UNIQUE_WORK_NAME, uniqueWorkName)
+        putExtra(WallpaperAlarmReceiver.EXTRA_SOURCE, source)
+    }
+    val flags = (if (create) PendingIntent.FLAG_UPDATE_CURRENT else PendingIntent.FLAG_NO_CREATE) or
+            PendingIntent.FLAG_IMMUTABLE
+    return PendingIntent.getBroadcast(context, alarmRequestCode(uniqueWorkName), intent, flags)
+}
+
+/**
+ * Schedules an exact wallpaper-change alarm for [triggerAtMillis].
+ *
+ * This is the actual fix for the "wallpaper changes later and later every
+ * time" drift: a WorkManager PeriodicWorkRequest (or even a OneTimeWorkRequest
+ * with setInitialDelay) only guarantees "no earlier than" — Android's Doze
+ * mode and per-app battery/standby throttling are free to push the real
+ * execution back by anywhere from a few minutes to, on some phones,
+ * 15–20+ minutes, and that slack has no reason to shrink back down, so each
+ * run tends to land later than the one before. AlarmManager.
+ * setExactAndAllowWhileIdle is the one API Android grants an explicit
+ * exception to Doze deferral for, which is why it's used here instead.
+ *
+ * If the exact-alarm permission isn't granted (Android 12+, revocable in
+ * Settings → Apps → special access → Alarms & reminders), this falls back to
+ * a WorkManager OneTimeWorkRequest with the same delay so auto-wallpaper still
+ * works — just without the precise-timing guarantee — instead of doing
+ * nothing at all.
+ */
+fun scheduleExactWallpaperAlarm(context: Context, uniqueWorkName: String, triggerAtMillis: Long, source: String) {
+    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
+    // Safety net: a trigger time that's already in the past (or barely in
+    // the future) would make AlarmManager fire immediately, and if whatever
+    // reschedules the *next* alarm has the same bug, that becomes a tight
+    // refire loop (this happened once from a delay-computation bug — see
+    // computeDailyCycleInitialDelayMs). Clamp to at least 60s out and log
+    // loudly, so a future bug is visibly caught here instead of silently
+    // spinning.
+    val minTriggerAtMillis = System.currentTimeMillis() + 60_000L
+    val safeTriggerAtMillis = if (triggerAtMillis < minTriggerAtMillis) {
+        AppLogger.e(context, "Alarm", "scheduleExactWallpaperAlarm got a non-future trigger time for '$uniqueWorkName' (${triggerAtMillis - System.currentTimeMillis()}ms from now) — clamping to 60s out to prevent a refire loop. This indicates a delay-calculation bug.")
+        minTriggerAtMillis
+    } else {
+        triggerAtMillis
+    }
+
+    val pendingIntent = buildAlarmPendingIntent(context, uniqueWorkName, source, create = true)!!
+
+    val canScheduleExact = Build.VERSION.SDK_INT < Build.VERSION_CODES.S || alarmManager.canScheduleExactAlarms()
+
+    if (canScheduleExact) {
+        try {
+            alarmManager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, safeTriggerAtMillis, pendingIntent)
+            val whenStr = java.text.SimpleDateFormat("HH:mm:ss", java.util.Locale.US).format(java.util.Date(safeTriggerAtMillis))
+            AppLogger.i(context, "Alarm", "Exact alarm set for '$uniqueWorkName' at $whenStr")
+            return
+        } catch (e: SecurityException) {
+            AppLogger.e(context, "Alarm", "SecurityException scheduling exact alarm: ${e.message}")
+        }
+    } else {
+        AppLogger.w(context, "Alarm", "Exact-alarm permission not granted — falling back to WorkManager (timing may drift). Enable it in Settings → Apps → Alarms & reminders.")
+    }
+
+    // Fallback: WorkManager one-time request with the same delay.
+    val delay = (safeTriggerAtMillis - System.currentTimeMillis()).coerceAtLeast(0L)
+    val data = androidx.work.workDataOf("source" to source)
+    val request = OneTimeWorkRequestBuilder<DailyVerseWorker>()
+        .setInitialDelay(delay, TimeUnit.MILLISECONDS)
+        .setInputData(data)
         .build()
+    WorkManager.getInstance(context).enqueueUniqueWork(uniqueWorkName, ExistingWorkPolicy.REPLACE, request)
+}
 
-    workManager.enqueueUniquePeriodicWork(
-        "DailyBibleWallpaper",
-        ExistingPeriodicWorkPolicy.REPLACE,
-        dailyWorkRequest
-    )
+/** Cancels both the exact alarm and any WorkManager fallback job for [uniqueWorkName]. */
+fun cancelExactWallpaperAlarm(context: Context, uniqueWorkName: String) {
+    val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+    val pendingIntent = buildAlarmPendingIntent(context, uniqueWorkName, "verse", create = false)
+    if (pendingIntent != null) {
+        alarmManager.cancel(pendingIntent)
+        pendingIntent.cancel()
+    }
+    WorkManager.getInstance(context).cancelUniqueWork(uniqueWorkName)
+}
+
+/** True if an exact alarm is currently armed for [uniqueWorkName] (used for the Developer Logs diagnostic). */
+fun isWallpaperAlarmScheduled(context: Context, uniqueWorkName: String): Boolean =
+    buildAlarmPendingIntent(context, uniqueWorkName, "verse", create = false) != null
+
+fun scheduleDailyWallpaper(context: Context, hour: Int) {
+    val initialDelay = computeDailyInitialDelayMs(hour)
+    scheduleExactWallpaperAlarm(context, "DailyBibleWallpaper", System.currentTimeMillis() + initialDelay, "verse")
 }
 
 /**
  * Schedules the wallpaper worker based on interval.
- * For 24h, aligns to the user-chosen time-of-day (cross-device sync via UTC epoch slot).
- * For shorter intervals, uses the interval directly — all devices on same slot because
- * epoch_hours / intervalHours gives the same slot number worldwide at the same UTC time.
+ * For 12h/24h, aligns to the user-chosen time-of-day (dailyHour) in LOCAL time.
+ * For shorter intervals (1/2/3/6h), aligns to local-midnight-based slot
+ * boundaries — see computeSlotInitialDelayMs.
+ *
+ * Implemented as a self-rescheduling chain of exact AlarmManager alarms
+ * (see scheduleExactWallpaperAlarm) so every run recomputes the exact delay
+ * to the next hour boundary — this is what keeps the fire time pinned to
+ * hh:00:00 instead of drifting later with every execution (see
+ * DailyVerseWorker.rescheduleNext).
  */
 fun scheduleAutoWallpaper(context: Context, intervalHours: Int, dailyHour: Int) {
-    val workManager = WorkManager.getInstance(context)
-
-    if (intervalHours == 24) {
-        scheduleDailyWallpaper(context, dailyHour)
-        return
+    val initialDelayMs = when (intervalHours) {
+        24 -> computeDailyInitialDelayMs(dailyHour)
+        12 -> computeDailyCycleInitialDelayMs(dailyHour, 12)
+        else -> computeSlotInitialDelayMs(intervalHours)
     }
-
-    // For sub-day intervals: align initial delay to the next slot boundary
-    // so all devices with the same interval are in sync (e.g. every 6h → 0,6,12,18 UTC)
-    val nowEpochHours = System.currentTimeMillis() / (1000L * 60 * 60)
-    val nextSlot = (nowEpochHours / intervalHours + 1) * intervalHours
-    val nextSlotMs = nextSlot * 60L * 60L * 1000L
-    val initialDelayMs = nextSlotMs - System.currentTimeMillis()
-
-    val workRequest = PeriodicWorkRequestBuilder<DailyVerseWorker>(intervalHours.toLong(), TimeUnit.HOURS)
-        .setInitialDelay(initialDelayMs, TimeUnit.MILLISECONDS)
-        .setConstraints(Constraints.Builder()
-            .setRequiredNetworkType(NetworkType.NOT_REQUIRED)
-            .build())
-        .build()
-
-    workManager.enqueueUniquePeriodicWork(
-        "DailyBibleWallpaper",
-        ExistingPeriodicWorkPolicy.REPLACE,
-        workRequest
-    )
+    scheduleExactWallpaperAlarm(context, "DailyBibleWallpaper", System.currentTimeMillis() + initialDelayMs, "verse")
 }
 
 // Helper to keep boot receiver / legacy code working
@@ -5446,62 +6029,43 @@ fun runOneTimeWorker(context: Context) {
 }
 
 /**
- * Schedules or cancels the wallpaper cycling worker.
+ * Schedules or cancels the wallpaper cycling alarm.
  *
- * If wallpaper cycling is enabled and the mode requires a periodic worker
- * (ON_VERSE_CHANGE or CUSTOM_INTERVAL), schedules a periodic worker under a
- * unique name "WallpaperCycling". If disabled or in ON_SCREEN_OFF / DAY_NIGHT
- * mode, cancels any existing cycling worker.
+ * If wallpaper cycling is enabled and the mode requires a periodic trigger
+ * (CUSTOM_INTERVAL), arms an exact alarm under a unique name "WallpaperCycling".
+ * If disabled or in ON_SCREEN_OFF / DAY_NIGHT mode, cancels any existing
+ * cycling alarm.
  *
- * This is separate from the verse cycling worker ("DailyBibleWallpaper") so
+ * This is separate from the verse cycling alarm ("DailyBibleWallpaper") so
  * both can run independently.
  */
 fun scheduleWallpaperCycling(context: Context) {
     val prefs = context.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
     val settings = WallpaperSettings.load(prefs)
-    val workManager = WorkManager.getInstance(context)
 
     if (!settings.cycleEnabled) {
-        workManager.cancelUniqueWork("WallpaperCycling")
+        cancelExactWallpaperAlarm(context, "WallpaperCycling")
         return
     }
 
     when (settings.cycleMode) {
         com.daklok.biblelockscreen.WallpaperManager.CYCLE_ON_SCREEN_OFF -> {
-            // No periodic worker needed — ScreenOffReceiver handles it
-            workManager.cancelUniqueWork("WallpaperCycling")
+            // No periodic alarm needed — ScreenOffReceiver handles it
+            cancelExactWallpaperAlarm(context, "WallpaperCycling")
         }
         else -> {
-            // CUSTOM_INTERVAL — schedule a periodic worker (independent of verse cycling)
+            // CUSTOM_INTERVAL — schedule a self-rescheduling exact alarm
+            // (independent of verse cycling). Chained via rescheduleNext()
+            // (instead of a PeriodicWorkRequest) keeps every run pinned to
+            // the exact hour boundary instead of drifting later with each
+            // execution.
             val intervalHours = settings.cycleIntervalHours
-            val wallpaperData = androidx.work.workDataOf("source" to "wallpaper")
-            if (intervalHours == 12 || intervalHours == 24) {
-                val now = java.util.Calendar.getInstance()
-                val target = java.util.Calendar.getInstance().apply {
-                    set(java.util.Calendar.HOUR_OF_DAY, settings.cycleDailyHour)
-                    set(java.util.Calendar.MINUTE, 0)
-                    set(java.util.Calendar.SECOND, 0)
-                    if (timeInMillis <= now.timeInMillis) {
-                        add(java.util.Calendar.HOUR_OF_DAY, intervalHours)
-                    }
-                }
-                val initialDelay = target.timeInMillis - now.timeInMillis
-                val req = PeriodicWorkRequestBuilder<DailyVerseWorker>(intervalHours.toLong(), TimeUnit.HOURS)
-                    .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
-                    .setInputData(wallpaperData)
-                    .build()
-                workManager.enqueueUniquePeriodicWork("WallpaperCycling", ExistingPeriodicWorkPolicy.REPLACE, req)
+            val initialDelayMs = if (intervalHours == 12 || intervalHours == 24) {
+                computeDailyCycleInitialDelayMs(settings.cycleDailyHour, intervalHours)
             } else {
-                val nowEpochHours = System.currentTimeMillis() / (1000L * 60 * 60)
-                val nextSlot = (nowEpochHours / intervalHours + 1) * intervalHours
-                val nextSlotMs = nextSlot * 60L * 60L * 1000L
-                val initialDelayMs = nextSlotMs - System.currentTimeMillis()
-                val req = PeriodicWorkRequestBuilder<DailyVerseWorker>(intervalHours.toLong(), TimeUnit.HOURS)
-                    .setInitialDelay(initialDelayMs, TimeUnit.MILLISECONDS)
-                    .setInputData(wallpaperData)
-                    .build()
-                workManager.enqueueUniquePeriodicWork("WallpaperCycling", ExistingPeriodicWorkPolicy.REPLACE, req)
+                computeSlotInitialDelayMs(intervalHours)
             }
+            scheduleExactWallpaperAlarm(context, "WallpaperCycling", System.currentTimeMillis() + initialDelayMs, "wallpaper")
         }
     }
 }

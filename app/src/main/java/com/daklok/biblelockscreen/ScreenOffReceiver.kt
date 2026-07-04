@@ -11,6 +11,7 @@ class ScreenOffReceiver : BroadcastReceiver() {
     @RequiresApi(Build.VERSION_CODES.P)
     override fun onReceive(context: Context, intent: Intent) {
         if (intent.action != Intent.ACTION_SCREEN_OFF) return
+        AppLogger.i(context, "Receiver", "onReceive(ACTION_SCREEN_OFF)")
 
         val prefs = context.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
         val wpSettings = WallpaperSettings.load(prefs)
@@ -22,13 +23,22 @@ class ScreenOffReceiver : BroadcastReceiver() {
         val autoActive = prefs.getBoolean("auto_wallpaper_active", false)
         val shouldCycleVerse = changeOnScreenOff && autoActive
 
-        if (!shouldCycleWallpaper && !shouldCycleVerse) return
+        if (!shouldCycleWallpaper && !shouldCycleVerse) {
+            AppLogger.d(context, "Receiver", "Ignored: No cycling enabled")
+            return
+        }
 
         if (shouldCycleWallpaper) {
-            com.daklok.biblelockscreen.WallpaperManager.cycleToNext(context, prefs)
+            val changed = com.daklok.biblelockscreen.WallpaperManager.cycleToNext(context, prefs)
+            if (changed) {
+                AppLogger.i(context, "Wallpaper", "Cycled to next wallpaper in gallery")
+            } else {
+                AppLogger.d(context, "Wallpaper", "Cycle skipped: fewer than 2 wallpapers in gallery")
+            }
         }
 
         if (shouldCycleVerse) {
+            AppLogger.d(context, "Receiver", "Cycling verse index")
             val currentIndex = prefs.getInt("screen_off_verse_index", 0)
             prefs.edit().putInt("screen_off_verse_index", currentIndex + 1).apply()
         }
@@ -42,18 +52,24 @@ class ScreenOffReceiver : BroadcastReceiver() {
                     null
                 }
                 if (cachedBitmap != null) {
+                    AppLogger.d(context, "Wallpaper", "Applying cached bitmap")
                     applyBitmap(context, prefs, cachedBitmap)
                     cachedBitmap.recycle()
                 } else {
+                    AppLogger.d(context, "Wallpaper", "Cache miss, rendering full")
                     val bitmap = renderFull(context, prefs)
                     if (bitmap != null) {
                         applyBitmap(context, prefs, bitmap)
                         bitmap.recycle()
+                    } else {
+                        AppLogger.e(context, "Wallpaper", "Error: renderFull returned null")
                     }
                 }
                 // Pre-render next wallpaper for next screen-off
                 WallpaperCacheManager.prerenderNext(context, prefs)
+                AppLogger.i(context, "Receiver", "ScreenOff processing finished")
             } catch (e: Exception) {
+                AppLogger.e(context, "Receiver", "Error: ${e.message}")
                 e.printStackTrace()
             } finally {
                 pendingResult.finish()
@@ -74,13 +90,20 @@ class ScreenOffReceiver : BroadcastReceiver() {
             2    -> android.app.WallpaperManager.FLAG_LOCK or android.app.WallpaperManager.FLAG_SYSTEM
             else -> android.app.WallpaperManager.FLAG_LOCK
         }
+        val targetLabel = when (target) {
+            1 -> "Home screen"
+            2 -> "Lock + Home screen"
+            else -> "Lock screen"
+        }
         try {
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
                 wallpaperManager.setBitmap(bitmap, null, true, flag)
             } else {
                 wallpaperManager.setBitmap(bitmap)
             }
+            AppLogger.i(context, "Wallpaper", "✓ Wallpaper set successfully ($targetLabel)")
         } catch (e: Exception) {
+            AppLogger.e(context, "Wallpaper", "✗ Failed to set wallpaper: ${e.message}")
             e.printStackTrace()
         }
     }
