@@ -36,10 +36,10 @@ class DailyVerseWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
         } else {
             val intervalHours = prefs.getInt("auto_interval_hours", 24)
             val dailyHour = prefs.getInt("daily_hour", 6)
-            if (intervalHours == 24) {
-                computeDailyInitialDelayMs(dailyHour)
-            } else {
-                computeSlotInitialDelayMs(intervalHours)
+            when (intervalHours) {
+                24 -> computeDailyInitialDelayMs(dailyHour)
+                12 -> computeDailyCycleInitialDelayMs(dailyHour, 12)
+                else -> computeSlotInitialDelayMs(intervalHours)
             }
         }
 

@@ -5835,18 +5835,33 @@ fun computeDailyInitialDelayMs(hour: Int): Long {
 }
 
 /**
- * Computes the delay (ms) until the next UTC slot boundary for a given
- * interval, e.g. every 6h → 00:00, 06:00, 12:00, 18:00 UTC exactly, never
- * drifting to e.g. 20:43. All devices on the same interval land on the same
- * slot because epoch_hours / intervalHours is identical worldwide at a given
- * UTC instant.
+ * Delay (ms) until the next LOCAL wall-clock slot boundary for an interval
+ * that evenly divides 24 (1, 2, 3, 4, 6, 8, 12h) — anchored to local
+ * midnight. So "every 3 hours" lands on 00:00, 03:00, 06:00, 09:00, 12:00,
+ * 15:00, 18:00, 21:00 *local* time.
+ *
+ * Previously this aligned to UTC epoch-hour boundaries instead, which drifts
+ * by the device's UTC offset — e.g. on a UTC+2 (CEST) device, "every 3
+ * hours" landed on 02:00, 05:00, ..., 17:00, 20:00, 23:00 local time instead
+ * of the expected 00:00/03:00/.../18:00/21:00.
  */
 fun computeSlotInitialDelayMs(intervalHours: Int): Long {
-    val now = System.currentTimeMillis()
-    val nowEpochHours = now / (1000L * 60 * 60)
-    val nextSlot = (nowEpochHours / intervalHours + 1) * intervalHours
-    val nextSlotMs = nextSlot * 60L * 60L * 1000L
-    return nextSlotMs - now
+    val now = Calendar.getInstance()
+    val currentHour = now.get(Calendar.HOUR_OF_DAY)
+    val nextSlotHour = ((currentHour / intervalHours) + 1) * intervalHours
+
+    val target = Calendar.getInstance().apply {
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+        if (nextSlotHour >= 24) {
+            add(Calendar.DAY_OF_YEAR, 1)
+            set(Calendar.HOUR_OF_DAY, nextSlotHour - 24)
+        } else {
+            set(Calendar.HOUR_OF_DAY, nextSlotHour)
+        }
+    }
+    return target.timeInMillis - now.timeInMillis
 }
 
 /**
@@ -5956,9 +5971,9 @@ fun scheduleDailyWallpaper(context: Context, hour: Int) {
 
 /**
  * Schedules the wallpaper worker based on interval.
- * For 24h, aligns to the user-chosen time-of-day (cross-device sync via UTC epoch slot).
- * For shorter intervals, uses the interval directly — all devices on same slot because
- * epoch_hours / intervalHours gives the same slot number worldwide at the same UTC time.
+ * For 12h/24h, aligns to the user-chosen time-of-day (dailyHour) in LOCAL time.
+ * For shorter intervals (1/2/3/6h), aligns to local-midnight-based slot
+ * boundaries — see computeSlotInitialDelayMs.
  *
  * Implemented as a self-rescheduling chain of exact AlarmManager alarms
  * (see scheduleExactWallpaperAlarm) so every run recomputes the exact delay
@@ -5967,14 +5982,11 @@ fun scheduleDailyWallpaper(context: Context, hour: Int) {
  * DailyVerseWorker.rescheduleNext).
  */
 fun scheduleAutoWallpaper(context: Context, intervalHours: Int, dailyHour: Int) {
-    if (intervalHours == 24) {
-        scheduleDailyWallpaper(context, dailyHour)
-        return
+    val initialDelayMs = when (intervalHours) {
+        24 -> computeDailyInitialDelayMs(dailyHour)
+        12 -> computeDailyCycleInitialDelayMs(dailyHour, 12)
+        else -> computeSlotInitialDelayMs(intervalHours)
     }
-
-    // For sub-day intervals: align initial delay to the next slot boundary
-    // so all devices with the same interval are in sync (e.g. every 6h → 0,6,12,18 UTC)
-    val initialDelayMs = computeSlotInitialDelayMs(intervalHours)
     scheduleExactWallpaperAlarm(context, "DailyBibleWallpaper", System.currentTimeMillis() + initialDelayMs, "verse")
 }
 
