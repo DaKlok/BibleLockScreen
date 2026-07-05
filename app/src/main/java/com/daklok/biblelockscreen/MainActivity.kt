@@ -2778,7 +2778,13 @@ fun MainScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .clip(RoundedCornerShape(topStart = 36.dp, topEnd = 36.dp))
-                        .background(MaterialTheme.colorScheme.surface)
+                        // `surface` defaults to the exact same tone as
+                        // `background` in the static (non-dynamic) color
+                        // scheme, and sits very close to it under Material
+                        // You too — making this container indistinguishable
+                        // from the screen behind it. `surfaceContainerLow`
+                        // is deliberately one tonal step above `background`.
+                        .background(MaterialTheme.colorScheme.surfaceContainerLow)
                         .animateContentSize(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow))
                         .padding(horizontal = 20.dp)
                         .padding(top = 8.dp, bottom = 0.dp),
@@ -4248,7 +4254,20 @@ fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
     Card(
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surfaceVariant
+            // Material 3's `surfaceVariant` role can render almost
+            // identically to `background`/`surface` — especially under
+            // Material You dynamic color, where all three are derived from
+            // very close tonal steps of the same neutral palette, but also
+            // in the static (non-dynamic) light scheme, where `background`
+            // and `surface` default to literally the same tone. That made
+            // this card blend into both the settings-area background and
+            // the area behind the Pixel 6 preview.
+            //
+            // `surfaceContainerHigh` is one of M3's newer "surface
+            // container" roles, specifically designed to give each nesting
+            // level a deliberately distinct, guaranteed-different tone —
+            // regardless of whether the theme is static or dynamic.
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -4713,6 +4732,14 @@ fun Pixel6LockScreenPreview(
             .aspectRatio(9f / 20f)
             .border(2.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(32.dp))
             .clickable { onClick() },
+        // Card defaults to `colorScheme.surface` — the same role used for
+        // the Scaffold background directly behind this preview — so if this
+        // color were ever visible (e.g. through the rounded corners), it
+        // would blend right into the screen. Pick a deliberately distinct
+        // tone instead.
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
+        ),
         elevation = CardDefaults.cardElevation(12.dp)
     ) {
         BoxWithConstraints(modifier = Modifier.fillMaxSize()) {
