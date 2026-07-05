@@ -1,14 +1,9 @@
 name: Update CHANGELOG.md
 
-# Runs every time a release is published on GitHub. If CHANGELOG.md already
-# exists, it just prepends the new release's notes. If CHANGELOG.md doesn't
-# exist yet, it backfills the ENTIRE release history in one go (useful the
-# very first time this workflow runs on a repo that already has releases).
 on:
   release:
     types: [published]
-  # Lets you re-run it by hand from the Actions tab (e.g. to force a full
-  # backfill again, or to re-apply a single past release's notes).
+
   workflow_dispatch:
     inputs:
       tag:
@@ -19,7 +14,7 @@ permissions:
   contents: write
 
 env:
-  # 👉 Single source of truth for the branch CHANGELOG.md lives on.
+
   TARGET_BRANCH: master
 
 jobs:
@@ -29,9 +24,6 @@ jobs:
       - name: Checkout target branch
         uses: actions/checkout@v4
         with:
-          # IMPORTANT: a "release published" event checks out the release's
-          # tag by default (detached HEAD), which we can't push to. We need
-          # to explicitly check out the branch CHANGELOG.md lives on.
           ref: ${{ env.TARGET_BRANCH }}
           fetch-depth: 0
 
@@ -64,8 +56,7 @@ jobs:
               echo ""
             } > CHANGELOG.md
 
-            # The GitHub API returns releases sorted by published date,
-            # newest first — exactly the order we want them to appear in.
+
             gh api "repos/${GITHUB_REPOSITORY}/releases" --paginate \
               --jq '[.[] | select(.draft == false)] | sort_by(.published_at) | reverse | .[] | @base64' \
               > /tmp/releases.b64
