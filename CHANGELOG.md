@@ -66,6 +66,73 @@
 - Registered `WallpaperAlarmReceiver` (not exported — only triggered by the app's own alarms).
 - Registered `BootReceiver` (exported, filtered to `BOOT_COMPLETED`).
 
+
+## [2.1](https://github.com/DaKlok/BibleLockScreen/releases/tag/2.1) — Release 2.1 (2026-07-05)
+
+# Changelog
+
+## 🆕 Developer Logs
+
+- Added a new **`AppLogger`** object — a lightweight, file-backed logger that persists structured log lines (`DEBUG` / `INFO` / `WARN` / `ERROR`) to app storage.
+- Added an in-app **Developer Logs** viewer (`DeveloperLogSheet`) with:
+  - Filter tabs: `All`, `ERROR`, `WARN`, `INFO`, `DEBUG`
+  - Copy-all and clear-all actions
+  - Color-coded rows per log level
+- Instrumented key components with logging so real device behavior is traceable without `adb logcat`:
+  - `ScreenOffReceiver` — logs receipt of `ACTION_SCREEN_OFF`, wallpaper cycling decisions, cache hits/misses, and success/failure of applying the wallpaper.
+  - `DailyVerseWorker` — logs `doWork()` start, success/failure, and (later) rescheduling.
+- Added **crash / kill detection**: on each app start, `AppLogger` compares the previous session's state and reports either:
+  - A previous session that ended in an uncaught crash, or
+  - The process having been killed by the system while backgrounded (with no clean shutdown).
+- **Fix:** the "process was killed" log entry used to report the timestamp of *reopening* the app, not the time the process was actually last alive. It now uses the last recorded heartbeat (`onStop()`) as the entry's timestamp instead of "now".
+- **Fix:** the "process was killed" message was always shown as a `WARN`, implying it broke scheduled wallpaper updates — which is no longer true for interval-based scheduling (see AlarmManager section below). It's now:
+  - `INFO` (reassuring, "this is normal") when only interval-based scheduling is active, since that survives process death.
+  - `WARN` only when "change wallpaper on screen off" is enabled, since that feature genuinely depends on the app process staying alive.
+- Added a distinct **Material 3 Expressive green** highlight for the specific log lines that represent an actual wallpaper change (`Success: Wallpaper applied`, `✓ Wallpaper set successfully`), so the single most important event in the log visually stands out from routine lifecycle/scheduling noise.
+
+## ⏰ Exact-time wallpaper scheduling (major rework)
+
+**Problem:** scheduled wallpaper changes were drifting later and later over time (e.g. showing up at 20:43 instead of 20:00), because the app relied on `WorkManager`'s `PeriodicWorkRequest` / delayed `OneTimeWorkRequest`, which only guarantees "no earlier than" — Android's Doze mode and battery/App-Standby throttling are free to push real execution back, and that slack never shrinks back down.
+
+- Replaced `PeriodicWorkRequest`-based scheduling with a **self-rescheduling chain of exact `AlarmManager` alarms** (`AlarmManager.setExactAndAllowWhileIdle`), the one Android API explicitly exempted from Doze deferral.
+- Added **`WallpaperAlarmReceiver`** — a small, manifest-registered `BroadcastReceiver` that receives the exact alarm and hands the actual rendering work off to `WorkManager` (`DailyVerseWorker`), combining exact timing with WorkManager's more robust execution model.
+- Added **`BootReceiver`** — exact alarms don't survive a device reboot (unlike WorkManager jobs), so this re-arms them on `BOOT_COMPLETED`.
+- `DailyVerseWorker` now re-arms its *own* next alarm at the end of every run (success or failure) via `rescheduleNext()`, recomputing the delay fresh each time instead of relying on a fixed periodic interval.
+- Added a **graceful fallback**: if the exact-alarm permission isn't granted (or gets revoked), the app falls back to a delayed `WorkManager` job with the same delay and logs a warning, instead of silently doing nothing.
+- Manifest changes: added `SCHEDULE_EXACT_ALARM` and `RECEIVE_BOOT_COMPLETED` permissions, and registered both new receivers.
+- Updated the in-app diagnostic check (previously inspecting `WorkManager`'s job state) to instead check whether an exact alarm is currently armed for each schedule ("DailyBibleWallpaper", "WallpaperCycling").
+
+## 🕒 Local-time alignment fixes
+
+**Problem:** interval-based scheduling ("every N hours") was computed from **UTC epoch hours** instead of the device's local time. On a UTC+2 device, "every 3 hours" landed on 17:00 / 20:00 instead of the expected 15:00 / 18:00 / 21:00 / 00:00 (offset drift by the device's UTC offset).
+
+- Rewrote `computeSlotInitialDelayMs()` to align to **local** wall-clock hour boundaries (via `Calendar`) instead of UTC epoch-hour arithmetic. Fixes the 2h/3h/6h interval offset issue.
+- **Fix:** the 12-hour interval option silently ignored the user-selected anchor hour and fell through to the same (buggy, UTC-based) slot logic used for 2h/3h/6h. It now correctly honors the chosen hour, same as the 24h option, via `computeDailyCycleInitialDelayMs(hour, 12)`.
+- **Fix (critical):** `computeDailyCycleInitialDelayMs()` only added the interval **once** when computing the next occurrence of the anchor hour. With a 12h interval and anchor hour 7 (07:00/19:00), if the current time was already past 19:00 (e.g. 19:48), the single addition still landed in the past — producing a **negative delay**. A negative/past trigger time made `AlarmManager` fire immediately, and since the worker rescheduled itself using the same buggy function, this became a **tight refire loop** (wallpaper changing almost every second). Fixed by looping the addition until the target time is strictly in the future.
+- Added a **defense-in-depth safety net** in `scheduleExactWallpaperAlarm()`: any trigger time that isn't at least 60 seconds in the future is now clamped and logged as an `ERROR`, so a similar bug can never again cause a silent refire loop — it will visibly show up in Developer Logs instead.
+- `LocalBibleProvider.getVerseForInterval()`: the sub-24h verse "time slot" index was also based on raw UTC epoch hours, which could disagree with the (now local-time-based) alarm schedule — e.g. changing the anchor hour from 22:00 to 23:00 could still land in the same UTC slot and show the same verse. Switched the slot calculation to use local wall-clock hour + a local day counter, consistent with the scheduling fix above.
+- Note: image cycling (`WallpaperManager.cycleToNext()`) was **not affected** by any of the above — it's a simple round-robin counter advanced once per triggered run, with no time-of-day math involved. It only inherits correctness from the alarm-scheduling fix (i.e. it now advances at the correct local time), but never had a UTC/local slot bug of its own.
+
+## 🎨 Material 3 color/theming fixes
+
+**Problem:** with Material You (dynamic color) enabled, several nested backgrounds that were supposed to look different rendered as the *same* color — most noticeably the settings-area background and the area behind the Pixel 6 lock-screen preview. The same issue showed up in the plain light theme too, even with Material You off.
+
+- **Root cause:** these surfaces used the classic `background` / `surface` / `surfaceVariant` roles, which are often very close in tone under dynamic color, and in the static (non-dynamic) light scheme `background` and `surface` default to the *exact same* tone unless explicitly overridden.
+- Migrated the nested UI containers to Material 3's newer **surface container ladder**, which is specifically designed to keep each nesting level a deliberately distinct tone:
+  - Screen background (area behind the Pixel 6 preview) → stays `background`
+  - Settings-area wrapper → `surface` → **`surfaceContainerLow`**
+  - Individual settings cards (`SettingsCard`, incl. verse settings) → `surfaceVariant` → **`surfaceContainerHigh`**
+  - Pixel 6 preview `Card` → previously no explicit color (defaulted to `surface`) → now explicitly **`surfaceContainerHighest`**
+- **Follow-up fix:** after the above change, the *static* dark theme (Material You off) looked different from before — because the newly-used `surfaceContainer*` roles weren't explicitly set in the custom `DarkColorScheme`, so they silently fell back to Material 3's baseline neutral defaults instead of this app's custom dark palette (`BackgroundDark` / `SurfaceDark` / `SurfaceVariantDark`). Fixed by explicitly pinning `surfaceContainerLowest/Low/(default)/High/Highest` in `Theme.kt`, built from the same custom dark palette so the static dark theme's original look is preserved while the light/dynamic-color contrast fix still applies.
+
+
+## 📄 Manifest
+
+- Added `SCHEDULE_EXACT_ALARM` permission (for exact wallpaper-change alarms).
+- Added `RECEIVE_BOOT_COMPLETED` permission (to re-arm alarms after reboot).
+- Registered `WallpaperAlarmReceiver` (not exported — only triggered by the app's own alarms).
+- Registered `BootReceiver` (exported, filtered to `BOOT_COMPLETED`).
+
 ## [2.0](https://github.com/DaKlok/BibleLockScreen/releases/tag/2.0) — Release 2.0 (2026-07-01)
 
 Implement a wallpaper gallery management system, auto-cycling functionality, and a paginated UI for the home screen.
