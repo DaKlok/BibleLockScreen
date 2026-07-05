@@ -1,0 +1,122 @@
+name: Update CHANGELOG.md
+
+# Runs every time a release is published on GitHub. If CHANGELOG.md already
+# exists, it just prepends the new release's notes. If CHANGELOG.md doesn't
+# exist yet, it backfills the ENTIRE release history in one go (useful the
+# very first time this workflow runs on a repo that already has releases).
+on:
+  release:
+    types: [published]
+  # Lets you re-run it by hand from the Actions tab (e.g. to force a full
+  # backfill again, or to re-apply a single past release's notes).
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to (re)apply — leave empty to just backfill everything if CHANGELOG.md is missing"
+        required: false
+
+permissions:
+  contents: write
+
+env:
+  # 👉 Single source of truth for the branch CHANGELOG.md lives on.
+  TARGET_BRANCH: master
+
+jobs:
+  changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout target branch
+        uses: actions/checkout@v4
+        with:
+          # IMPORTANT: a "release published" event checks out the release's
+          # tag by default (detached HEAD), which we can't push to. We need
+          # to explicitly check out the branch CHANGELOG.md lives on.
+          ref: ${{ env.TARGET_BRANCH }}
+          fetch-depth: 0
+
+      - name: Build/update CHANGELOG.md
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CURRENT_TAG: ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.tag || github.event.release.tag_name }}
+        run: |
+          set -e
+
+          render_section() {
+            # args: tag name url date body
+            local tag="$1" name="$2" url="$3" date="$4" body="$5"
+            local date_only="${date%%T*}"
+            local title="${name:-$tag}"
+            echo "## [${tag}](${url}) — ${title} (${date_only})"
+            echo ""
+            if [ -n "$body" ]; then
+              echo "$body"
+            else
+              echo "_No release notes were written for this release._"
+            fi
+            echo ""
+          }
+
+          if [ ! -f CHANGELOG.md ]; then
+            echo "CHANGELOG.md not found — backfilling from ALL existing releases."
+            {
+              echo "# Changelog"
+              echo ""
+            } > CHANGELOG.md
+
+            # The GitHub API returns releases sorted by published date,
+            # newest first — exactly the order we want them to appear in.
+            gh api "repos/${GITHUB_REPOSITORY}/releases" --paginate \
+              --jq '[.[] | select(.draft == false)] | sort_by(.published_at) | reverse | .[] | @base64' \
+              > /tmp/releases.b64
+
+            while IFS= read -r line; do
+              row=$(echo "$line" | base64 -d)
+              tag=$(echo "$row" | jq -r '.tag_name')
+              name=$(echo "$row" | jq -r '.name')
+              url=$(echo "$row" | jq -r '.html_url')
+              date=$(echo "$row" | jq -r '.published_at')
+              body=$(echo "$row" | jq -r '.body')
+              render_section "$tag" "$name" "$url" "$date" "$body" >> CHANGELOG.md
+            done < /tmp/releases.b64
+
+          elif [ -n "$CURRENT_TAG" ]; then
+            echo "CHANGELOG.md exists — prepending only ${CURRENT_TAG}."
+            row=$(gh api "repos/${GITHUB_REPOSITORY}/releases/tags/${CURRENT_TAG}")
+            tag=$(echo "$row" | jq -r '.tag_name')
+            name=$(echo "$row" | jq -r '.name')
+            url=$(echo "$row" | jq -r '.html_url')
+            date=$(echo "$row" | jq -r '.published_at')
+            body=$(echo "$row" | jq -r '.body')
+            render_section "$tag" "$name" "$url" "$date" "$body" > /tmp/new_section.md
+
+            if head -n1 CHANGELOG.md | grep -q "^# "; then
+              { head -n1 CHANGELOG.md; echo ""; cat /tmp/new_section.md; tail -n +2 CHANGELOG.md; } > /tmp/CHANGELOG.md
+            else
+              { echo "# Changelog"; echo ""; cat /tmp/new_section.md; cat CHANGELOG.md; } > /tmp/CHANGELOG.md
+            fi
+            mv /tmp/CHANGELOG.md CHANGELOG.md
+          else
+            echo "CHANGELOG.md already exists and no tag was given — nothing to do."
+          fi
+
+      - name: Commit and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          if git diff --cached --quiet; then
+            echo "CHANGELOG.md already up to date, nothing to commit."
+            exit 0
+          fi
+          git commit -m "docs: update CHANGELOG.md"
+
+          # Guard against the remote branch having moved on since checkout —
+          # rebase our single commit on top instead of failing outright.
+          git fetch origin "${TARGET_BRANCH}"
+          git rebase "origin/${TARGET_BRANCH}" || {
+            echo "Rebase failed — resolve manually.";
+            git rebase --abort;
+            exit 1;
+          }
+          git push origin "HEAD:${TARGET_BRANCH}"
