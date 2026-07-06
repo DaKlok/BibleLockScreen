@@ -175,8 +175,7 @@ fixes are welcome.
 ---
 
 ## Credits
-
-Contributors are listed in [`TRANSLATORS.md`](../../Downloads/TRANSLATORS.md). When your PR
+Contributors are listed in [`TRANSLATORS.md`](/TRANSLATORS.md). When your PR
 is merged, please also submit a tiny follow-up PR adding yourself to that
 file under the appropriate language, or just ask the maintainer to do it.
 
