@@ -1,0 +1,79 @@
+name: Validate translations
+
+# Runs on every Pull Request and on every push to master that touches
+# translation-related files. Also runnable manually from the Actions tab.
+on:
+  pull_request:
+    paths:
+      - 'app/src/main/java/com/daklok/biblelockscreen/strings/**'
+      - 'app/src/main/assets/verses_*.json'
+      - 'scripts/validate_translations.py'
+      - '.github/workflows/validate-translations.yml'
+  push:
+    branches: [master]
+    paths:
+      - 'app/src/main/java/com/daklok/biblelockscreen/strings/**'
+      - 'app/src/main/assets/verses_*.json'
+      - 'scripts/validate_translations.py'
+      - '.github/workflows/validate-translations.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: write  # so the job can leave review comments on failures
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run translation validator
+        id: validate
+        run: |
+          python3 scripts/validate_translations.py
+        continue-on-error: true
+
+      - name: Post a comment on the PR if validation failed
+        if: ${{ failure() && github.event_name == 'pull_request' && steps.validate.outcome == 'failure' }}
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = [
+              "### ⚠️ Translation validation failed",
+              "",
+              "One or more translation files have issues that need to be fixed before this PR can merge.",
+              "",
+              "Re-run locally with:",
+              "```bash",
+              "python3 scripts/validate_translations.py",
+              "```",
+              "",
+              "See [`CONTRIBUTING.md`](../blob/master/CONTRIBUTING.md) for help.",
+              "",
+              "[View the full validation log in the workflow run.](",
+              `  ${context.payload.pull_request.html_url.replace(/\/pull\/\d+$/, '')}/actions/runs/${context.runId}`,
+              ")",
+            ].join("\n");
+            await github.rest.issues.createComment({
+              ...context.repo,
+              issue_number: context.issue.number,
+              body,
+            });
+            core.setFailed("Translation validation failed; see comment above.");
+
+      - name: Fail the job if validation failed
+        if: ${{ steps.validate.outcome == 'failure' }}
+        run: |
+          echo "Validator reported errors. See step output above."
+          exit 1

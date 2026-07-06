@@ -1,0 +1,257 @@
+package com.daklok.biblelockscreen.strings
+
+// =============================================================================
+// TEMPLATE FILE -- DO NOT COMPILE.
+// (Filename ends in .kt.txt so Gradle ignores it. The CI validation script
+//  also explicitly skips any file named StringsTemplate.kt.)
+//
+// HOW TO USE THIS TEMPLATE
+// ------------------------
+// 1. Copy this file to StringsXX.kt where XX is your ISO 639-1 language code
+//    in uppercase (e.g. StringsPT.kt for Portuguese, StringsRU.kt for Russian).
+//    IMPORTANT: rename the extension from .kt.txt to just .kt.
+// 2. Rename the val below:  xxStrings  ->  ptStrings  (lowercase code + "Strings")
+// 3. Replace every  "<TODO>"  with your translation, in quotes.
+//    - Keep `%s` placeholders exactly as they are -- they're filled in at runtime.
+//    - Keep `\"` escapes and any HTML/markup exactly as in the original.
+//    - Don't change the property names on the left of `=`.
+// 4. Open `AppStrings.kt` (same folder) and:
+//      a) add your code + language name to `availableLanguages`
+//      b) add your code to the `getDefaultAppLanguage()` when-branch
+// 5. Open `app/src/main/java/com/daklok/biblelockscreen/MainActivity.kt`,
+//    find the `when` block that maps language codes to string instances
+//    (search for `"EN" -> enStrings`), and add your case:
+//         "PT" -> ptStrings
+// 6. Create `app/src/main/assets/verses_XX.json` (copy verses_EN.json and
+//    translate the entries -- see CONTRIBUTING.md for Bible copyright rules).
+// 7. Commit and open a Pull Request. The CI validator will check your work.
+//
+// Tip: It's often easier to copy StringsEN.kt instead of using this template,
+// because the English text gives you context for what each field means.
+// =============================================================================
+
+val xxStrings = AppStrings(
+
+    test = "<TODO>",
+    generatingBtn = "<TODO>",
+    generating = "<TODO>",
+    done = "<TODO>",
+
+    updateTime = "<TODO>",
+
+    tapToEdit = "<TODO>",
+    appName = "<TODO>",
+    settings = "<TODO>",
+    dailyWallpaper = "<TODO>",
+    active = "<TODO>",
+    inactive = "<TODO>",
+
+    textCustomization = "<TODO>",
+    bold = "<TODO>",
+    shadow = "<TODO>",
+    textSize = "<TODO>",
+    textWidth = "<TODO>",
+    textHeight = "<TODO>",
+    textAlpha = "<TODO>",
+    bgBlur = "<TODO>",
+    bgDarknessLabel = "<TODO>",
+    anotherPhoto = "<TODO>",
+    selectPhotoFirst = "<TODO>",
+    appearance = "<TODO>",
+    system = "<TODO>",
+    light = "<TODO>",
+    dark = "<TODO>",
+    dynamicColor = "<TODO>",
+    haptics = "<TODO>",
+    hapticsDesc = "<TODO>",
+    support = "<TODO>",
+    supportDesc = "<TODO>",
+    donate = "<TODO>",
+    close = "<TODO>",
+    dragHint = "<TODO>",
+
+    cancel = "<TODO>",
+    clickToSelect = "<TODO>",
+    loading = "<TODO>",
+    appLanguage = "<TODO>",
+    verseLanguage = "<TODO>",
+    language = "<TODO>",
+    dailyWorkerOn = "<TODO>",
+    dailyWorkerOff = "<TODO>",
+    fontModern = "<TODO>",
+    fontBook = "<TODO>",
+
+    fontMono = "<TODO>",
+    fontCursive = "<TODO>",
+    fontLight = "<TODO>",
+    fontCondensed = "<TODO>",
+    langSk = "<TODO>",
+    langEn = "<TODO>",
+    langCz = "<TODO>",
+
+    batteryWarningTitle = "<TODO>",
+    batteryWarningDesc = "<TODO>",
+    batteryWarningButton = "<TODO>",
+
+    customVerseTitle = "<TODO>",
+    customVerseHint = "<TODO>",
+    customRefHint = "<TODO>",
+    applyCustom = "<TODO>",
+
+    autoWallpaper = "<TODO>",
+    autoWallpaperIntervalLabel = "<TODO>",
+    autoWallpaperEvery1h = "<TODO>",
+    autoWallpaperEvery2h = "<TODO>",
+    autoWallpaperEvery3h = "<TODO>",
+    autoWallpaperEvery6h = "<TODO>",
+    autoWallpaperEvery12h = "<TODO>",
+    autoWallpaperEvery24h = "<TODO>",
+    autoWallpaperOnScreenOff = "<TODO>",
+    autoWallpaperOnScreenOffDesc = "<TODO>",
+    autoWallpaperTimeLabel = "<TODO>",
+    autoWallpaperActiveHourly = "<TODO>",
+    autoWallpaperActiveDaily = "<TODO>",
+    autoWallpaperActiveScreenOff = "<TODO>",
+    autoWorkerOn = "<TODO>",
+    autoWorkerOff = "<TODO>",
+
+    colorPickerTitle = "<TODO>",
+    colorPickerBrightness = "<TODO>",
+    colorPickerVerseColor = "<TODO>",
+
+    wallpaperTargetLabel = "<TODO>",
+    wallpaperTargetLock = "<TODO>",
+    wallpaperTargetHome = "<TODO>",
+    wallpaperTargetBoth = "<TODO>",
+
+    vdbTitle = "<TODO>",
+    vdbSubtitle = "<TODO>",
+    vdbManage = "<TODO>",
+    vdbNewDatabase = "<TODO>",
+    vdbEditPrefix = "<TODO>",
+    vdbImportExport = "<TODO>",
+    vdbCreateNew = "<TODO>",
+    vdbSectionCustom = "<TODO>",
+    vdbSectionBuiltIn = "<TODO>",
+    vdbHint = "<TODO>",
+    vdbDeleteTitle = "<TODO>",
+    vdbDeleteText = "<TODO>",
+    vdbDelete = "<TODO>",
+    vdbDeleted = "<TODO>",
+    vdbVerses = "<TODO>",
+    vdbCustomLabel = "<TODO>",
+    vdbCodeLabel = "<TODO>",
+    vdbCodePlaceholder = "<TODO>",
+    vdbCodeHint = "<TODO>",
+    vdbUpdate = "<TODO>",
+    vdbSave = "<TODO>",
+    vdbNoVerses = "<TODO>",
+    vdbVersesFilled = "<TODO>",
+    vdbVerse = "<TODO>",
+    vdbVersePlural = "<TODO>",
+    vdbClearAll = "<TODO>",
+    vdbNoVersesYet = "<TODO>",
+    vdbAddFirstVerse = "<TODO>",
+    vdbAddVerse = "<TODO>",
+    vdbVerseText = "<TODO>",
+    vdbReference = "<TODO>",
+    vdbReferencePlaceholder = "<TODO>",
+    vdbVerseCard = "<TODO>",
+    vdbUpdated = "<TODO>",
+    vdbCreated = "<TODO>",
+    vdbErrorCode = "<TODO>",
+    vdbErrorVerse = "<TODO>",
+    vdbErrorFailed = "<TODO>",
+    vdbImportTitle = "<TODO>",
+    vdbImportJson = "<TODO>",
+    vdbImportDesc = "<TODO>",
+    vdbBrowse = "<TODO>",
+    vdbImporting = "<TODO>",
+    vdbImportCodeTitle = "<TODO>",
+    vdbImportCodeDesc = "<TODO>",
+    vdbImport = "<TODO>",
+    vdbImportSuccess = "<TODO>",
+    vdbImportFailed = "<TODO>",
+    vdbExportCustom = "<TODO>",
+    vdbExportBuiltIn = "<TODO>",
+    vdbExport = "<TODO>",
+    vdbExporting = "<TODO>",
+    vdbExportDone = "<TODO>",
+    vdbExportFailed = "<TODO>",
+    vdbJsonFormat = "<TODO>",
+
+    backupTitle = "<TODO>",
+    backupExport = "<TODO>",
+    backupExportDesc = "<TODO>",
+    backupImport = "<TODO>",
+    backupImportDesc = "<TODO>",
+    backupExporting = "<TODO>",
+    backupImporting = "<TODO>",
+    backupExportSuccess = "<TODO>",
+    backupImportSuccess = "<TODO>",
+    backupExportFailed = "<TODO>",
+    backupImportFailed = "<TODO>",
+    backupConfirmTitle = "<TODO>",
+    backupConfirmDesc = "<TODO>",
+
+    wpScreenTitle = "<TODO>",
+    wpScreenSubtitle = "<TODO>",
+    wpGalleryEmpty = "<TODO>",
+    wpGalleryEmptyDesc = "<TODO>",
+    wpAdd = "<TODO>",
+    wpSetActive = "<TODO>",
+    wpActive = "<TODO>",
+    wpDelete = "<TODO>",
+    wpDeleteConfirm = "<TODO>",
+    wpDeleteConfirmDesc = "<TODO>",
+    wpCycleTitle = "<TODO>",
+    wpCycleDesc = "<TODO>",
+    wpCycleInterval = "<TODO>",
+    wpCycleDailyHour = "<TODO>",
+    wpCycleOnScreenOff = "<TODO>",
+    wpCycleOnScreenOffDesc = "<TODO>",
+    wpNightMode = "<TODO>",
+    wpNightModeDesc = "<TODO>",
+    wpNightStart = "<TODO>",
+    wpNightEnd = "<TODO>",
+    wpActiveBadge = "<TODO>",
+    wpNightBadge = "<TODO>",
+    wpCycleModeVerse = "<TODO>",
+    wpCycleModeInterval = "<TODO>",
+    wpCycleModeScreenOff = "<TODO>",
+    wpCycleModeDayNight = "<TODO>",
+    wpCycleModeVerseDesc = "<TODO>",
+    wpCycleModeDayNightDesc = "<TODO>",
+    wpCycleDayWallpaper = "<TODO>",
+    wpCycleNightWallpaper = "<TODO>",
+    wpCycleModeIntervalDesc = "<TODO>",
+    wpCycleModeScreenOffDesc = "<TODO>",
+    wpDualLockWarning = "<TODO>",
+    wpDayStart = "<TODO>",
+    wpDayEnd = "<TODO>",
+
+    wpViewAll = "<TODO>",
+    wpViewAllTitle = "<TODO>",
+    wpSelectMode = "<TODO>",
+    wpDeleteSelected = "<TODO>",
+    wpSelected = "<TODO>",
+    wpDeleteAllConfirm = "<TODO>",
+    wpDeleteAllConfirmDesc = "<TODO>",
+    wpPageHint = "<TODO>",
+
+    vdbSourceDefault = "<TODO>",
+    vdbSourceCustom = "<TODO>",
+    vdbEmptyCustom = "<TODO>",
+    vdbEmptyCustomDesc = "<TODO>",
+    vdbEmptyCustomCta = "<TODO>",
+
+    vdbWarningCodeBuiltin = "<TODO>",
+    vdbWarningCodeCustom = "<TODO>",
+    vdbImportConflictTitle = "<TODO>",
+    vdbImportConflictDesc = "<TODO>",
+    vdbImportConflictAction = "<TODO>",
+
+    vdbOverwriteTitle = "<TODO>",
+    vdbOverwriteDesc = "<TODO>",
+    vdbOverwriteConfirm = "<TODO>",
+)

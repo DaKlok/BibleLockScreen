@@ -1,5 +1,6 @@
 package com.daklok.biblelockscreen
 
+import com.daklok.biblelockscreen.strings.*
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
