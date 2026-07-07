@@ -19,6 +19,7 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
@@ -49,6 +50,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.blur
@@ -192,6 +194,7 @@ class MainActivity : ComponentActivity() {
 
 
 
+@RequiresApi(Build.VERSION_CODES.P)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
@@ -308,6 +311,7 @@ fun MainScreen(
     // Share verse as image — state
     var showShareDialog by remember { mutableStateOf(false) }
     var isShareInProgress by remember { mutableStateOf(false) }
+    var shareInProgressAction by remember { mutableStateOf<String?>(null) }
 
     // Custom Haptic Helper
     val performHaptic = { type: HapticFeedbackType ->
@@ -464,6 +468,7 @@ fun MainScreen(
         val capturedStrings = strings
 
         isShareInProgress = true
+        shareInProgressAction = action
         scope.launch(Dispatchers.IO) {
             try {
                 val bitmap = ShareVerseManager.generateVerseBitmap(
@@ -507,12 +512,14 @@ fun MainScreen(
                         }
                     }
                     isShareInProgress = false
+                    shareInProgressAction = null
                     showShareDialog = false
                 }
             } catch (e: Exception) {
                 withContext(Dispatchers.Main) {
                     showNotification(capturedStrings.shareFailed, NotificationType.ERROR)
                     isShareInProgress = false
+                    shareInProgressAction = null
                     showShareDialog = false
                 }
             }
@@ -2111,55 +2118,72 @@ fun MainScreen(
         // Placed at the top level (outside the Settings sheet) so it renders
         // regardless of which sheet is open.
         if (showShareDialog) {
-            AlertDialog(
-                onDismissRequest = { showShareDialog = false },
-                icon = {
-                    Icon(
-                        Icons.Default.Share, null,
-                        tint = MaterialTheme.colorScheme.primary
-                    )
-                },
-                title = { Text(strings.shareDialogTitle) },
-                text = {
-                    Column {
+            Dialog(onDismissRequest = { if (!isShareInProgress) showShareDialog = false }) {
+                Surface(
+                    shape = RoundedCornerShape(28.dp),
+                    color = MaterialTheme.colorScheme.surface,
+                    tonalElevation = 6.dp,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(modifier = Modifier.padding(24.dp)) {
+                        // Header: icon badge + title + description
+                        Box(
+                            modifier = Modifier
+                                .size(56.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.primaryContainer),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                Icons.Default.Share,
+                                null,
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier.size(28.dp)
+                            )
+                        }
+                        Spacer(Modifier.height(16.dp))
+                        Text(
+                            strings.shareDialogTitle,
+                            style = MaterialTheme.typography.headlineSmall
+                        )
+                        Spacer(Modifier.height(4.dp))
                         Text(
                             strings.shareDialogDesc,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        Spacer(Modifier.height(16.dp))
-                        // Share via ACTION_SEND
-                        Button(
-                            onClick = {
-                                performShareAction("share")
-                            },
+                        Spacer(Modifier.height(20.dp))
+
+                        // Action rows — tappable cards instead of stacked buttons,
+                        // each with an icon, title, subtitle and trailing chevron
+                        // (or a progress indicator while busy).
+                        ShareActionRow(
+                            icon = Icons.Default.Share,
+                            title = strings.shareAction,
+                            subtitle = strings.shareActionDesc,
                             enabled = !isShareInProgress,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(Icons.Default.Share, null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(8.dp))
-                            Text(strings.shareAction)
-                        }
-                        Spacer(Modifier.height(8.dp))
-                        // Save to gallery
-                        OutlinedButton(
-                            onClick = {
-                                performShareAction("save")
-                            },
+                            isLoading = isShareInProgress && shareInProgressAction == "share",
+                            onClick = { performShareAction("share") }
+                        )
+                        Spacer(Modifier.height(10.dp))
+                        ShareActionRow(
+                            icon = Icons.Default.Save,
+                            title = strings.saveToGalleryAction,
+                            subtitle = strings.saveToGalleryActionDesc,
                             enabled = !isShareInProgress,
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Icon(Icons.Default.Save, null, modifier = Modifier.size(18.dp))
-                            Spacer(Modifier.width(8.dp))
-                            Text(strings.saveToGalleryAction)
-                        }
+                            isLoading = isShareInProgress && shareInProgressAction == "save",
+                            onClick = { performShareAction("save") }
+                        )
+
+                        Spacer(Modifier.height(12.dp))
+                        TextButton(
+                            onClick = { showShareDialog = false },
+                            enabled = !isShareInProgress,
+                            modifier = Modifier.align(Alignment.End)
+                        ) { Text(strings.cancel) }
                     }
-                },
-                confirmButton = {},
-                dismissButton = {
-                    TextButton(onClick = { showShareDialog = false }) { Text(strings.cancel) }
                 }
-            )
+            }
         }
 
         // Developer log sheet — opened by holding the book icon in the top
@@ -2329,6 +2353,78 @@ fun MainScreen(
 
 
 // --- KOMPONENTY ---
+
+/**
+ * A single tappable action row used in the share dialog: icon badge on the
+ * left, title + subtitle in the middle, and a trailing chevron that turns
+ * into a small progress indicator while that specific action is running.
+ */
+@Composable
+fun ShareActionRow(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    title: String,
+    subtitle: String,
+    enabled: Boolean,
+    isLoading: Boolean,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        enabled = enabled,
+        shape = RoundedCornerShape(18.dp),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 14.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    icon,
+                    null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+            Spacer(Modifier.width(14.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    title,
+                    style = MaterialTheme.typography.titleSmall,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                Text(
+                    subtitle,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            Spacer(Modifier.width(8.dp))
+            if (isLoading) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(20.dp),
+                    strokeWidth = 2.dp,
+                    color = MaterialTheme.colorScheme.primary
+                )
+            } else {
+                Icon(
+                    Icons.Default.ChevronRight,
+                    null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = if (enabled) 1f else 0.4f)
+                )
+            }
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
