@@ -1,5 +1,6 @@
 package com.daklok.biblelockscreen.strings
 
+// frStrings -- auto-extracted from MainActivity.kt (original lines 1223..1442).
 val frStrings = AppStrings(
     updateTime = "Heure de mise à jour quotidienne",
     settings = "Paramètres",
@@ -218,5 +219,15 @@ val frStrings = AppStrings(
     // Overwrite confirmation dialog (CreateEditScreen — Save with existing custom code)
     vdbOverwriteTitle = "Écraser la base de données ?",
     vdbOverwriteDesc = "Une base de données personnalisée avec le code \"%s\" existe déjà. L'enregistrement remplacera définitivement ses versets. Cette action est irréversible.",
-    vdbOverwriteConfirm = "Écraser"
+    vdbOverwriteConfirm = "Écraser",
+    share = "Partager",
+    shareDialogTitle = "Partager le verset",
+    shareDialogDesc = "Choisissez une action",
+    shareAction = "Partager",
+    saveToGalleryAction = "Enregistrer dans la galerie",
+    shareSuccess = "Verset partagé",
+    shareFailed = "Échec du partage du verset",
+    saveSuccess = "Verset enregistré dans la galerie",
+    saveFailed = "Échec de l'enregistrement",
+    shareImageDesc = "Image avec verset à partager"
 )

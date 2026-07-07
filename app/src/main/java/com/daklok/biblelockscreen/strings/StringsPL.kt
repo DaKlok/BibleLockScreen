@@ -1,5 +1,6 @@
 package com.daklok.biblelockscreen.strings
 
+// plStrings -- auto-extracted from MainActivity.kt (original lines 1887..2102).
 val plStrings = AppStrings(
     updateTime = "Czas aktualizacji dziennie",
     generatingBtn = "generowanie...",
@@ -214,5 +215,15 @@ val plStrings = AppStrings(
     // Overwrite confirmation dialog (CreateEditScreen — Save with existing custom code)
     vdbOverwriteTitle = "Nadpisać bazę danych?",
     vdbOverwriteDesc = "Własna baza danych z kodem \"%s\" już istnieje. Zapisanie trwale zastąpi jej wersety. Tej czynności nie można cofnąć.",
-    vdbOverwriteConfirm = "Nadpisz"
+    vdbOverwriteConfirm = "Nadpisz",
+    share = "Udostępnij",
+    shareDialogTitle = "Udostępnij werset",
+    shareDialogDesc = "Wybierz akcję",
+    shareAction = "Udostępnij",
+    saveToGalleryAction = "Zapisz w galerii",
+    shareSuccess = "Werset udostępniony",
+    shareFailed = "Nie udało się udostępnić wersetu",
+    saveSuccess = "Werset zapisany w galerii",
+    saveFailed = "Nie udało się zapisać w galerii",
+    shareImageDesc = "Obraz z wersemem do udostępnienia"
 )

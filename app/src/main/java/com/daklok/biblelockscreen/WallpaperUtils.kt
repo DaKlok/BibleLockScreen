@@ -30,16 +30,6 @@ object WallpaperUtils {
         bgDarkness: Float = 0.23f
     ): Bitmap? {
         try {
-            // 1. Získanie rozmerov obrazovky
-            // Always render the wallpaper in portrait dimensions,
-            // regardless of the device's *current* orientation. The
-            // lock screen is always portrait on phones, so if the
-            // wallpaper is regenerated while the user is in landscape
-            // (e.g. watching YouTube), we must still emit a portrait
-            // bitmap — otherwise the system crops/stretches the
-            // landscape bitmap and the wallpaper looks broken on the
-            // lock screen. Using min/max guarantees width < height
-            // on every device.
             val metrics = context.resources.displayMetrics
             val rawW = metrics.widthPixels
             val rawH = metrics.heightPixels
@@ -51,11 +41,10 @@ object WallpaperUtils {
                 decoder.isMutableRequired = true
             }
 
-            // 2. Vytvoríme si dočasnú bitmapu pre pozadie
             var workingBitmap = Bitmap.createBitmap(screenW, screenH, Bitmap.Config.ARGB_8888)
             val bgCanvas = Canvas(workingBitmap)
 
-            // 3. Center-Crop obrázku
+            // Center-Crop obrázku
             val scale = max(screenW.toFloat() / original.width, screenH.toFloat() / original.height)
             val scaledW = original.width * scale
             val scaledH = original.height * scale
@@ -69,7 +58,7 @@ object WallpaperUtils {
             bgCanvas.drawBitmap(original, matrix, Paint(Paint.FILTER_BITMAP_FLAG))
             original.recycle()
 
-            // 4. Aplikácia Blur efektu na pozadie - teraz s ohľadom na hustotu pixelov (DP -> PX)
+            // Aplikácia Blur efektu na pozadie
             if (bgBlurRadius > 0f) {
                 val density = metrics.density
                 val blurred = blurBitmap(context, workingBitmap, bgBlurRadius * density)
@@ -77,90 +66,169 @@ object WallpaperUtils {
                 workingBitmap = blurred
             }
 
-            // Vytvoríme už finálny canvas na upravenom (alebo neupravenom) pozadí
+            return renderVerseOnBitmap(
+                workingBitmap, screenW, screenH, verse, ref,
+                textSizeMultiplier, textWidthMultiplier, verticalOffset,
+                textColorInt, textAlpha, isBold, useShadow, fontFamilyStr,
+                bgDarkness
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return null
+        }
+    }
+
+    /**
+     * Creates a verse bitmap with a gradient background (fallback when the
+     * user has not selected a background photo). Uses a calm diagonal
+     * gradient from deep indigo to near-black — works well with white text.
+     */
+    @RequiresApi(Build.VERSION_CODES.P)
+    fun createBitmapWithGradient(
+        context: Context,
+        verse: String,
+        ref: String,
+        textSizeMultiplier: Float = 1.0f,
+        textWidthMultiplier: Float = 1.0f,
+        verticalOffset: Float = 0.0f,
+        textColorInt: Int = Color.WHITE,
+        textAlpha: Float = 1.0f,
+        isBold: Boolean = true,
+        useShadow: Boolean = true,
+        fontFamilyStr: String = "sans-serif",
+        bgDarkness: Float = 0.0f
+    ): Bitmap? {
+        try {
+            val metrics = context.resources.displayMetrics
+            val rawW = metrics.widthPixels
+            val rawH = metrics.heightPixels
+            val screenW = minOf(rawW, rawH)
+            val screenH = maxOf(rawW, rawH)
+
+            val workingBitmap = Bitmap.createBitmap(screenW, screenH, Bitmap.Config.ARGB_8888)
             val canvas = Canvas(workingBitmap)
 
-            // 5. Vignette
+            // Diagonal gradient: deep indigo (top-left) → near-black (bottom-right)
+            val gradient = LinearGradient(
+                0f, 0f, screenW.toFloat(), screenH.toFloat(),
+                intArrayOf(0xFF1A237E.toInt(), 0xFF000000.toInt()),
+                floatArrayOf(0f, 1f),
+                android.graphics.Shader.TileMode.CLAMP
+            )
+            val gradientPaint = Paint().apply { shader = gradient }
+            canvas.drawRect(0f, 0f, screenW.toFloat(), screenH.toFloat(), gradientPaint)
+
+            return renderVerseOnBitmap(
+                workingBitmap, screenW, screenH, verse, ref,
+                textSizeMultiplier, textWidthMultiplier, verticalOffset,
+                textColorInt, textAlpha, isBold, useShadow, fontFamilyStr,
+                bgDarkness
+            )
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return null
+        }
+    }
+
+    /**
+     * Renders the verse text + reference onto an already-prepared background
+     * bitmap. Shared between [createBitmapWithText] (photo background) and
+     * [createBitmapWithGradient] (gradient fallback).
+     *
+     * The [workingBitmap] must be mutable and sized to (screenW × screenH).
+     * Returns the same bitmap (now with text drawn on it).
+     */
+    private fun renderVerseOnBitmap(
+        workingBitmap: Bitmap,
+        screenW: Int,
+        screenH: Int,
+        verse: String,
+        ref: String,
+        textSizeMultiplier: Float,
+        textWidthMultiplier: Float,
+        verticalOffset: Float,
+        textColorInt: Int,
+        textAlpha: Float,
+        isBold: Boolean,
+        useShadow: Boolean,
+        fontFamilyStr: String,
+        bgDarkness: Float
+    ): Bitmap {
+        val canvas = Canvas(workingBitmap)
+
+        // Vignette / darkness scrim
+        if (bgDarkness > 0f) {
             val paintScrim = Paint().apply {
                 color = Color.BLACK
                 alpha = (bgDarkness * 255).toInt().coerceIn(0, 255)
             }
             canvas.drawRect(0f, 0f, screenW.toFloat(), screenH.toFloat(), paintScrim)
-
-            // 6. Text Settings
-            val finalTextColor = applyAlpha(textColorInt, textAlpha)
-            val textPaint = TextPaint().apply {
-                color = finalTextColor
-                isAntiAlias = true
-                typeface = Typeface.create(fontFamilyStr, if (isBold) Typeface.BOLD else Typeface.NORMAL)
-                if (useShadow) {
-                    setShadowLayer(12f, 0f, 0f, Color.BLACK)
-                }
-            }
-
-            // KONZISTENTNÁ LOGIKA VEĽKOSTI A ŠÍRKY
-            val boxWidth = screenW * 0.80f * textWidthMultiplier
-            val paddingPx = screenW * 0.025f
-            val textLayoutWidth = max(1f, boxWidth - (2 * paddingPx)).toInt()
-
-            var baseSize = screenW * 0.055f
-            if (verse.length > 150) baseSize = screenW * 0.045f
-            textPaint.textSize = baseSize * textSizeMultiplier
-
-            var staticLayout = createLayout(verse, textPaint, textLayoutWidth)
-
-            // Zmenšovanie ak sa nezmestí (safety check)
-            while (staticLayout.height > screenH * 0.6 && textPaint.textSize > 20f) {
-                textPaint.textSize -= 2f
-                staticLayout = createLayout(verse, textPaint, textLayoutWidth)
-            }
-
-            // Ref Settings
-            val cleanRef = ref.replace(" Katolícky preklad", "")
-                .replace(" SSV", "")
-                .trim()
-
-            val refPaint = TextPaint().apply {
-                color = applyAlpha(textColorInt, textAlpha * 0.8f)
-                textSize = textPaint.textSize * 0.75f
-                isAntiAlias = true
-                typeface = Typeface.create(fontFamilyStr, Typeface.NORMAL)
-                textAlign = Paint.Align.CENTER
-                if (useShadow) {
-                    setShadowLayer(8f, 0f, 0f, Color.BLACK)
-                }
-            }
-
-            // Výpočet výšky celého bloku
-            val gap = textPaint.textSize * 0.5f
-            val fontMetrics = refPaint.fontMetrics
-            val refHeight = fontMetrics.descent - fontMetrics.ascent
-            val totalBlockHeight = staticLayout.height + gap + refHeight
-
-            // 7. Pozícia
-            val centerX = screenW / 2f
-            val centerY = (screenH / 2f) - (totalBlockHeight / 2f)
-
-            val defaultOffset = screenH * 0.05f
-            val userOffsetPixels = (screenH * 0.35f) * verticalOffset
-            val blockTopY = centerY + userOffsetPixels + defaultOffset
-
-            // 8. Kreslenie verša (vycentrovaný StaticLayout)
-            canvas.save()
-            val xPos = (screenW - textLayoutWidth) / 2f
-            canvas.translate(xPos, blockTopY)
-            staticLayout.draw(canvas)
-            canvas.restore()
-
-            // 9. Kreslenie referencie
-            val refBaselineY = blockTopY + staticLayout.height + gap - fontMetrics.ascent
-            canvas.drawText(cleanRef, centerX, refBaselineY, refPaint)
-
-            return workingBitmap
-        } catch (e: Exception) {
-            e.printStackTrace()
-            return null
         }
+
+        // Text Settings
+        val finalTextColor = applyAlpha(textColorInt, textAlpha)
+        val textPaint = TextPaint().apply {
+            color = finalTextColor
+            isAntiAlias = true
+            typeface = Typeface.create(fontFamilyStr, if (isBold) Typeface.BOLD else Typeface.NORMAL)
+            if (useShadow) {
+                setShadowLayer(12f, 0f, 0f, Color.BLACK)
+            }
+        }
+
+        val boxWidth = screenW * 0.80f * textWidthMultiplier
+        val paddingPx = screenW * 0.025f
+        val textLayoutWidth = max(1f, boxWidth - (2 * paddingPx)).toInt()
+
+        var baseSize = screenW * 0.055f
+        if (verse.length > 150) baseSize = screenW * 0.045f
+        textPaint.textSize = baseSize * textSizeMultiplier
+
+        var staticLayout = createLayout(verse, textPaint, textLayoutWidth)
+
+        while (staticLayout.height > screenH * 0.6 && textPaint.textSize > 20f) {
+            textPaint.textSize -= 2f
+            staticLayout = createLayout(verse, textPaint, textLayoutWidth)
+        }
+
+        // Ref Settings
+        val cleanRef = ref.replace(" Katolícky preklad", "")
+            .replace(" SSV", "")
+            .trim()
+
+        val refPaint = TextPaint().apply {
+            color = applyAlpha(textColorInt, textAlpha * 0.8f)
+            textSize = textPaint.textSize * 0.75f
+            isAntiAlias = true
+            typeface = Typeface.create(fontFamilyStr, Typeface.NORMAL)
+            textAlign = Paint.Align.CENTER
+            if (useShadow) {
+                setShadowLayer(8f, 0f, 0f, Color.BLACK)
+            }
+        }
+
+        val gap = textPaint.textSize * 0.5f
+        val fontMetrics = refPaint.fontMetrics
+        val refHeight = fontMetrics.descent - fontMetrics.ascent
+        val totalBlockHeight = staticLayout.height + gap + refHeight
+
+        val centerX = screenW / 2f
+        val centerY = (screenH / 2f) - (totalBlockHeight / 2f)
+
+        val defaultOffset = screenH * 0.05f
+        val userOffsetPixels = (screenH * 0.35f) * verticalOffset
+        val blockTopY = centerY + userOffsetPixels + defaultOffset
+
+        canvas.save()
+        val xPos = (screenW - textLayoutWidth) / 2f
+        canvas.translate(xPos, blockTopY)
+        staticLayout.draw(canvas)
+        canvas.restore()
+
+        val refBaselineY = blockTopY + staticLayout.height + gap - fontMetrics.ascent
+        canvas.drawText(cleanRef, centerX, refBaselineY, refPaint)
+
+        return workingBitmap
     }
 
     @Suppress("DEPRECATION")

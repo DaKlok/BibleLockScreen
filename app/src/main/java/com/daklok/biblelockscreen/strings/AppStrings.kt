@@ -243,7 +243,19 @@ data class AppStrings(
     // Overwrite confirmation dialog (CreateEditScreen — Save with existing custom code)
     val vdbOverwriteTitle: String = "Prepísať databázu?",
     val vdbOverwriteDesc: String = "Vlastná databáza s kódom \"%s\" už existuje. Uloženie natrvalo prepíše jej verše. Túto akciu nie je možné vrátiť späť.",
-    val vdbOverwriteConfirm: String = "Prepísať"
+    val vdbOverwriteConfirm: String = "Prepísať",
+
+    // --- Share verse as image ---
+    val share: String = "Zdieľať",
+    val shareDialogTitle: String = "Zdieľať verš",
+    val shareDialogDesc: String = "Vyberte akciu",
+    val shareAction: String = "Zdieľať",
+    val saveToGalleryAction: String = "Uložiť do galérie",
+    val shareSuccess: String = "Verš zdieľaný",
+    val shareFailed: String = "Nepodarilo sa zdieľať verš",
+    val saveSuccess: String = "Verš uložený do galérie",
+    val saveFailed: String = "Nepodarilo sa uložiť do galérie",
+    val shareImageDesc: String = "Obrázok s veršom na zdieľanie"
 )
 
 // --- LANGUAGE DETECTION ---

@@ -305,6 +305,10 @@ fun MainScreen(
     var showRestoreConfirm by remember { mutableStateOf(false) }
     var pendingRestoreUri by remember { mutableStateOf<Uri?>(null) }
 
+    // Share verse as image — state
+    var showShareDialog by remember { mutableStateOf(false) }
+    var isShareInProgress by remember { mutableStateOf(false) }
+
     // Custom Haptic Helper
     val performHaptic = { type: HapticFeedbackType ->
         if (useHaptics) {
@@ -427,6 +431,91 @@ fun MainScreen(
         } else {
             val savedUri = prefs.getString("bg_uri", null)
             if (savedUri != null) imageUri = Uri.parse(savedUri)
+        }
+    }
+
+    // Share verse as image — generates bitmap and either shares via ACTION_SEND
+    // or saves to gallery, depending on the [action] parameter.
+    // Uses an explicit label `doShare@` so early returns work cleanly.
+    val performShareAction = doShare@ { action: String ->
+        // Guard against double-tap
+        if (isShareInProgress) {
+            return@doShare
+        }
+
+        val currentVerse = versePair
+        if (currentVerse == null) {
+            showNotification(strings.shareFailed, NotificationType.ERROR)
+            return@doShare
+        }
+
+        // Capture all Compose state values on the main thread before going background
+        val capturedImageUri = imageUri
+        val capturedTextSizeMult = textSizeMult
+        val capturedTextWidthMult = textWidthMult
+        val capturedVerticalOffset = verticalOffset
+        val capturedTextColor = textColor
+        val capturedTextAlpha = textAlpha
+        val capturedIsBold = isBold
+        val capturedUseShadow = useShadow
+        val capturedFontFamilyStr = fontFamilyStr
+        val capturedBgBlur = bgBlur
+        val capturedBgDarkness = bgDarkness
+        val capturedStrings = strings
+
+        isShareInProgress = true
+        scope.launch(Dispatchers.IO) {
+            try {
+                val bitmap = ShareVerseManager.generateVerseBitmap(
+                    context = context,
+                    imageUri = capturedImageUri,
+                    verseText = currentVerse.first,
+                    verseRef = currentVerse.second,
+                    textSizeMultiplier = capturedTextSizeMult,
+                    textWidthMultiplier = capturedTextWidthMult,
+                    verticalOffset = capturedVerticalOffset,
+                    textColor = capturedTextColor,
+                    textAlpha = capturedTextAlpha,
+                    isBold = capturedIsBold,
+                    useShadow = capturedUseShadow,
+                    fontFamilyStr = capturedFontFamilyStr,
+                    bgBlur = capturedBgBlur,
+                    bgDarkness = capturedBgDarkness
+                )
+
+                val result = if (bitmap == null) {
+                    ShareVerseManager.Result.Failure("Bitmap generation failed")
+                } else {
+                    when (action) {
+                        "share" -> ShareVerseManager.shareBitmap(context, bitmap)
+                        "save" -> ShareVerseManager.saveToGallery(context, bitmap)
+                        else -> ShareVerseManager.Result.Failure("Unknown action")
+                    }
+                }
+
+                withContext(Dispatchers.Main) {
+                    when (result) {
+                        is ShareVerseManager.Result.Success -> {
+                            val msg = if (action == "share") capturedStrings.shareSuccess
+                            else capturedStrings.saveSuccess
+                            showNotification(msg, NotificationType.SUCCESS)
+                        }
+                        is ShareVerseManager.Result.Failure -> {
+                            val msg = if (action == "share") capturedStrings.shareFailed
+                            else capturedStrings.saveFailed
+                            showNotification(msg, NotificationType.ERROR)
+                        }
+                    }
+                    isShareInProgress = false
+                    showShareDialog = false
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    showNotification(capturedStrings.shareFailed, NotificationType.ERROR)
+                    isShareInProgress = false
+                    showShareDialog = false
+                }
+            }
         }
     }
 
@@ -1475,6 +1564,37 @@ fun MainScreen(
                                 }
                             }
                         }
+
+                        // Zdieľať verš ako obrázok — full-width button below
+                        OutlinedButton(
+                            onClick = {
+                                performHaptic(HapticFeedbackType.LongPress)
+                                showShareDialog = true
+                            },
+                            enabled = !isShareInProgress && versePair != null,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(52.dp)
+                                .padding(top = 4.dp),
+                            shape = RoundedCornerShape(16.dp),
+                            border = BorderStroke(1.5.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
+                        ) {
+                            if (isShareInProgress) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    strokeWidth = 2.dp,
+                                    color = MaterialTheme.colorScheme.onSurface
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                            } else {
+                                Icon(Icons.Default.Share, null, modifier = Modifier.size(18.dp))
+                                Spacer(modifier = Modifier.width(8.dp))
+                            }
+                            Text(
+                                if (isShareInProgress) strings.generatingBtn else strings.share,
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
                     } else {
                         Card(
                             modifier = Modifier
@@ -1984,6 +2104,61 @@ fun MainScreen(
                     customDbs = VerseJsonManager.listCustomDatabases(context)
                 },
                 openCreate = dbSheetOpenCreate
+            )
+        }
+
+        // Share verse as image — choose action dialog.
+        // Placed at the top level (outside the Settings sheet) so it renders
+        // regardless of which sheet is open.
+        if (showShareDialog) {
+            AlertDialog(
+                onDismissRequest = { showShareDialog = false },
+                icon = {
+                    Icon(
+                        Icons.Default.Share, null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                },
+                title = { Text(strings.shareDialogTitle) },
+                text = {
+                    Column {
+                        Text(
+                            strings.shareDialogDesc,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Spacer(Modifier.height(16.dp))
+                        // Share via ACTION_SEND
+                        Button(
+                            onClick = {
+                                performShareAction("share")
+                            },
+                            enabled = !isShareInProgress,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Default.Share, null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text(strings.shareAction)
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        // Save to gallery
+                        OutlinedButton(
+                            onClick = {
+                                performShareAction("save")
+                            },
+                            enabled = !isShareInProgress,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Icon(Icons.Default.Save, null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text(strings.saveToGalleryAction)
+                        }
+                    }
+                },
+                confirmButton = {},
+                dismissButton = {
+                    TextButton(onClick = { showShareDialog = false }) { Text(strings.cancel) }
+                }
             )
         }
 

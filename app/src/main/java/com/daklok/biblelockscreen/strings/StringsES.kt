@@ -1,5 +1,6 @@
 package com.daklok.biblelockscreen.strings
 
+// esStrings -- auto-extracted from MainActivity.kt (original lines 781..1000).
 val esStrings = AppStrings(
     updateTime = "Hora de actualización diaria",
     settings = "Ajustes de la App",
@@ -218,5 +219,15 @@ val esStrings = AppStrings(
     // Overwrite confirmation dialog (CreateEditScreen — Save with existing custom code)
     vdbOverwriteTitle = "¿Sobrescribir base de datos?",
     vdbOverwriteDesc = "Ya existe una base de datos personalizada con el código \"%s\". Guardar reemplazará permanentemente sus versículos. Esta acción no se puede deshacer.",
-    vdbOverwriteConfirm = "Sobrescribir"
+    vdbOverwriteConfirm = "Sobrescribir",
+    share = "Compartir",
+    shareDialogTitle = "Compartir versículo",
+    shareDialogDesc = "Elige una acción",
+    shareAction = "Compartir",
+    saveToGalleryAction = "Guardar en galería",
+    shareSuccess = "Versículo compartido",
+    shareFailed = "Error al compartir versículo",
+    saveSuccess = "Versículo guardado en galería",
+    saveFailed = "Error al guardar en galería",
+    shareImageDesc = "Imagen con versículo para compartir"
 )

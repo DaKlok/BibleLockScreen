@@ -1,5 +1,6 @@
 package com.daklok.biblelockscreen.strings
 
+// czStrings -- auto-extracted from MainActivity.kt (original lines 560..779).
 val czStrings = AppStrings(
     updateTime = "Čas denní aktualizace",
     settings = "Nastavení aplikace",
@@ -218,5 +219,15 @@ val czStrings = AppStrings(
     // Overwrite confirmation dialog (CreateEditScreen — Save with existing custom code)
     vdbOverwriteTitle = "Přepsat databázi?",
     vdbOverwriteDesc = "Vlastní databáze s kódem \"%s\" již existuje. Uložení trvale přepíše její verše. Tuto akci nelze vrátit zpět.",
-    vdbOverwriteConfirm = "Přepsat"
+    vdbOverwriteConfirm = "Přepsat",
+    share = "Sdílet",
+    shareDialogTitle = "Sdílet verš",
+    shareDialogDesc = "Vyberte akci",
+    shareAction = "Sdílet",
+    saveToGalleryAction = "Uložit do galerie",
+    shareSuccess = "Verš sdílen",
+    shareFailed = "Nepodařilo se sdílet verš",
+    saveSuccess = "Verš uložen do galerie",
+    saveFailed = "Nepodařilo se uložit do galerie",
+    shareImageDesc = "Obrázek s veršem pro sdílení"
 )

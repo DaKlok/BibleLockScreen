@@ -1,5 +1,6 @@
 package com.daklok.biblelockscreen.strings
 
+// huStrings -- auto-extracted from MainActivity.kt (original lines 1665..1885).
 val huStrings = AppStrings(
     updateTime = "Napi frissítés időpontja",
     settings = "Alkalmazás beállításai",
@@ -219,5 +220,15 @@ val huStrings = AppStrings(
     // Overwrite confirmation dialog (CreateEditScreen — Save with existing custom code)
     vdbOverwriteTitle = "Adatbázis felülírása?",
     vdbOverwriteDesc = "Már létezik saját adatbázis \"%s\" kóddal. A mentés véglegesen felülírja a verseit. Ez a művelet nem visszavonható.",
-    vdbOverwriteConfirm = "Felülírás"
+    vdbOverwriteConfirm = "Felülírás",
+    share = "Megosztás",
+    shareDialogTitle = "Igerész megosztása",
+    shareDialogDesc = "Válassz műveletet",
+    shareAction = "Megosztás",
+    saveToGalleryAction = "Mentés a galériába",
+    shareSuccess = "Igerész megosztva",
+    shareFailed = "Megosztás sikertelen",
+    saveSuccess = "Igerész elmentve a galériába",
+    saveFailed = "Mentés sikertelen",
+    shareImageDesc = "Kép igerésszel megosztáshoz"
 )

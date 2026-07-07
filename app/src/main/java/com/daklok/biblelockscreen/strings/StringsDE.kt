@@ -1,5 +1,6 @@
 package com.daklok.biblelockscreen.strings
 
+// deStrings -- auto-extracted from MainActivity.kt (original lines 1444..1663).
 val deStrings = AppStrings(
     updateTime = "Zeitliche Aktualisierungszeit",
     settings = "App-Einstellungen",
@@ -218,5 +219,15 @@ val deStrings = AppStrings(
     // Overwrite confirmation dialog (CreateEditScreen — Save with existing custom code)
     vdbOverwriteTitle = "Datenbank überschreiben?",
     vdbOverwriteDesc = "Eine eigene Datenbank mit Code \"%s\" existiert bereits. Speichern überschreibt ihre Verse dauerhaft. Diese Aktion kann nicht rückgängig gemacht werden.",
-    vdbOverwriteConfirm = "Überschreiben"
+    vdbOverwriteConfirm = "Überschreiben",
+    share = "Teilen",
+    shareDialogTitle = "Vers teilen",
+    shareDialogDesc = "Aktion wählen",
+    shareAction = "Teilen",
+    saveToGalleryAction = "In Galerie speichern",
+    shareSuccess = "Vers geteilt",
+    shareFailed = "Teilen fehlgeschlagen",
+    saveSuccess = "Vers in Galerie gespeichert",
+    saveFailed = "Speichern fehlgeschlagen",
+    shareImageDesc = "Bild mit Vers zum Teilen"
 )
