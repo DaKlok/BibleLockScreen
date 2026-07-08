@@ -329,25 +329,21 @@ fun MainScreen(
         }
     }
 
-    // One-time-per-launch diagnostic: report the state of the scheduled
-    // wallpaper alarms to the Developer Logs. If auto-wallpaper is supposed
-    // to be running but no exact alarm is currently armed, that's a strong
-    // sign the system cleared it (e.g. the exact-alarm permission was
-    // revoked, or — before this used AlarmManager — a reboot happened).
+    // One-time-per-launch check: make sure the scheduled wallpaper alarms
+    // actually match what the prefs say should be running, and re-arm them
+    // if not. This is what keeps things working after a reinstall + backup
+    // restore (which writes the "auto-change on" pref directly, without ever
+    // going through the toggle UI that normally schedules the alarm) — see
+    // ensureWallpaperAlarmsScheduled() for the full story. It also quietly
+    // recovers from any other case where the system cleared an alarm it
+    // shouldn't have (e.g. exact-alarm permission was revoked and later
+    // re-granted).
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
             try {
-                if (isDailyActive) {
-                    if (!isWallpaperAlarmScheduled(context, "DailyBibleWallpaper")) {
-                        AppLogger.w(context, "Alarm", "Auto-wallpaper is enabled but no exact alarm is armed — the system may have cleared it.")
-                    } else {
-                        AppLogger.i(context, "Alarm", "DailyBibleWallpaper: exact alarm armed")
-                    }
-                }
-                val cyclingArmed = isWallpaperAlarmScheduled(context, "WallpaperCycling")
-                AppLogger.i(context, "Alarm", "WallpaperCycling: exact alarm ${if (cyclingArmed) "armed" else "not armed"}")
+                ensureWallpaperAlarmsScheduled(context)
             } catch (e: Exception) {
-                AppLogger.e(context, "Alarm", "Failed to read scheduled alarm status: ${e.message}")
+                AppLogger.e(context, "Alarm", "Failed to verify/reschedule wallpaper alarms: ${e.message}")
             }
         }
     }
@@ -3979,110 +3975,118 @@ fun DeveloperLogSheet(onDismiss: () -> Unit, onClear: () -> Unit) {
         },
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
     ) {
-        if (entries.isEmpty()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 48.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Icon(
-                    Icons.Outlined.MenuBook,
-                    contentDescription = null,
-                    modifier = Modifier.size(40.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
-                )
-                Spacer(Modifier.height(8.dp))
+        // Cap the sheet's content height the same way the Settings sheet does
+        // (fillMaxHeight(0.92f)) so that dragging this sheet all the way up
+        // stops just shy of the very top of the screen instead of going
+        // true edge-to-edge fullscreen. The half-screen starting position
+        // (skipPartiallyExpanded = false, above) is unchanged — this only
+        // affects what the fully-dragged-up state looks like.
+        Box(modifier = Modifier.fillMaxHeight(0.92f)) {
+            if (entries.isEmpty()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 48.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Icon(
+                        Icons.Outlined.MenuBook,
+                        contentDescription = null,
+                        modifier = Modifier.size(40.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        "No logs yet — use the app for a bit and check back here.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.padding(horizontal = 32.dp)
+                    )
+                }
+            } else if (filteredEntries.isEmpty()) {
                 Text(
-                    "No logs yet — use the app for a bit and check back here.",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    "No entries match this filter.",
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(32.dp),
                     textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(horizontal = 32.dp)
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-            }
-        } else if (filteredEntries.isEmpty()) {
-            Text(
-                "No entries match this filter.",
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(32.dp),
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-        } else {
-            androidx.compose.foundation.lazy.LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(horizontal = 16.dp),
-                contentPadding = PaddingValues(bottom = 32.dp),
-                verticalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                items(filteredEntries.size) { index ->
-                    val entry = filteredEntries[index]
-                    val wallpaperApplied = isWallpaperAppliedEntry(entry)
-                    val accent = if (wallpaperApplied) WallpaperAppliedAccent else levelAccentColor(entry.level, MaterialTheme.colorScheme)
-                    val containerColor = if (wallpaperApplied) WallpaperAppliedContainer else levelContainerColor(entry.level, MaterialTheme.colorScheme)
-                    val icon = if (entry.tag == "Wallpaper" || wallpaperApplied) Icons.Filled.Wallpaper else levelIcon(entry.level)
-                    Surface(
-                        color = containerColor,
-                        shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .drawBehind {
-                                    drawRect(
-                                        color = accent,
-                                        size = androidx.compose.ui.geometry.Size(3.dp.toPx(), size.height)
-                                    )
-                                }
-                                .padding(start = 10.dp, top = 8.dp, bottom = 8.dp, end = 10.dp),
-                            verticalAlignment = Alignment.Top
+            } else {
+                androidx.compose.foundation.lazy.LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
+                    contentPadding = PaddingValues(bottom = 32.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                ) {
+                    items(filteredEntries.size) { index ->
+                        val entry = filteredEntries[index]
+                        val wallpaperApplied = isWallpaperAppliedEntry(entry)
+                        val accent = if (wallpaperApplied) WallpaperAppliedAccent else levelAccentColor(entry.level, MaterialTheme.colorScheme)
+                        val containerColor = if (wallpaperApplied) WallpaperAppliedContainer else levelContainerColor(entry.level, MaterialTheme.colorScheme)
+                        val icon = if (entry.tag == "Wallpaper" || wallpaperApplied) Icons.Filled.Wallpaper else levelIcon(entry.level)
+                        Surface(
+                            color = containerColor,
+                            shape = RoundedCornerShape(10.dp),
+                            modifier = Modifier.fillMaxWidth()
                         ) {
-                            Icon(
-                                icon,
-                                contentDescription = entry.level.label,
-                                tint = accent,
+                            Row(
                                 modifier = Modifier
-                                    .padding(top = 1.dp)
-                                    .size(14.dp)
-                            )
-                            Spacer(Modifier.width(8.dp))
-                            Column(modifier = Modifier.weight(1f)) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    .fillMaxWidth()
+                                    .drawBehind {
+                                        drawRect(
+                                            color = accent,
+                                            size = androidx.compose.ui.geometry.Size(3.dp.toPx(), size.height)
+                                        )
+                                    }
+                                    .padding(start = 10.dp, top = 8.dp, bottom = 8.dp, end = 10.dp),
+                                verticalAlignment = Alignment.Top
+                            ) {
+                                Icon(
+                                    icon,
+                                    contentDescription = entry.level.label,
+                                    tint = accent,
+                                    modifier = Modifier
+                                        .padding(top = 1.dp)
+                                        .size(14.dp)
+                                )
+                                Spacer(Modifier.width(8.dp))
+                                Column(modifier = Modifier.weight(1f)) {
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(
+                                            text = entry.tag,
+                                            style = MaterialTheme.typography.labelSmall,
+                                            fontWeight = FontWeight.Bold,
+                                            color = accent
+                                        )
+                                        Spacer(Modifier.width(6.dp))
+                                        Text(
+                                            text = entry.timestampRaw,
+                                            style = TextStyle(
+                                                fontFamily = FontFamily.Monospace,
+                                                fontSize = 10.sp
+                                            ),
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                        )
+                                    }
+                                    Spacer(Modifier.height(2.dp))
                                     Text(
-                                        text = entry.tag,
-                                        style = MaterialTheme.typography.labelSmall,
-                                        fontWeight = FontWeight.Bold,
-                                        color = accent
-                                    )
-                                    Spacer(Modifier.width(6.dp))
-                                    Text(
-                                        text = entry.timestampRaw,
+                                        text = entry.message,
                                         style = TextStyle(
                                             fontFamily = FontFamily.Monospace,
-                                            fontSize = 10.sp
+                                            fontSize = 11.sp
                                         ),
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
                                     )
                                 }
-                                Spacer(Modifier.height(2.dp))
-                                Text(
-                                    text = entry.message,
-                                    style = TextStyle(
-                                        fontFamily = FontFamily.Monospace,
-                                        fontSize = 11.sp
-                                    ),
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
                             }
                         }
                     }
                 }
             }
-        }
+        } // end height-capped Box
     }
 }
 
@@ -4263,6 +4267,44 @@ fun cancelExactWallpaperAlarm(context: Context, uniqueWorkName: String) {
 /** True if an exact alarm is currently armed for [uniqueWorkName] (used for the Developer Logs diagnostic). */
 fun isWallpaperAlarmScheduled(context: Context, uniqueWorkName: String): Boolean =
     buildAlarmPendingIntent(context, uniqueWorkName, "verse", create = false) != null
+
+/**
+ * Re-arms whatever wallpaper alarms the saved prefs say *should* be running,
+ * but only touches the ones that are actually missing/mismatched — safe to
+ * call unconditionally on every app start.
+ *
+ * This is what [BootReceiver] already did after a device reboot (Android
+ * clears all AlarmManager alarms across reboots), but reboot isn't the only
+ * way the app can end up with "auto-change is on in prefs, but no alarm is
+ * armed": a fresh install (or reinstall) followed by restoring a backup
+ * writes `auto_wallpaper_active` / `wp_cycle_enabled` etc. straight into
+ * SharedPreferences without ever going through [toggleAutoWorker] or the
+ * wallpaper-cycling toggle UI — the only two places that used to call
+ * scheduleAutoWallpaper/scheduleWallpaperCycling. A brand-new install has no
+ * alarms at all yet, so the restored "on" state silently did nothing until
+ * the user manually flipped the toggle off and on again. Calling this here
+ * closes that gap.
+ */
+fun ensureWallpaperAlarmsScheduled(context: Context) {
+    val prefs = context.getSharedPreferences("bible_app_prefs", Context.MODE_PRIVATE)
+    val isDailyActive = prefs.getBoolean("auto_wallpaper_active", false)
+    val changeOnScreenOff = prefs.getBoolean("change_on_screen_off", false)
+
+    if (isDailyActive && !changeOnScreenOff) {
+        if (!isWallpaperAlarmScheduled(context, "DailyBibleWallpaper")) {
+            val intervalHours = prefs.getInt("auto_interval_hours", 24)
+            val dailyHour = prefs.getInt("daily_hour", 6)
+            AppLogger.i(context, "Alarm", "DailyBibleWallpaper should be armed but isn't — rescheduling.")
+            scheduleAutoWallpaper(context, intervalHours, dailyHour)
+        }
+    } else {
+        cancelExactWallpaperAlarm(context, "DailyBibleWallpaper")
+    }
+
+    // scheduleWallpaperCycling() reads the wp_cycle_* prefs itself and both
+    // arms and cancels as needed, so it's always safe/idempotent to call.
+    scheduleWallpaperCycling(context)
+}
 
 fun scheduleDailyWallpaper(context: Context, hour: Int) {
     val initialDelay = computeDailyInitialDelayMs(hour)
