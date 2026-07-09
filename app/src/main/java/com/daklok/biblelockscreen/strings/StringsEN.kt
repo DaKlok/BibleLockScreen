@@ -227,5 +227,20 @@ val enStrings = AppStrings(
     shareFailed = "Failed to share verse",
     saveSuccess = "Verse saved to gallery",
     saveFailed = "Failed to save to gallery",
-    shareImageDesc = "Image with verse for sharing"
+    shareImageDesc = "Image with verse for sharing",
+
+    // --- Favorite verses ---
+    favorites = "Favorites",
+    favoritesTitle = "Favorite verses",
+    favoritesEmpty = "You don't have any favorite verses yet",
+    favoritesEmptyDesc = "Add a verse by tapping the star in the preview.",
+    addToFavorites = "Add to favorites",
+    removeFromFavorites = "Remove from favorites",
+    favoritesCount = "%d favorites",
+    setAsWallpaper = "Set as wallpaper",
+    confirmRemoveFavoriteTitle = "Remove from favorites?",
+    confirmRemoveFavoriteDesc = "This verse will be removed from your favorites.",
+    addedToFavorites = "Verse added to favorites",
+    removedFromFavorites = "Verse removed from favorites",
+    addedOn = "Added %s"
 )

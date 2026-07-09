@@ -232,5 +232,20 @@ val huStrings = AppStrings(
     shareFailed = "Megosztás sikertelen",
     saveSuccess = "Igerész elmentve a galériába",
     saveFailed = "Mentés sikertelen",
-    shareImageDesc = "Kép igerésszel megosztáshoz"
+    shareImageDesc = "Kép igerésszel megosztáshoz",
+
+    // --- Favorite verses ---
+    favorites = "Kedvencek",
+    favoritesTitle = "Kedvenc igeversek",
+    favoritesEmpty = "Még nincsenek kedvenc igeverseid",
+    favoritesEmptyDesc = "Adj hozzá egy igeverset a csillagra koppintva az előnézetben.",
+    addToFavorites = "Hozzáadás a kedvencekhez",
+    removeFromFavorites = "Eltávolítás a kedvencek közül",
+    favoritesCount = "%d kedvenc",
+    setAsWallpaper = "Beállítás háttérképként",
+    confirmRemoveFavoriteTitle = "Eltávolítás a kedvencek közül?",
+    confirmRemoveFavoriteDesc = "Ez az igevers törlődik a kedvenceid közül.",
+    addedToFavorites = "Igevers hozzáadva a kedvencekhez",
+    removedFromFavorites = "Igevers eltávolítva a kedvencek közül",
+    addedOn = "Hozzáadva: %s"
 )

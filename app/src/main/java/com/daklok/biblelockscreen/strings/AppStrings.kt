@@ -259,7 +259,22 @@ data class AppStrings(
     val shareFailed: String,
     val saveSuccess: String,
     val saveFailed: String,
-    val shareImageDesc: String
+    val shareImageDesc: String,
+
+    // --- Favorite verses ---
+    val favorites: String,
+    val favoritesTitle: String,
+    val favoritesEmpty: String,
+    val favoritesEmptyDesc: String,
+    val addToFavorites: String,
+    val removeFromFavorites: String,
+    val favoritesCount: String,
+    val setAsWallpaper: String,
+    val confirmRemoveFavoriteTitle: String,
+    val confirmRemoveFavoriteDesc: String,
+    val addedToFavorites: String,
+    val removedFromFavorites: String,
+    val addedOn: String
 )
 
 // --- LANGUAGE DETECTION ---

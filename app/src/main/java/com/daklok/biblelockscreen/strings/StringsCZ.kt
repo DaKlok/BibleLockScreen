@@ -231,5 +231,20 @@ val czStrings = AppStrings(
     shareFailed = "Nepodařilo se sdílet verš",
     saveSuccess = "Verš uložen do galerie",
     saveFailed = "Nepodařilo se uložit do galerie",
-    shareImageDesc = "Obrázek s veršem pro sdílení"
+    shareImageDesc = "Obrázek s veršem pro sdílení",
+
+    // --- Favorite verses ---
+    favorites = "Oblíbené",
+    favoritesTitle = "Oblíbené verše",
+    favoritesEmpty = "Zatím nemáte žádné oblíbené verše",
+    favoritesEmptyDesc = "Přidejte verš klepnutím na hvězdičku v náhledu.",
+    addToFavorites = "Přidat do oblíbených",
+    removeFromFavorites = "Odebrat z oblíbených",
+    favoritesCount = "%d oblíbených",
+    setAsWallpaper = "Nastavit jako tapetu",
+    confirmRemoveFavoriteTitle = "Odebrat z oblíbených?",
+    confirmRemoveFavoriteDesc = "Tento verš bude odebrán z vašich oblíbených.",
+    addedToFavorites = "Verš přidán do oblíbených",
+    removedFromFavorites = "Verš odebrán z oblíbených",
+    addedOn = "Přidáno %s"
 )

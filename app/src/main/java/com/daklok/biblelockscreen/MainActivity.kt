@@ -42,6 +42,7 @@ import androidx.compose.material.icons.outlined.FormatBold
 import androidx.compose.material.icons.outlined.MenuBook
 import androidx.compose.material.icons.outlined.RestartAlt
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material.icons.outlined.BlurOn
 import androidx.compose.material.icons.outlined.TouchApp
 import androidx.compose.material3.*
@@ -299,6 +300,15 @@ fun MainScreen(
     // Hoisted so both the settings sheet (picker + manage button) and the
     // outer VerseDatabaseSheet host can read/refresh the same list.
     var customDbs by remember { mutableStateOf(VerseJsonManager.listCustomDatabases(context)) }
+
+    // --- Favorite verses state ---
+    // File-backed (FavoriteVersesManager), so we bump this counter after any
+    // add/remove and re-read the list, the same way `customDbs` is refreshed
+    // after verse-database changes above.
+    var favoritesRefreshTrigger by remember { mutableIntStateOf(0) }
+    val favoritesList = remember(favoritesRefreshTrigger) { FavoriteVersesManager.listFavorites(context) }
+    var showFavoritesScreen by remember { mutableStateOf(false) }
+
     var isDailyActive by remember { mutableStateOf(prefs.getBoolean("auto_wallpaper_active", false)) }
     var autoIntervalHours by remember { mutableIntStateOf(prefs.getInt("auto_interval_hours", 24)) }
     var changeOnScreenOff by remember { mutableStateOf(prefs.getBoolean("change_on_screen_off", false)) }
@@ -523,6 +533,108 @@ fun MainScreen(
         }
     }
 
+    // Whether the verse currently shown in the preview is already a
+    // favorite — recomputed whenever the verse, its language, or the
+    // favorites list itself changes.
+    val isCurrentVerseFavorite by remember(versePair, verseLang, favoritesRefreshTrigger) {
+        mutableStateOf(
+            versePair?.let { (text, ref) ->
+                FavoriteVersesManager.isFavorite(context, text, ref, verseLang)
+            } ?: false
+        )
+    }
+
+    // Adds/removes the currently previewed verse from favorites.
+    val onFavoriteToggle = {
+        val current = versePair
+        if (current == null) {
+            showNotification(strings.shareFailed, NotificationType.ERROR)
+        } else {
+            val (text, ref) = current
+            if (FavoriteVersesManager.isFavorite(context, text, ref, verseLang)) {
+                FavoriteVersesManager.removeFavorite(context, text, ref, verseLang)
+                showNotification(strings.removedFromFavorites, NotificationType.INFO)
+            } else {
+                FavoriteVersesManager.addFavorite(
+                    context,
+                    FavoriteVerse(
+                        text = text,
+                        ref = ref,
+                        lang = verseLang,
+                        source = if (verseLangSource == LocalBibleProvider.SOURCE_CUSTOM) "custom" else "builtin",
+                        addedAt = System.currentTimeMillis()
+                    )
+                )
+                showNotification(strings.addedToFavorites, NotificationType.SUCCESS)
+            }
+            favoritesRefreshTrigger++
+        }
+    }
+
+    // Shares a favorite verse straight through the native share sheet —
+    // reuses the same bitmap-generation pipeline as performShareAction, but
+    // for an arbitrary (text, ref) pair instead of the currently previewed
+    // verse, and always shares directly (no share/save chooser dialog).
+    val shareFavoriteVerse: (FavoriteVerse) -> Unit = shareFav@{ fav ->
+        if (isShareInProgress) {
+            return@shareFav
+        }
+        isShareInProgress = true
+
+        val capturedImageUri = imageUri
+        val capturedTextSizeMult = textSizeMult
+        val capturedTextWidthMult = textWidthMult
+        val capturedVerticalOffset = verticalOffset
+        val capturedTextColor = textColor
+        val capturedTextAlpha = textAlpha
+        val capturedIsBold = isBold
+        val capturedUseShadow = useShadow
+        val capturedFontFamilyStr = fontFamilyStr
+        val capturedBgBlur = bgBlur
+        val capturedBgDarkness = bgDarkness
+        val capturedStrings = strings
+
+        scope.launch(Dispatchers.IO) {
+            try {
+                val bitmap = ShareVerseManager.generateVerseBitmap(
+                    context = context,
+                    imageUri = capturedImageUri,
+                    verseText = fav.text,
+                    verseRef = fav.ref,
+                    textSizeMultiplier = capturedTextSizeMult,
+                    textWidthMultiplier = capturedTextWidthMult,
+                    verticalOffset = capturedVerticalOffset,
+                    textColor = capturedTextColor,
+                    textAlpha = capturedTextAlpha,
+                    isBold = capturedIsBold,
+                    useShadow = capturedUseShadow,
+                    fontFamilyStr = capturedFontFamilyStr,
+                    bgBlur = capturedBgBlur,
+                    bgDarkness = capturedBgDarkness
+                )
+                val result = if (bitmap == null) {
+                    ShareVerseManager.Result.Failure("Bitmap generation failed")
+                } else {
+                    ShareVerseManager.shareBitmap(context, bitmap)
+                }
+                withContext(Dispatchers.Main) {
+                    when (result) {
+                        is ShareVerseManager.Result.Success ->
+                            showNotification(capturedStrings.shareSuccess, NotificationType.SUCCESS)
+                        is ShareVerseManager.Result.Failure ->
+                            showNotification(capturedStrings.shareFailed, NotificationType.ERROR)
+                    }
+                    isShareInProgress = false
+                }
+            } catch (e: Exception) {
+                withContext(Dispatchers.Main) {
+                    showNotification(capturedStrings.shareFailed, NotificationType.ERROR)
+                    isShareInProgress = false
+                }
+            }
+        }
+    }
+
     // Obnovíme stav optimalizácie a preview dáta vždy, keď sa užívateľ vráti do aplikácie
     DisposableEffect(lifecycleOwner, verseLang) {
         val observer = LifecycleEventObserver { _, event ->
@@ -638,8 +750,9 @@ fun MainScreen(
 
     val settingsSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    BackHandler(enabled = isEditing || showSettings || showDbSheet || showDevMenu) {
+    BackHandler(enabled = isEditing || showSettings || showDbSheet || showDevMenu || showFavoritesScreen) {
         if (isEditing) isEditing = false
+        else if (showFavoritesScreen) showFavoritesScreen = false
         else if (showDbSheet) showDbSheet = false
         else if (showDevMenu) showDevMenu = false
         else if (showSettings) scope.launch {
@@ -671,6 +784,32 @@ fun MainScreen(
                         }
                     },
                     actions = {
+                        BadgedBox(
+                            badge = {
+                                if (favoritesList.isNotEmpty()) {
+                                    FavoritesCountBadge(count = favoritesList.size)
+                                }
+                            },
+                            modifier = Modifier.padding(end = 8.dp)
+                        ) {
+                            FilledIconButton(
+                                onClick = {
+                                    performHaptic(HapticFeedbackType.LongPress)
+                                    showFavoritesScreen = true
+                                },
+                                modifier = Modifier.size(40.dp),
+                                colors = IconButtonDefaults.filledIconButtonColors(
+                                    containerColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f),
+                                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                            ) {
+                                Icon(
+                                    imageVector = if (favoritesList.isNotEmpty()) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                                    contentDescription = strings.favorites,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
                         FilledIconButton(
                             onClick = { showSettings = true },
                             modifier = Modifier.padding(end = 8.dp).size(40.dp),
@@ -762,6 +901,11 @@ fun MainScreen(
                                         hasSeenEditHint = true
                                         prefs.edit().putBoolean("has_seen_edit_hint", true).apply()
                                     }
+                                },
+                                isFavorite = isCurrentVerseFavorite,
+                                onFavoriteToggle = {
+                                    performHaptic(HapticFeedbackType.LongPress)
+                                    onFavoriteToggle()
                                 }
                             )
                         }
@@ -2235,6 +2379,45 @@ fun MainScreen(
             )
         }
 
+        // Obľúbené verše — full-screen modálna obrazovka (nie súčasť
+        // HorizontalPageru), zobrazená zospodu podobne ako iné modálne
+        // prechody v appke.
+        AnimatedVisibility(
+            visible = showFavoritesScreen,
+            enter = fadeIn(animationSpec = tween(250)) + slideInVertically(
+                initialOffsetY = { it },
+                animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessMedium)
+            ),
+            exit = fadeOut(animationSpec = tween(200)) + slideOutVertically(
+                targetOffsetY = { it },
+                animationSpec = tween(durationMillis = 220, easing = FastOutLinearInEasing)
+            )
+        ) {
+            FavoritesScreen(
+                strings = strings,
+                appLang = appLang,
+                favorites = favoritesList,
+                onBack = { showFavoritesScreen = false },
+                onSetAsWallpaper = { fav ->
+                    prefs.edit()
+                        .putBoolean("use_custom_verse", true)
+                        .putString("custom_verse_text", fav.text)
+                        .putString("custom_verse_ref", fav.ref)
+                        .apply()
+                    reloadPreviewData()
+                    showFavoritesScreen = false
+                    showNotification(strings.setAsWallpaper, NotificationType.SUCCESS)
+                },
+                onShare = { fav -> shareFavoriteVerse(fav) },
+                onRemove = { fav ->
+                    FavoriteVersesManager.removeFavorite(context, fav.text, fav.ref, fav.lang)
+                    favoritesRefreshTrigger++
+                    showNotification(strings.removedFromFavorites, NotificationType.INFO)
+                },
+                performHaptic = performHaptic
+            )
+        }
+
         // Floating Status Popup
         Box(
             modifier = Modifier
@@ -2963,7 +3146,9 @@ fun Pixel6LockScreenPreview(
     showBubbleHint: Boolean = false,
     strings: AppStrings,
     onClick: () -> Unit,
-    onEditClick: () -> Unit
+    onEditClick: () -> Unit,
+    isFavorite: Boolean = false,
+    onFavoriteToggle: () -> Unit = {}
 ) {
     val density = LocalDensity.current
     val context = LocalContext.current
@@ -3213,6 +3398,46 @@ fun Pixel6LockScreenPreview(
                     Icon(Icons.Default.AccountBalanceWallet, null, tint = Color.White, modifier = Modifier
                         .align(Alignment.BottomStart)
                         .padding(bottom = 16.dp))
+                }
+            }
+
+            // Ikona hviezdičky pre pridanie/odstránenie z obľúbených —
+            // overlay v pravom hornom rohu, nezávisle od toho, či je uri
+            // nastavené (neprekáža edit hintu ani bubble hintu, ktoré sú
+            // vykreslené vyššie a viažu sa iba na obsah preview, nie na
+            // tento roh karty).
+            Box(
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .padding(top = 16.dp, end = 16.dp)
+                    .size(36.dp)
+                    .background(Color.Black.copy(alpha = 0.35f), CircleShape)
+                    .border(1.5.dp, Color.White.copy(alpha = 0.5f), CircleShape)
+                    .clickable {
+                        onFavoriteToggle()
+                    },
+                contentAlignment = Alignment.Center
+            ) {
+                AnimatedContent(
+                    targetState = isFavorite,
+                    transitionSpec = {
+                        (scaleIn(
+                            initialScale = 0.4f,
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMedium
+                            )
+                        ) + fadeIn(animationSpec = tween(200))) togetherWith
+                                (scaleOut(targetScale = 0.4f, animationSpec = tween(150)) + fadeOut(animationSpec = tween(120)))
+                    },
+                    label = "favorite_star"
+                ) { favState ->
+                    Icon(
+                        imageVector = if (favState) Icons.Filled.Star else Icons.Outlined.StarBorder,
+                        contentDescription = if (favState) strings.removeFromFavorites else strings.addToFavorites,
+                        tint = if (favState) Color(0xFFFFC107) else Color.White.copy(alpha = 0.9f),
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
             }
         }

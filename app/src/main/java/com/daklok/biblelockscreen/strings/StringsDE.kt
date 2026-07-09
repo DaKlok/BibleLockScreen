@@ -231,5 +231,20 @@ val deStrings = AppStrings(
     shareFailed = "Teilen fehlgeschlagen",
     saveSuccess = "Vers in Galerie gespeichert",
     saveFailed = "Speichern fehlgeschlagen",
-    shareImageDesc = "Bild mit Vers zum Teilen"
+    shareImageDesc = "Bild mit Vers zum Teilen",
+
+    // --- Favorite verses ---
+    favorites = "Favoriten",
+    favoritesTitle = "Lieblingsverse",
+    favoritesEmpty = "Du hast noch keine Lieblingsverse",
+    favoritesEmptyDesc = "Füge einen Vers hinzu, indem du auf den Stern in der Vorschau tippst.",
+    addToFavorites = "Zu Favoriten hinzufügen",
+    removeFromFavorites = "Aus Favoriten entfernen",
+    favoritesCount = "%d Favoriten",
+    setAsWallpaper = "Als Hintergrundbild festlegen",
+    confirmRemoveFavoriteTitle = "Aus Favoriten entfernen?",
+    confirmRemoveFavoriteDesc = "Dieser Vers wird aus deinen Favoriten entfernt.",
+    addedToFavorites = "Vers zu Favoriten hinzugefügt",
+    removedFromFavorites = "Vers aus Favoriten entfernt",
+    addedOn = "Hinzugefügt am %s"
 )

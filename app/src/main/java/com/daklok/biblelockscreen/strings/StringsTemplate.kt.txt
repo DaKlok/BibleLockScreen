@@ -254,4 +254,19 @@ val xxStrings = AppStrings(
     vdbOverwriteTitle = "<TODO>",
     vdbOverwriteDesc = "<TODO>",
     vdbOverwriteConfirm = "<TODO>",
+
+    // --- Favorite verses ---
+    favorites = "<TODO>",
+    favoritesTitle = "<TODO>",
+    favoritesEmpty = "<TODO>",
+    favoritesEmptyDesc = "<TODO>",
+    addToFavorites = "<TODO>",
+    removeFromFavorites = "<TODO>",
+    favoritesCount = "<TODO>",
+    setAsWallpaper = "<TODO>",
+    confirmRemoveFavoriteTitle = "<TODO>",
+    confirmRemoveFavoriteDesc = "<TODO>",
+    addedToFavorites = "<TODO>",
+    removedFromFavorites = "<TODO>",
+    addedOn = "<TODO>"
 )

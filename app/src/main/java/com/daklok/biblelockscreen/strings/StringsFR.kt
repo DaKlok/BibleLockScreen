@@ -231,5 +231,20 @@ val frStrings = AppStrings(
     shareFailed = "Échec du partage du verset",
     saveSuccess = "Verset enregistré dans la galerie",
     saveFailed = "Échec de l'enregistrement",
-    shareImageDesc = "Image avec verset à partager"
+    shareImageDesc = "Image avec verset à partager",
+
+    // --- Favorite verses ---
+    favorites = "Favoris",
+    favoritesTitle = "Versets favoris",
+    favoritesEmpty = "Vous n'avez pas encore de versets favoris",
+    favoritesEmptyDesc = "Ajoutez un verset en appuyant sur l'étoile dans l'aperçu.",
+    addToFavorites = "Ajouter aux favoris",
+    removeFromFavorites = "Retirer des favoris",
+    favoritesCount = "%d favoris",
+    setAsWallpaper = "Définir comme fond d'écran",
+    confirmRemoveFavoriteTitle = "Retirer des favoris ?",
+    confirmRemoveFavoriteDesc = "Ce verset sera retiré de vos favoris.",
+    addedToFavorites = "Verset ajouté aux favoris",
+    removedFromFavorites = "Verset retiré des favoris",
+    addedOn = "Ajouté le %s"
 )

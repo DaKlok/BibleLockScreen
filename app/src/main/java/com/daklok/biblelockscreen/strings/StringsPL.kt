@@ -227,5 +227,20 @@ val plStrings = AppStrings(
     shareFailed = "Nie udało się udostępnić wersetu",
     saveSuccess = "Werset zapisany w galerii",
     saveFailed = "Nie udało się zapisać w galerii",
-    shareImageDesc = "Obraz z wersemem do udostępnienia"
+    shareImageDesc = "Obraz z wersemem do udostępnienia",
+
+    // --- Favorite verses ---
+    favorites = "Ulubione",
+    favoritesTitle = "Ulubione wersety",
+    favoritesEmpty = "Nie masz jeszcze ulubionych wersetów",
+    favoritesEmptyDesc = "Dodaj werset, dotykając gwiazdki w podglądzie.",
+    addToFavorites = "Dodaj do ulubionych",
+    removeFromFavorites = "Usuń z ulubionych",
+    favoritesCount = "%d ulubionych",
+    setAsWallpaper = "Ustaw jako tapetę",
+    confirmRemoveFavoriteTitle = "Usunąć z ulubionych?",
+    confirmRemoveFavoriteDesc = "Ten werset zostanie usunięty z Twoich ulubionych.",
+    addedToFavorites = "Werset dodany do ulubionych",
+    removedFromFavorites = "Werset usunięty z ulubionych",
+    addedOn = "Dodano %s"
 )

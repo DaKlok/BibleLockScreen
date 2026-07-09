@@ -231,5 +231,20 @@ val esStrings = AppStrings(
     shareFailed = "Error al compartir versículo",
     saveSuccess = "Versículo guardado en galería",
     saveFailed = "Error al guardar en galería",
-    shareImageDesc = "Imagen con versículo para compartir"
+    shareImageDesc = "Imagen con versículo para compartir",
+
+    // --- Favorite verses ---
+    favorites = "Favoritos",
+    favoritesTitle = "Versículos favoritos",
+    favoritesEmpty = "Aún no tienes versículos favoritos",
+    favoritesEmptyDesc = "Añade un versículo tocando la estrella en la vista previa.",
+    addToFavorites = "Añadir a favoritos",
+    removeFromFavorites = "Quitar de favoritos",
+    favoritesCount = "%d favoritos",
+    setAsWallpaper = "Establecer como fondo de pantalla",
+    confirmRemoveFavoriteTitle = "¿Quitar de favoritos?",
+    confirmRemoveFavoriteDesc = "Este versículo se eliminará de tus favoritos.",
+    addedToFavorites = "Versículo añadido a favoritos",
+    removedFromFavorites = "Versículo eliminado de favoritos",
+    addedOn = "Añadido %s"
 )

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- For sharing verses as images: bitmaps are written to cacheDir/shared_verse.jpg -->
+    <cache-path name="shared_images" path="." />
+    <!-- For any future file-based sharing from filesDir -->
+    <files-path name="internal_files" path="." />
+</paths>
