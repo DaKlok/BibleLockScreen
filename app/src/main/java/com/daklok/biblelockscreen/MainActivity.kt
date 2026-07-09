@@ -65,6 +65,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
@@ -3844,6 +3845,17 @@ fun DeveloperLogSheet(onDismiss: () -> Unit, onClear: () -> Unit) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     val scope = rememberCoroutineScope()
     val clipboard = LocalClipboardManager.current
+    val density = LocalDensity.current
+    val screenHeightDp = LocalConfiguration.current.screenHeightDp.dp
+    // The header (title/badge row + copy/clear/close icons + filter chips) is
+    // much taller here than on the Settings sheet, so a flat 0.92f fraction
+    // applied to the body alone isn't enough — header height + 92% of the
+    // screen can add up to *more* than the screen, which makes Compose clamp
+    // the sheet's "fully expanded" offset to 0, i.e. true edge-to-edge
+    // fullscreen (the exact bug we're fixing). Measuring the header and
+    // subtracting it keeps header + body pinned to 92% of the screen total,
+    // same as Settings, regardless of how tall the header actually renders.
+    var headerHeightDp by remember { mutableStateOf(150.dp) }
 
     // Logs are written to disk from background threads (receivers, workers)
     // that don't know this sheet is open, so we can't rely on state changes
@@ -3868,7 +3880,13 @@ fun DeveloperLogSheet(onDismiss: () -> Unit, onClear: () -> Unit) {
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         dragHandle = {
-            Column(modifier = Modifier.fillMaxWidth()) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .onGloballyPositioned { coordinates ->
+                        headerHeightDp = with(density) { coordinates.size.height.toDp() }
+                    }
+            ) {
                 Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
                     BottomSheetDefaults.DragHandle()
                 }
@@ -3975,13 +3993,12 @@ fun DeveloperLogSheet(onDismiss: () -> Unit, onClear: () -> Unit) {
         },
         shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp),
     ) {
-        // Cap the sheet's content height the same way the Settings sheet does
-        // (fillMaxHeight(0.92f)) so that dragging this sheet all the way up
-        // stops just shy of the very top of the screen instead of going
-        // true edge-to-edge fullscreen. The half-screen starting position
-        // (skipPartiallyExpanded = false, above) is unchanged — this only
-        // affects what the fully-dragged-up state looks like.
-        Box(modifier = Modifier.fillMaxHeight(0.92f)) {
+        // Cap the sheet's total height (header + body) at 92% of the screen,
+        // same overall budget the Settings sheet uses — see headerHeightDp
+        // comment above for why we subtract the measured header instead of
+        // just reusing a flat fillMaxHeight(0.92f) here.
+        val bodyMaxHeight = (screenHeightDp * 0.92f - headerHeightDp).coerceAtLeast(200.dp)
+        Box(modifier = Modifier.height(bodyMaxHeight)) {
             if (entries.isEmpty()) {
                 Column(
                     modifier = Modifier
