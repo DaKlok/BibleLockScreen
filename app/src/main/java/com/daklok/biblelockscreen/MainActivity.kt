@@ -24,6 +24,9 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.gestures.FlingBehavior
+import androidx.compose.foundation.gestures.ScrollScope
+import androidx.compose.foundation.gestures.ScrollableDefaults
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
@@ -216,6 +219,11 @@ fun MainScreen(
     var isBatteryOptimized by remember { mutableStateOf(!powerManager.isIgnoringBatteryOptimizations(context.packageName)) }
 
     val scrollState = rememberScrollState()
+    // Height (px) of the pager section (preview / wallpapers / favorites),
+    // measured live via onGloballyPositioned below — used as a scroll-snap
+    // boundary so a fast fling can't sail straight past it into the
+    // settings area in one motion. See rememberSectionSnapFlingBehavior.
+    var pagerSectionHeightPx by remember { mutableFloatStateOf(0f) }
 
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     var versePair by remember { mutableStateOf<Pair<String, String>?>(null) }
@@ -304,10 +312,11 @@ fun MainScreen(
     // --- Favorite verses state ---
     // File-backed (FavoriteVersesManager), so we bump this counter after any
     // add/remove and re-read the list, the same way `customDbs` is refreshed
-    // after verse-database changes above.
+    // after verse-database changes above. The favorites screen itself lives
+    // as page 2 of the main HorizontalPager (see MainScreen's pager below),
+    // not as a separate modal.
     var favoritesRefreshTrigger by remember { mutableIntStateOf(0) }
     val favoritesList = remember(favoritesRefreshTrigger) { FavoriteVersesManager.listFavorites(context) }
-    var showFavoritesScreen by remember { mutableStateOf(false) }
 
     var isDailyActive by remember { mutableStateOf(prefs.getBoolean("auto_wallpaper_active", false)) }
     var autoIntervalHours by remember { mutableIntStateOf(prefs.getInt("auto_interval_hours", 24)) }
@@ -371,10 +380,9 @@ fun MainScreen(
                 SettingsBackupManager.export(context, uri).fold(
                     onSuccess = { summary ->
                         isBackingUp = false
-                        showNotification(
-                            strings.backupExportSuccess.format(summary.prefsCount, summary.databaseCount),
-                            NotificationType.SUCCESS
-                        )
+                        val message = strings.backupExportSuccess.format(summary.prefsCount, summary.databaseCount) +
+                                if (summary.favoritesCount > 0) " · " + strings.favoritesCount.format(summary.favoritesCount) else ""
+                        showNotification(message, NotificationType.SUCCESS)
                     },
                     onFailure = {
                         isBackingUp = false
@@ -401,10 +409,9 @@ fun MainScreen(
             SettingsBackupManager.import(context, uri).fold(
                 onSuccess = { summary ->
                     isRestoring = false
-                    showNotification(
-                        strings.backupImportSuccess.format(summary.prefsCount, summary.databaseCount),
-                        NotificationType.SUCCESS
-                    )
+                    val message = strings.backupImportSuccess.format(summary.prefsCount, summary.databaseCount) +
+                            if (summary.favoritesCount > 0) " · " + strings.favoritesCount.format(summary.favoritesCount) else ""
+                    showNotification(message, NotificationType.SUCCESS)
                     // Recreate the Activity so all `remember { prefs... }`
                     // state re-initializes from the freshly-written prefs,
                     // and the restored wallpaper is picked up.
@@ -750,9 +757,8 @@ fun MainScreen(
 
     val settingsSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
-    BackHandler(enabled = isEditing || showSettings || showDbSheet || showDevMenu || showFavoritesScreen) {
+    BackHandler(enabled = isEditing || showSettings || showDbSheet || showDevMenu) {
         if (isEditing) isEditing = false
-        else if (showFavoritesScreen) showFavoritesScreen = false
         else if (showDbSheet) showDbSheet = false
         else if (showDevMenu) showDevMenu = false
         else if (showSettings) scope.launch {
@@ -762,8 +768,9 @@ fun MainScreen(
     }
 
     Box(modifier = Modifier.fillMaxSize()) {
-        // Horizontal pager: page 0 = main screen, page 1 = wallpaper gallery
-        val pagerState = rememberPagerState(initialPage = 0, pageCount = { 2 })
+        // Horizontal pager: page 0 = main screen, page 1 = wallpaper gallery,
+        // page 2 = favorite verses
+        val pagerState = rememberPagerState(initialPage = 0, pageCount = { 3 })
         // Sync pager page when user swipes — used by the page indicator
         val scope2 = rememberCoroutineScope()
 
@@ -784,32 +791,6 @@ fun MainScreen(
                         }
                     },
                     actions = {
-                        BadgedBox(
-                            badge = {
-                                if (favoritesList.isNotEmpty()) {
-                                    FavoritesCountBadge(count = favoritesList.size)
-                                }
-                            },
-                            modifier = Modifier.padding(end = 8.dp)
-                        ) {
-                            FilledIconButton(
-                                onClick = {
-                                    performHaptic(HapticFeedbackType.LongPress)
-                                    showFavoritesScreen = true
-                                },
-                                modifier = Modifier.size(40.dp),
-                                colors = IconButtonDefaults.filledIconButtonColors(
-                                    containerColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f),
-                                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                                )
-                            ) {
-                                Icon(
-                                    imageVector = if (favoritesList.isNotEmpty()) Icons.Filled.Star else Icons.Outlined.StarBorder,
-                                    contentDescription = strings.favorites,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                            }
-                        }
                         FilledIconButton(
                             onClick = { showSettings = true },
                             modifier = Modifier.padding(end = 8.dp).size(40.dp),
@@ -840,7 +821,10 @@ fun MainScreen(
                     .pointerInput(Unit) {
                         detectTapGestures(onTap = { focusManager.clearFocus() })
                     }
-                    .verticalScroll(scrollState),
+                    .verticalScroll(
+                        scrollState,
+                        flingBehavior = rememberSectionSnapFlingBehavior(scrollState) { pagerSectionHeightPx }
+                    ),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 // 1. PREVIEW AREA — wrapped in a HorizontalPager so swiping
@@ -851,6 +835,9 @@ fun MainScreen(
                     state = pagerState,
                     modifier = Modifier
                         .fillMaxWidth()
+                        .onGloballyPositioned { coordinates ->
+                            pagerSectionHeightPx = coordinates.size.height.toFloat()
+                        }
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                         .animateContentSize(
                             animationSpec = spring(
@@ -909,7 +896,7 @@ fun MainScreen(
                                 }
                             )
                         }
-                    } else {
+                    } else if (page == 1) {
                         WallpaperScreen(
                             strings = strings,
                             showNotification = showNotification,
@@ -917,6 +904,29 @@ fun MainScreen(
                                 imageUri = WallpaperManager.activeWallpaperUri(context)
                                 reloadPreviewData()
                             }
+                        )
+                    } else {
+                        FavoritesScreen(
+                            strings = strings,
+                            appLang = appLang,
+                            favorites = favoritesList,
+                            onSetAsWallpaper = { fav ->
+                                prefs.edit()
+                                    .putBoolean("use_custom_verse", true)
+                                    .putString("custom_verse_text", fav.text)
+                                    .putString("custom_verse_ref", fav.ref)
+                                    .apply()
+                                reloadPreviewData()
+                                scope2.launch { pagerState.animateScrollToPage(0) }
+                                showNotification(strings.setAsWallpaper, NotificationType.SUCCESS)
+                            },
+                            onShare = { fav -> shareFavoriteVerse(fav) },
+                            onRemove = { fav ->
+                                FavoriteVersesManager.removeFavorite(context, fav.text, fav.ref, fav.lang)
+                                favoritesRefreshTrigger++
+                                showNotification(strings.removedFromFavorites, NotificationType.INFO)
+                            },
+                            performHaptic = performHaptic
                         )
                     }
                 }
@@ -928,7 +938,7 @@ fun MainScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    repeat(2) { index ->
+                    repeat(3) { index ->
                         val isSelected = pagerState.currentPage == index
                         val width by animateDpAsState(
                             targetValue = if (isSelected) 24.dp else 8.dp,
@@ -2379,45 +2389,6 @@ fun MainScreen(
             )
         }
 
-        // Obľúbené verše — full-screen modálna obrazovka (nie súčasť
-        // HorizontalPageru), zobrazená zospodu podobne ako iné modálne
-        // prechody v appke.
-        AnimatedVisibility(
-            visible = showFavoritesScreen,
-            enter = fadeIn(animationSpec = tween(250)) + slideInVertically(
-                initialOffsetY = { it },
-                animationSpec = spring(dampingRatio = Spring.DampingRatioLowBouncy, stiffness = Spring.StiffnessMedium)
-            ),
-            exit = fadeOut(animationSpec = tween(200)) + slideOutVertically(
-                targetOffsetY = { it },
-                animationSpec = tween(durationMillis = 220, easing = FastOutLinearInEasing)
-            )
-        ) {
-            FavoritesScreen(
-                strings = strings,
-                appLang = appLang,
-                favorites = favoritesList,
-                onBack = { showFavoritesScreen = false },
-                onSetAsWallpaper = { fav ->
-                    prefs.edit()
-                        .putBoolean("use_custom_verse", true)
-                        .putString("custom_verse_text", fav.text)
-                        .putString("custom_verse_ref", fav.ref)
-                        .apply()
-                    reloadPreviewData()
-                    showFavoritesScreen = false
-                    showNotification(strings.setAsWallpaper, NotificationType.SUCCESS)
-                },
-                onShare = { fav -> shareFavoriteVerse(fav) },
-                onRemove = { fav ->
-                    FavoriteVersesManager.removeFavorite(context, fav.text, fav.ref, fav.lang)
-                    favoritesRefreshTrigger++
-                    showNotification(strings.removedFromFavorites, NotificationType.INFO)
-                },
-                performHaptic = performHaptic
-            )
-        }
-
         // Floating Status Popup
         Box(
             modifier = Modifier
@@ -2679,8 +2650,66 @@ fun SettingsSectionHeader(icon: androidx.compose.ui.graphics.vector.ImageVector,
 
 
 
+/**
+ * A [FlingBehavior] for the main screen's outer scroll that adds a soft
+ * "snap boundary" right where the pager section (preview / wallpapers /
+ * favorites) ends and the settings section begins.
+ *
+ * Without this, a fast fling starting anywhere in the pager area sails
+ * straight through into the settings below in one continuous motion,
+ * which felt uncontrollable — especially once the favorites page could
+ * hold a long list. With this, a fling that *starts* above the boundary
+ * is clamped so it can never cross the boundary in a single motion: it
+ * always lands exactly at the edge, the same way a normal scrollable
+ * stops when it hits the start/end of its content. A second, deliberate
+ * scroll from there continues into the settings normally. Flings that
+ * start already inside the settings section (or head back up toward the
+ * top) are left completely alone, so nothing about scrolling within
+ * settings, or flicking back up to the preview, changes.
+ *
+ * [sectionBoundary] is read fresh on every fling (not just once), so it
+ * stays correct as the pager's measured height changes across its three
+ * pages (the preview and favorites pages are a fixed height, but the
+ * wallpaper gallery page is not).
+ */
 @Composable
-fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
+private fun rememberSectionSnapFlingBehavior(
+    scrollState: ScrollState,
+    sectionBoundary: () -> Float
+): FlingBehavior {
+    val defaultFling = ScrollableDefaults.flingBehavior()
+    return remember(scrollState, defaultFling) {
+        object : FlingBehavior {
+            override suspend fun ScrollScope.performFling(initialVelocity: Float): Float {
+                val realScope = this
+                val boundary = sectionBoundary()
+                val startedBelowBoundary = boundary > 0f && scrollState.value.toFloat() < boundary - 0.5f
+
+                if (!startedBelowBoundary) {
+                    return with(defaultFling) { realScope.performFling(initialVelocity) }
+                }
+
+                // Proxy scrollBy so any attempt to scroll *past* the
+                // boundary is clamped — reported as "under-consumed",
+                // exactly like hitting a real scroll edge. The default
+                // fling's own decay math sees that and stops on its own,
+                // so we don't need to hand-animate anything ourselves.
+                val guardedScope = object : ScrollScope {
+                    override fun scrollBy(pixels: Float): Float {
+                        val current = scrollState.value.toFloat()
+                        if (current >= boundary - 0.5f) return 0f
+                        val toApply = if (pixels > 0f) minOf(pixels, boundary - current) else pixels
+                        return realScope.scrollBy(toApply)
+                    }
+                }
+                return with(defaultFling) { guardedScope.performFling(initialVelocity) }
+            }
+        }
+    }
+}
+
+@Composable
+fun SettingsCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     Card(
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(
@@ -2699,7 +2728,7 @@ fun SettingsCard(content: @Composable ColumnScope.() -> Unit) {
             // regardless of whether the theme is static or dynamic.
             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
         ),
-        modifier = Modifier.fillMaxWidth()
+        modifier = modifier.fillMaxWidth()
     ) {
         Column(
             modifier = Modifier.padding(16.dp),

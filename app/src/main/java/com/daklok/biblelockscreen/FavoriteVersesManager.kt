@@ -31,7 +31,8 @@ data class FavoriteVerse(
  */
 object FavoriteVersesManager {
 
-    private const val FILE_NAME = "favorite_verses.json"
+    /** Public so [SettingsBackupManager] can back up/restore the same file without duplicating the name. */
+    const val FILE_NAME = "favorite_verses.json"
 
     private fun file(context: Context): File = File(context.filesDir, FILE_NAME)
 

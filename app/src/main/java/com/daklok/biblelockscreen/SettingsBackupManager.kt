@@ -15,8 +15,11 @@ import java.util.zip.ZipOutputStream
  * Full-app backup & restore. Bundles all user data into a single ZIP file:
  *
  *   bible_lockscreen_backup.zip
- *   ├── prefs.json          — every SharedPreferences key/value (with type info)
- *   ├── wallpaper.jpg       — the internal user_wallpaper.jpg (if one exists)
+ *   ├── prefs.json              — every SharedPreferences key/value (with type info)
+ *   ├── wallpaper.jpg           — the internal user_wallpaper.jpg (if one exists)
+ *   ├── favorite_verses.json    — the user's favorite verses (if any)
+ *   ├── wallpapers/
+ *   │   └── wp_*.jpg
  *   └── databases/
  *       ├── verses_KJV.json
  *       ├── verses_NIV.json
@@ -37,11 +40,13 @@ object SettingsBackupManager {
     private const val WALLPAPER_ENTRY = "wallpaper.jpg"
     private const val DB_PREFIX = "databases/"
     private const val WALLPAPER_GALLERY_PREFIX = "wallpapers/"
+    private const val FAVORITES_ENTRY = FavoriteVersesManager.FILE_NAME
 
     data class BackupSummary(
         val prefsCount: Int,
         val hasWallpaper: Boolean,
-        val databaseCount: Int
+        val databaseCount: Int,
+        val favoritesCount: Int = 0
     )
 
     // ─────────────────────────────────────────────────────────────────────
@@ -98,6 +103,10 @@ object SettingsBackupManager {
             val wallpaperFile = File(context.filesDir, WALLPAPER_FILENAME)
             val hasWallpaper = wallpaperFile.exists()
 
+            val favoritesFile = File(context.filesDir, FAVORITES_ENTRY)
+            val hasFavorites = favoritesFile.exists()
+            val favoritesCount = if (hasFavorites) FavoriteVersesManager.getFavoriteCount(context) else 0
+
             val dbDir = File(context.filesDir, DB_DIR)
             val dbFiles: List<File> = if (dbDir.exists()) {
                 dbDir.listFiles { f -> f.name.endsWith(".json") }?.toList() ?: emptyList()
@@ -124,6 +133,13 @@ object SettingsBackupManager {
                         zos.closeEntry()
                     }
 
+                    // favorite_verses.json — the user's favorite verses
+                    if (hasFavorites) {
+                        zos.putNextEntry(ZipEntry(FAVORITES_ENTRY))
+                        favoritesFile.inputStream().use { it.copyTo(zos) }
+                        zos.closeEntry()
+                    }
+
                     // wallpapers/wp_*.jpg — all managed gallery wallpapers
                     for (wpFile in galleryFiles) {
                         zos.putNextEntry(ZipEntry("$WALLPAPER_GALLERY_PREFIX${wpFile.name}"))
@@ -140,7 +156,7 @@ object SettingsBackupManager {
                 }
             } ?: return Result.failure(Exception("Could not open output stream"))
 
-            Result.success(BackupSummary(prefsCount, hasWallpaper, dbFiles.size))
+            Result.success(BackupSummary(prefsCount, hasWallpaper, dbFiles.size, favoritesCount))
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -156,6 +172,7 @@ object SettingsBackupManager {
             var prefsCount = 0
             var hasWallpaper = false
             var databaseCount = 0
+            var favoritesCount = 0
 
             context.contentResolver.openInputStream(inputUri)?.use { istream ->
                 ZipInputStream(istream).use { zis ->
@@ -197,6 +214,12 @@ object SettingsBackupManager {
                                 hasWallpaper = true
                             }
 
+                            entry.name == FAVORITES_ENTRY -> {
+                                val favoritesFile = File(context.filesDir, FavoriteVersesManager.FILE_NAME)
+                                favoritesFile.outputStream().use { out -> zis.copyTo(out) }
+                                favoritesCount = FavoriteVersesManager.getFavoriteCount(context)
+                            }
+
                             entry.name.startsWith(WALLPAPER_GALLERY_PREFIX) -> {
                                 val galleryDir = File(context.filesDir, WALLPAPER_GALLERY_DIR).also { it.mkdirs() }
                                 val filename = entry.name.removePrefix(WALLPAPER_GALLERY_PREFIX)
@@ -222,7 +245,7 @@ object SettingsBackupManager {
                 }
             } ?: return Result.failure(Exception("Could not open input stream"))
 
-            Result.success(BackupSummary(prefsCount, hasWallpaper, databaseCount))
+            Result.success(BackupSummary(prefsCount, hasWallpaper, databaseCount, favoritesCount))
         } catch (e: Exception) {
             Result.failure(e)
         }
