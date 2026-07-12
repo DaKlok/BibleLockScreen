@@ -24,13 +24,11 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.gestures.FlingBehavior
-import androidx.compose.foundation.gestures.ScrollScope
-import androidx.compose.foundation.gestures.ScrollableDefaults
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -59,6 +57,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.blur
 import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
@@ -218,12 +217,10 @@ fun MainScreen(
     val powerManager = remember { context.getSystemService(Context.POWER_SERVICE) as PowerManager }
     var isBatteryOptimized by remember { mutableStateOf(!powerManager.isIgnoringBatteryOptimizations(context.packageName)) }
 
+    // Used for the settings page's own internal scroll (page 1 of
+    // outerPagerState, below) — no longer shared with the pager section,
+    // now that the two live on separate pager pages.
     val scrollState = rememberScrollState()
-    // Height (px) of the pager section (preview / wallpapers / favorites),
-    // measured live via onGloballyPositioned below — used as a scroll-snap
-    // boundary so a fast fling can't sail straight past it into the
-    // settings area in one motion. See rememberSectionSnapFlingBehavior.
-    var pagerSectionHeightPx by remember { mutableFloatStateOf(0f) }
 
     var imageUri by remember { mutableStateOf<Uri?>(null) }
     var versePair by remember { mutableStateOf<Pair<String, String>?>(null) }
@@ -237,12 +234,6 @@ fun MainScreen(
     var hasSeenEditHint by remember { mutableStateOf(prefs.getBoolean("has_seen_edit_hint", false)) }
     var hasSeenSwipeHint by remember { mutableStateOf(prefs.getBoolean("has_seen_swipe_hint", false)) }
 
-    LaunchedEffect(scrollState.value) {
-        if (scrollState.value > 20 && !hasSeenSwipeHint) {
-            hasSeenSwipeHint = true
-            prefs.edit().putBoolean("has_seen_swipe_hint", true).apply()
-        }
-    }
     var dailyHour by remember { mutableIntStateOf(prefs.getInt("daily_hour", 6)) }
     var generationStatus by remember { mutableStateOf("idle") }
 
@@ -774,6 +765,14 @@ fun MainScreen(
         // Sync pager page when user swipes — used by the page indicator
         val scope2 = rememberCoroutineScope()
 
+        // Outer vertical pager: page 0 = the pager section above (preview /
+        // wallpapers / favorites), page 1 = settings. Two genuinely
+        // separate pages, rather than one continuous scroll, is what makes
+        // "stop at the bottom, then a second swipe continues into
+        // settings" a guarantee rather than something hand-built on top of
+        // scroll internals — it's what Pager already does for a living.
+        val outerPagerState = rememberPagerState(initialPage = 0, pageCount = { 2 })
+
         Scaffold(
             topBar = {
                 TopAppBar(
@@ -811,22 +810,15 @@ fun MainScreen(
             snackbarHost = { },
             containerColor = MaterialTheme.colorScheme.background
         ) { padding ->
-            // ── Main scrollable Column (NOT inside a pager) ──────────────
-            // Only the preview area swipes horizontally; the settings below
-            // stay in place and scroll vertically with the rest of the page.
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(padding)
-                    .pointerInput(Unit) {
-                        detectTapGestures(onTap = { focusManager.clearFocus() })
-                    }
-                    .verticalScroll(
-                        scrollState,
-                        flingBehavior = rememberSectionSnapFlingBehavior(scrollState) { pagerSectionHeightPx }
-                    ),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
+            // The 2-page vertical split (pager section / settings as
+            // separate pages, with a hard stop between them) only applies
+            // while the favorites page (page 2 of the inner pager) is
+            // showing — that's the one whose list can grow long enough to
+            // make "how far did I just scroll" hard to control. The
+            // preview and wallpaper pages keep the original single
+            // continuous scroll. Both modes share the exact same pager
+            // section and settings section content, defined once below.
+            val pagerSectionContent: @Composable () -> Unit = {
                 // 1. PREVIEW AREA — wrapped in a HorizontalPager so swiping
                 //    left/right switches between the lock-screen preview and
                 //    the wallpaper gallery. Only this area swipes; the
@@ -835,9 +827,6 @@ fun MainScreen(
                     state = pagerState,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .onGloballyPositioned { coordinates ->
-                            pagerSectionHeightPx = coordinates.size.height.toFloat()
-                        }
                         .padding(horizontal = 16.dp, vertical = 8.dp)
                         .animateContentSize(
                             animationSpec = spring(
@@ -847,55 +836,41 @@ fun MainScreen(
                         )
                 ) { page ->
                     if (page == 0) {
-                        // Parallax zoom-out on the preview only — the wallpaper
-                        // screen (page 1) scrolls normally without this effect.
-                        Box(
-                            modifier = Modifier.graphicsLayer {
-                                val scrollOffset = scrollState.value.toFloat()
-                                val scale = (1f - (scrollOffset / 1500f)).coerceIn(0.6f, 1f)
-                                val alphaVal = (1f - (scrollOffset / 900f)).coerceIn(0.5f, 1f)
-                                scaleX = scale
-                                scaleY = scale
-                                alpha = alphaVal
-                                translationY = scrollOffset * 0.5f
-                            }
-                        ) {
-                            Pixel6LockScreenPreview(
-                                uri = imageUri,
-                                verseText = versePair?.first ?: strings.loading,
-                                verseReference = versePair?.second ?: "",
-                                textSizeMult = textSizeMult,
-                                textWidthMult = textWidthMult,
-                                verticalOffset = verticalOffset,
-                                textColor = textColor,
-                                textAlpha = textAlpha,
-                                bgBlur = bgBlur,
-                                bgDarkness = bgDarkness,
-                                isBold = isBold,
-                                useShadow = useShadow,
-                                fontFamilyStr = fontFamilyStr,
-                                showEditHint = true,
-                                strings = strings,
-                                showBubbleHint = imageUri != null && !hasSeenEditHint,
-                                onClick = {
-                                    performHaptic(HapticFeedbackType.LongPress)
-                                    launcher.launch("image/*")
-                                },
-                                onEditClick = {
-                                    performHaptic(HapticFeedbackType.LongPress)
-                                    isEditing = true
-                                    if (!hasSeenEditHint) {
-                                        hasSeenEditHint = true
-                                        prefs.edit().putBoolean("has_seen_edit_hint", true).apply()
-                                    }
-                                },
-                                isFavorite = isCurrentVerseFavorite,
-                                onFavoriteToggle = {
-                                    performHaptic(HapticFeedbackType.LongPress)
-                                    onFavoriteToggle()
+                        Pixel6LockScreenPreview(
+                            uri = imageUri,
+                            verseText = versePair?.first ?: strings.loading,
+                            verseReference = versePair?.second ?: "",
+                            textSizeMult = textSizeMult,
+                            textWidthMult = textWidthMult,
+                            verticalOffset = verticalOffset,
+                            textColor = textColor,
+                            textAlpha = textAlpha,
+                            bgBlur = bgBlur,
+                            bgDarkness = bgDarkness,
+                            isBold = isBold,
+                            useShadow = useShadow,
+                            fontFamilyStr = fontFamilyStr,
+                            showEditHint = true,
+                            strings = strings,
+                            showBubbleHint = imageUri != null && !hasSeenEditHint,
+                            onClick = {
+                                performHaptic(HapticFeedbackType.LongPress)
+                                launcher.launch("image/*")
+                            },
+                            onEditClick = {
+                                performHaptic(HapticFeedbackType.LongPress)
+                                isEditing = true
+                                if (!hasSeenEditHint) {
+                                    hasSeenEditHint = true
+                                    prefs.edit().putBoolean("has_seen_edit_hint", true).apply()
                                 }
-                            )
-                        }
+                            },
+                            isFavorite = isCurrentVerseFavorite,
+                            onFavoriteToggle = {
+                                performHaptic(HapticFeedbackType.LongPress)
+                                onFavoriteToggle()
+                            }
+                        )
                     } else if (page == 1) {
                         WallpaperScreen(
                             strings = strings,
@@ -996,9 +971,9 @@ fun MainScreen(
                         )
                     }
                 }
+            } // end pagerSectionContent
 
-                Spacer(modifier = Modifier.height(16.dp))
-
+            val settingsSectionContent: @Composable () -> Unit = {
                 // 2. OBLASŤ NASTAVENÍ
                 Column(
                     modifier = Modifier
@@ -1775,7 +1750,106 @@ fun MainScreen(
                     }
                     Spacer(modifier = Modifier.height(80.dp))
                 } // end settings Column
-            } // end main Column
+            } // end settingsSectionContent
+
+            // settledPage (not currentPage) on purpose — currentPage
+            // updates in real time as the user's finger crosses the 50%
+            // threshold *during* a drag, and switching this entire
+            // structure (VerticalPager vs. plain Column) mid-drag tears
+            // down and rebuilds the HorizontalPager while a gesture is
+            // actively being tracked inside it, freezing the swipe
+            // halfway. settledPage only changes once the drag (and any
+            // settle animation) has fully finished.
+            if (pagerState.settledPage == 2) {
+                // Favorites is showing — 2 separate pages (see the big
+                // comment above pagerSectionContent for why).
+                VerticalPager(
+                    state = outerPagerState,
+                    // Pre-composes the settings page before it's actually
+                    // visible, instead of only starting to build its ~1300
+                    // lines of content the instant the user begins the
+                    // swipe. Without this, that first-time composition cost
+                    // shows up as a pop-in right in the middle of the
+                    // slide — the settings sheet's top edge visibly
+                    // "catching up" rather than smoothly sliding into
+                    // place.
+                    beyondViewportPageCount = 1,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                ) { outerPage ->
+                    if (outerPage == 0) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .pointerInput(Unit) {
+                                    detectTapGestures(onTap = { focusManager.clearFocus() })
+                                },
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            pagerSectionContent()
+
+                            Spacer(modifier = Modifier.weight(1f))
+
+                            // Small bouncing "swipe down for settings"
+                            // affordance — icon-only, no new strings needed.
+                            val settingsHintTransition = rememberInfiniteTransition(label = "settings_hint_bounce")
+                            val settingsHintOffsetY by settingsHintTransition.animateFloat(
+                                initialValue = 0f,
+                                targetValue = 10f,
+                                animationSpec = infiniteRepeatable(
+                                    animation = tween(700, easing = FastOutSlowInEasing),
+                                    repeatMode = RepeatMode.Reverse
+                                ),
+                                label = "settingsHintOffsetY"
+                            )
+                            Icon(
+                                imageVector = Icons.Default.KeyboardArrowDown,
+                                contentDescription = strings.settings,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                                modifier = Modifier
+                                    .padding(bottom = 8.dp)
+                                    .size(28.dp)
+                                    .offset(y = settingsHintOffsetY.dp)
+                                    .clickable {
+                                        performHaptic(HapticFeedbackType.LongPress)
+                                        scope2.launch { outerPagerState.animateScrollToPage(1) }
+                                    }
+                            )
+                        }
+                    } else {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .pointerInput(Unit) {
+                                    detectTapGestures(onTap = { focusManager.clearFocus() })
+                                }
+                                .verticalScroll(scrollState),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            settingsSectionContent()
+                        }
+                    }
+                }
+            } else {
+                // Preview or wallpapers is showing — original single
+                // continuous scroll, pager section flowing straight into
+                // settings.
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding)
+                        .pointerInput(Unit) {
+                            detectTapGestures(onTap = { focusManager.clearFocus() })
+                        }
+                        .verticalScroll(scrollState),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    pagerSectionContent()
+                    Spacer(modifier = Modifier.height(16.dp))
+                    settingsSectionContent()
+                }
+            }
         } // end Scaffold content lambda
 
         // Mark swipe hint as seen when user leaves page 0
@@ -1783,6 +1857,29 @@ fun MainScreen(
             if (pagerState.currentPage != 0 && !hasSeenSwipeHint) {
                 hasSeenSwipeHint = true
                 prefs.edit().putBoolean("has_seen_swipe_hint", true).apply()
+            }
+        }
+
+        // ...and also once they've discovered the settings page below —
+        // reaching it either way means they're comfortable navigating.
+        LaunchedEffect(outerPagerState.currentPage) {
+            if (outerPagerState.currentPage != 0 && !hasSeenSwipeHint) {
+                hasSeenSwipeHint = true
+                prefs.edit().putBoolean("has_seen_swipe_hint", true).apply()
+            }
+        }
+
+        // Always land on the favorites list itself (not settings) when
+        // arriving at the favorites page — without this, if the user had
+        // previously scrolled into settings from here, left, and came
+        // back, they'd land straight on settings again since outerPagerState
+        // keeps its position across the split-mode Composable being torn
+        // down and rebuilt. Keyed on settledPage, matching the main
+        // structural switch above, so it fires once a swipe fully lands
+        // on favorites rather than repeatedly while dragging across it.
+        LaunchedEffect(pagerState.settledPage) {
+            if (pagerState.settledPage == 2) {
+                outerPagerState.scrollToPage(0)
             }
         }
 
@@ -2649,64 +2746,6 @@ fun SettingsSectionHeader(icon: androidx.compose.ui.graphics.vector.ImageVector,
 }
 
 
-
-/**
- * A [FlingBehavior] for the main screen's outer scroll that adds a soft
- * "snap boundary" right where the pager section (preview / wallpapers /
- * favorites) ends and the settings section begins.
- *
- * Without this, a fast fling starting anywhere in the pager area sails
- * straight through into the settings below in one continuous motion,
- * which felt uncontrollable — especially once the favorites page could
- * hold a long list. With this, a fling that *starts* above the boundary
- * is clamped so it can never cross the boundary in a single motion: it
- * always lands exactly at the edge, the same way a normal scrollable
- * stops when it hits the start/end of its content. A second, deliberate
- * scroll from there continues into the settings normally. Flings that
- * start already inside the settings section (or head back up toward the
- * top) are left completely alone, so nothing about scrolling within
- * settings, or flicking back up to the preview, changes.
- *
- * [sectionBoundary] is read fresh on every fling (not just once), so it
- * stays correct as the pager's measured height changes across its three
- * pages (the preview and favorites pages are a fixed height, but the
- * wallpaper gallery page is not).
- */
-@Composable
-private fun rememberSectionSnapFlingBehavior(
-    scrollState: ScrollState,
-    sectionBoundary: () -> Float
-): FlingBehavior {
-    val defaultFling = ScrollableDefaults.flingBehavior()
-    return remember(scrollState, defaultFling) {
-        object : FlingBehavior {
-            override suspend fun ScrollScope.performFling(initialVelocity: Float): Float {
-                val realScope = this
-                val boundary = sectionBoundary()
-                val startedBelowBoundary = boundary > 0f && scrollState.value.toFloat() < boundary - 0.5f
-
-                if (!startedBelowBoundary) {
-                    return with(defaultFling) { realScope.performFling(initialVelocity) }
-                }
-
-                // Proxy scrollBy so any attempt to scroll *past* the
-                // boundary is clamped — reported as "under-consumed",
-                // exactly like hitting a real scroll edge. The default
-                // fling's own decay math sees that and stops on its own,
-                // so we don't need to hand-animate anything ourselves.
-                val guardedScope = object : ScrollScope {
-                    override fun scrollBy(pixels: Float): Float {
-                        val current = scrollState.value.toFloat()
-                        if (current >= boundary - 0.5f) return 0f
-                        val toApply = if (pixels > 0f) minOf(pixels, boundary - current) else pixels
-                        return realScope.scrollBy(toApply)
-                    }
-                }
-                return with(defaultFling) { guardedScope.performFling(initialVelocity) }
-            }
-        }
-    }
-}
 
 @Composable
 fun SettingsCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
