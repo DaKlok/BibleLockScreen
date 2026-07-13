@@ -62,7 +62,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
@@ -766,12 +765,27 @@ fun MainScreen(
         val scope2 = rememberCoroutineScope()
 
         // Outer vertical pager: page 0 = the pager section above (preview /
-        // wallpapers / favorites), page 1 = settings. Two genuinely
-        // separate pages, rather than one continuous scroll, is what makes
-        // "stop at the bottom, then a second swipe continues into
-        // settings" a guarantee rather than something hand-built on top of
-        // scroll internals — it's what Pager already does for a living.
-        val outerPagerState = rememberPagerState(initialPage = 0, pageCount = { 2 })
+        // wallpapers / favorites), page 1 = settings — but only while
+        // favorites (page 2 of the inner pager) is showing; see the page
+        // count below. Two genuinely separate pages, rather than one
+        // continuous scroll, is what makes "stop at the bottom, then a
+        // second swipe continues into settings" a guarantee rather than
+        // something hand-built on top of scroll internals.
+        //
+        // Page count is a lambda (re-read reactively) rather than a fixed
+        // number specifically so this VerticalPager can stay mounted at
+        // all times, with only its effective page count changing. The
+        // earlier version instead swapped between two entirely different
+        // composable trees (this VerticalPager vs. a plain continuous-
+        // scroll Column) based on which inner page was showing — tearing
+        // the whole thing down and rebuilding it, which also tore down
+        // the inner HorizontalPager nested inside it. That caused a
+        // visible discontinuity landing exactly on the boundary between
+        // the wallpaper and favorites pages (and only there, since that's
+        // the only boundary this used to swap structures on).
+        val outerPagerState = rememberPagerState(initialPage = 0) {
+            if (pagerState.settledPage == 2) 2 else 1
+        }
 
         Scaffold(
             topBar = {
@@ -1752,43 +1766,54 @@ fun MainScreen(
                 } // end settings Column
             } // end settingsSectionContent
 
-            // settledPage (not currentPage) on purpose — currentPage
-            // updates in real time as the user's finger crosses the 50%
-            // threshold *during* a drag, and switching this entire
-            // structure (VerticalPager vs. plain Column) mid-drag tears
-            // down and rebuilds the HorizontalPager while a gesture is
-            // actively being tracked inside it, freezing the swipe
-            // halfway. settledPage only changes once the drag (and any
-            // settle animation) has fully finished.
-            if (pagerState.settledPage == 2) {
-                // Favorites is showing — 2 separate pages (see the big
-                // comment above pagerSectionContent for why).
-                VerticalPager(
-                    state = outerPagerState,
-                    // Pre-composes the settings page before it's actually
-                    // visible, instead of only starting to build its ~1300
-                    // lines of content the instant the user begins the
-                    // swipe. Without this, that first-time composition cost
-                    // shows up as a pop-in right in the middle of the
-                    // slide — the settings sheet's top edge visibly
-                    // "catching up" rather than smoothly sliding into
-                    // place.
-                    beyondViewportPageCount = 1,
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding)
-                ) { outerPage ->
-                    if (outerPage == 0) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .pointerInput(Unit) {
-                                    detectTapGestures(onTap = { focusManager.clearFocus() })
-                                },
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            pagerSectionContent()
+            // Always mounted — never conditionally swapped for a
+            // different top-level structure. Only its effective page
+            // count changes reactively, via outerPagerState's pageCount
+            // lambda declared above. Keeping this permanently mounted
+            // means the inner HorizontalPager nested inside page 0 never
+            // gets torn down and rebuilt either, which is what was
+            // causing a visible discontinuity landing exactly on the
+            // wallpaper/favorites boundary — the one boundary that used
+            // to trigger a structural swap here.
+            VerticalPager(
+                state = outerPagerState,
+                // Pre-composes the settings page before it's actually
+                // visible, instead of only starting to build its ~1300
+                // lines of content the instant the user begins the
+                // swipe. Without this, that first-time composition cost
+                // shows up as a pop-in right in the middle of the
+                // slide — the settings sheet's top edge visibly
+                // "catching up" rather than smoothly sliding into place.
+                beyondViewportPageCount = 1,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(padding)
+            ) { outerPage ->
+                // No custom transform here on purpose. VerticalPager
+                // already positions each page based on scroll offset
+                // internally — that's what makes it slide at all. An
+                // earlier version of this also applied a translationY via
+                // graphicsLayer using the same offset, which stacked on
+                // top of the Pager's own positioning instead of replacing
+                // it, so pages ended up overlapping instead of sliding
+                // past each other. Now that the pager stays permanently
+                // mounted (see the big comment above), its default
+                // positioning already slides smoothly on its own — no
+                // extra code needed.
+                val isFavoritesSplitMode = pagerState.settledPage == 2
+                if (outerPage == 0) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .pointerInput(Unit) {
+                                detectTapGestures(onTap = { focusManager.clearFocus() })
+                            }
+                            .let { if (!isFavoritesSplitMode) it.verticalScroll(scrollState) else it },
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        pagerSectionContent()
 
+                        if (isFavoritesSplitMode) {
                             Spacer(modifier = Modifier.weight(1f))
 
                             // Small bouncing "swipe down for settings"
@@ -1816,38 +1841,23 @@ fun MainScreen(
                                         scope2.launch { outerPagerState.animateScrollToPage(1) }
                                     }
                             )
-                        }
-                    } else {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .pointerInput(Unit) {
-                                    detectTapGestures(onTap = { focusManager.clearFocus() })
-                                }
-                                .verticalScroll(scrollState),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
+                        } else {
+                            Spacer(modifier = Modifier.height(16.dp))
                             settingsSectionContent()
                         }
                     }
-                }
-            } else {
-                // Preview or wallpapers is showing — original single
-                // continuous scroll, pager section flowing straight into
-                // settings.
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding)
-                        .pointerInput(Unit) {
-                            detectTapGestures(onTap = { focusManager.clearFocus() })
-                        }
-                        .verticalScroll(scrollState),
-                    horizontalAlignment = Alignment.CenterHorizontally
-                ) {
-                    pagerSectionContent()
-                    Spacer(modifier = Modifier.height(16.dp))
-                    settingsSectionContent()
+                } else {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .pointerInput(Unit) {
+                                detectTapGestures(onTap = { focusManager.clearFocus() })
+                            }
+                            .verticalScroll(scrollState),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        settingsSectionContent()
+                    }
                 }
             }
         } // end Scaffold content lambda
