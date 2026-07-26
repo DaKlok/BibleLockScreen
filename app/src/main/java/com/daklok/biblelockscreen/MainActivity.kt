@@ -64,6 +64,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
@@ -1000,7 +1001,6 @@ fun MainScreen(
                         // from the screen behind it. `surfaceContainerLow`
                         // is deliberately one tonal step above `background`.
                         .background(MaterialTheme.colorScheme.surfaceContainerLow)
-                        .animateContentSize(animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMediumLow))
                         .padding(horizontal = 20.dp)
                         .padding(top = 8.dp, bottom = 0.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -1775,49 +1775,89 @@ fun MainScreen(
             // causing a visible discontinuity landing exactly on the
             // wallpaper/favorites boundary — the one boundary that used
             // to trigger a structural swap here.
+            // Computed once here so both branches below can use it.
+            val isFavoritesSplitMode = pagerState.settledPage == 2
+
+            // Smoothly drives the cross-fade / slide between the inline
+            // settings layout (preview & wallpaper pages) and the
+            // arrow-at-bottom split layout (favorites page). 0f = inline
+            // settings shown, 1f = split mode with the swipe-down arrow.
+            // Using a continuous float rather than a hard if/else lets the
+            // verse-settings panel slide all the way down off-screen
+            // instead of being yanked abruptly when settledPage flips to 2.
+            val splitProgress by animateFloatAsState(
+                targetValue = if (isFavoritesSplitMode) 1f else 0f,
+                animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
+                label = "splitModeProgress"
+            )
+
             VerticalPager(
                 state = outerPagerState,
-                // Pre-composes the settings page before it's actually
-                // visible, instead of only starting to build its ~1300
-                // lines of content the instant the user begins the
-                // swipe. Without this, that first-time composition cost
-                // shows up as a pop-in right in the middle of the
-                // slide — the settings sheet's top edge visibly
-                // "catching up" rather than smoothly sliding into place.
-                beyondViewportPageCount = 1,
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
             ) { outerPage ->
-                // No custom transform here on purpose. VerticalPager
-                // already positions each page based on scroll offset
-                // internally — that's what makes it slide at all. An
-                // earlier version of this also applied a translationY via
-                // graphicsLayer using the same offset, which stacked on
-                // top of the Pager's own positioning instead of replacing
-                // it, so pages ended up overlapping instead of sliding
-                // past each other. Now that the pager stays permanently
-                // mounted (see the big comment above), its default
-                // positioning already slides smoothly on its own — no
-                // extra code needed.
-                val isFavoritesSplitMode = pagerState.settledPage == 2
                 if (outerPage == 0) {
-                    Column(
+                    Box(
                         modifier = Modifier
                             .fillMaxSize()
                             .pointerInput(Unit) {
                                 detectTapGestures(onTap = { focusManager.clearFocus() })
                             }
-                            .let { if (!isFavoritesSplitMode) it.verticalScroll(scrollState) else it },
-                        horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        pagerSectionContent()
+                        // Scrollable column with pager content + settings.
+                        // Scroll stays enabled for as long as we're not
+                        // fully in split mode, so that during the slide-
+                        // down transition the user can still see (and
+                        // scroll) the settings panel as it animates out.
+                        // Once splitProgress reaches 1f the settings panel
+                        // is gone, scroll is disabled, and the outerPager's
+                        // swipe-down gesture takes over cleanly to reveal
+                        // the settings on page 1.
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .let { if (splitProgress < 1f) it.verticalScroll(scrollState) else it },
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            pagerSectionContent()
 
-                        if (isFavoritesSplitMode) {
-                            Spacer(modifier = Modifier.weight(1f))
+                            // Verse-settings panel — slides down past
+                            // the bottom of the viewport and fades out
+                            // as splitProgress → 1f. Rendered (and laid
+                            // out) only while we're not fully in split
+                            // mode, so the column collapses to just the
+                            // pager section once the animation finishes.
+                            // translationY uses 1.5× the panel's own
+                            // height to make sure it clears the bottom
+                            // edge of the viewport even when the panel
+                            // is short.
+                            if (splitProgress < 1f) {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .graphicsLayer {
+                                            translationY = size.height * 1.5f * splitProgress
+                                            alpha = 1f - splitProgress
+                                        }
+                                ) {
+                                    Column(modifier = Modifier.fillMaxWidth()) {
+                                        Spacer(modifier = Modifier.height(16.dp))
+                                        settingsSectionContent()
+                                    }
+                                }
+                            }
+                        }
 
-                            // Small bouncing "swipe down for settings"
-                            // affordance — icon-only, no new strings needed.
+                        // "Swipe down for settings" affordance — anchored
+                        // to the bottom of the viewport and fades in as
+                        // splitProgress → 1f. Lives in the outer Box
+                        // (not the scrollable column) so it stays put
+                        // regardless of scroll position, mirroring the
+                        // old `Spacer(weight = 1f)` + Icon arrangement
+                        // without needing weight inside a scrollable
+                        // column (which wouldn't work).
+                        if (splitProgress > 0f) {
                             val settingsHintTransition = rememberInfiniteTransition(label = "settings_hint_bounce")
                             val settingsHintOffsetY by settingsHintTransition.animateFloat(
                                 initialValue = 0f,
@@ -1833,17 +1873,16 @@ fun MainScreen(
                                 contentDescription = strings.settings,
                                 tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
                                 modifier = Modifier
+                                    .align(Alignment.BottomCenter)
                                     .padding(bottom = 8.dp)
                                     .size(28.dp)
                                     .offset(y = settingsHintOffsetY.dp)
+                                    .graphicsLayer { alpha = splitProgress }
                                     .clickable {
                                         performHaptic(HapticFeedbackType.LongPress)
                                         scope2.launch { outerPagerState.animateScrollToPage(1) }
                                     }
                             )
-                        } else {
-                            Spacer(modifier = Modifier.height(16.dp))
-                            settingsSectionContent()
                         }
                     }
                 } else {
@@ -1890,6 +1929,33 @@ fun MainScreen(
         LaunchedEffect(pagerState.settledPage) {
             if (pagerState.settledPage == 2) {
                 outerPagerState.scrollToPage(0)
+            }
+        }
+
+        // When entering favorites (split mode), smoothly reset the inline
+        // scroll position back to the top so that by the time splitProgress
+        // reaches 1f — at which point verticalScroll is removed from the
+        // outer column — the column is already showing the pager content.
+        // Without this, removing verticalScroll would snap the content from
+        // whatever scroll position the user was on back to the top,
+        // producing a visible jump right at the end of the slide-down
+        // transition. Cancelled automatically if the user swipes back to
+        // preview/wallpaper before the animation finishes — animateScrollTo
+        // is cooperative and leaves scrollState at its current value.
+        // Uses a fixed-duration tween (matching the splitProgress animation)
+        // rather than the default spring so the scroll is guaranteed to
+        // settle before splitProgress hits 1f, regardless of how far the
+        // user had scrolled.
+        // Re-derives the boolean here (rather than referencing the one
+        // declared inside the Scaffold content lambda above) because that
+        // earlier val is out of scope this far down — pagerState, however,
+        // is declared in the outer Box scope and remains visible here.
+        LaunchedEffect(pagerState.settledPage) {
+            if (pagerState.settledPage == 2 && scrollState.value > 0) {
+                scrollState.animateScrollTo(
+                    value = 0,
+                    animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing)
+                )
             }
         }
 
