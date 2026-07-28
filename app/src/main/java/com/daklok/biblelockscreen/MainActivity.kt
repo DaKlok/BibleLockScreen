@@ -703,6 +703,25 @@ fun MainScreen(
         }
     }
 
+    // Turns the auto-wallpaper worker off as a side effect of picking a
+    // custom/favorite verse — without this, "use_custom_verse" gets set
+    // to true while the worker is still scheduled and still thinks it's
+    // active, so the *next* automatic interval silently no-ops instead of
+    // either respecting the custom verse or picking a new one. The lock
+    // screen then looks frozen (stuck on whatever verse was showing) until
+    // the user manually flips the auto-change switch off and back on,
+    // which happens to reset both sides back into agreement. Disabling it
+    // here up front keeps them in agreement the whole time instead. No
+    // notification of its own — the caller already shows one for the
+    // action the user actually took (applying the verse).
+    fun disableAutoVerseChangeIfActive() {
+        if (isDailyActive) {
+            isDailyActive = false
+            prefs.edit().putBoolean("auto_wallpaper_active", false).apply()
+            cancelExactWallpaperAlarm(context, "DailyBibleWallpaper")
+        }
+    }
+
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let { sourceUri ->
             scope.launch(Dispatchers.IO) {
@@ -766,27 +785,18 @@ fun MainScreen(
         val scope2 = rememberCoroutineScope()
 
         // Outer vertical pager: page 0 = the pager section above (preview /
-        // wallpapers / favorites), page 1 = settings — but only while
-        // favorites (page 2 of the inner pager) is showing; see the page
-        // count below. Two genuinely separate pages, rather than one
-        // continuous scroll, is what makes "stop at the bottom, then a
-        // second swipe continues into settings" a guarantee rather than
-        // something hand-built on top of scroll internals.
+        // wallpapers / favorites). Verse settings are only ever reachable
+        // by scrolling down from the preview page — wallpaper and
+        // favorites no longer have a second settings page (or the
+        // swipe-down arrow that used to lead to it) below them, which
+        // frees up that vertical space for those two screens instead.
         //
-        // Page count is a lambda (re-read reactively) rather than a fixed
-        // number specifically so this VerticalPager can stay mounted at
-        // all times, with only its effective page count changing. The
-        // earlier version instead swapped between two entirely different
-        // composable trees (this VerticalPager vs. a plain continuous-
-        // scroll Column) based on which inner page was showing — tearing
-        // the whole thing down and rebuilding it, which also tore down
-        // the inner HorizontalPager nested inside it. That caused a
-        // visible discontinuity landing exactly on the boundary between
-        // the wallpaper and favorites pages (and only there, since that's
-        // the only boundary this used to swap structures on).
-        val outerPagerState = rememberPagerState(initialPage = 0) {
-            if (pagerState.settledPage == 2) 2 else 1
-        }
+        // Page count stays fixed at 1 so this VerticalPager can stay
+        // mounted at all times — keeping it always mounted is what keeps
+        // the inner HorizontalPager nested inside it from ever being torn
+        // down and rebuilt, which previously caused a visible
+        // discontinuity right at the wallpaper/favorites boundary.
+        val outerPagerState = rememberPagerState(initialPage = 0) { 1 }
 
         Scaffold(
             topBar = {
@@ -825,6 +835,24 @@ fun MainScreen(
             snackbarHost = { },
             containerColor = MaterialTheme.colorScheme.background
         ) { padding ->
+            // Height actually available inside the Scaffold body (screen
+            // height minus the top app bar and any system-bar insets
+            // Scaffold already accounts for). Used to size the wallpaper
+            // and favorites pages below — they no longer have a verse-
+            // settings panel or swipe-down arrow underneath them, so they
+            // can grow into that freed space, but only up to what still
+            // leaves room for the page-indicator dots underneath the
+            // pager; otherwise the dots get pushed off-screen and can't
+            // be reached, since scrolling is disabled once those pages
+            // are fully settled.
+            val screenHeightDp = LocalConfiguration.current.screenHeightDp.dp
+            val availableBodyHeight = screenHeightDp -
+                    padding.calculateTopPadding() - padding.calculateBottomPadding()
+            // Chrome below the pager's own content: the pager's vertical
+            // padding (8dp top + 8dp bottom) plus the dots row (4dp top +
+            // 4dp bottom padding + 8dp dot height), plus a small buffer.
+            val splitPageHeight = (availableBodyHeight - 56.dp).coerceAtLeast(280.dp)
+
             // The 2-page vertical split (pager section / settings as
             // separate pages, with a hard stop between them) only applies
             // while the favorites page (page 2 of the inner pager) is
@@ -851,73 +879,120 @@ fun MainScreen(
                         )
                 ) { page ->
                     if (page == 0) {
-                        Pixel6LockScreenPreview(
-                            uri = imageUri,
-                            verseText = versePair?.first ?: strings.loading,
-                            verseReference = versePair?.second ?: "",
-                            textSizeMult = textSizeMult,
-                            textWidthMult = textWidthMult,
-                            verticalOffset = verticalOffset,
-                            textColor = textColor,
-                            textAlpha = textAlpha,
-                            bgBlur = bgBlur,
-                            bgDarkness = bgDarkness,
-                            isBold = isBold,
-                            useShadow = useShadow,
-                            fontFamilyStr = fontFamilyStr,
-                            showEditHint = true,
-                            strings = strings,
-                            showBubbleHint = imageUri != null && !hasSeenEditHint,
-                            onClick = {
-                                performHaptic(HapticFeedbackType.LongPress)
-                                launcher.launch("image/*")
-                            },
-                            onEditClick = {
-                                performHaptic(HapticFeedbackType.LongPress)
-                                isEditing = true
-                                if (!hasSeenEditHint) {
-                                    hasSeenEditHint = true
-                                    prefs.edit().putBoolean("has_seen_edit_hint", true).apply()
+                        // Parallax zoom-out on the preview only — as the user
+                        // scrolls down through the inline settings on the
+                        // preview page, the Pixel 6 preview scales down,
+                        // fades, and translates downward, giving a sense of
+                        // depth as the settings panel rises over it.
+                        // wallpaper & favorites pages don't get this effect.
+                        Box(
+                            modifier = Modifier.graphicsLayer {
+                                val scrollOffset = scrollState.value.toFloat()
+                                val scale = (1f - (scrollOffset / 1500f)).coerceIn(0.6f, 1f)
+                                val alphaVal = (1f - (scrollOffset / 900f)).coerceIn(0.5f, 1f)
+                                scaleX = scale
+                                scaleY = scale
+                                alpha = alphaVal
+                                translationY = scrollOffset * 0.5f
+                            }
+                        ) {
+                            Pixel6LockScreenPreview(
+                                uri = imageUri,
+                                verseText = versePair?.first ?: strings.loading,
+                                verseReference = versePair?.second ?: "",
+                                textSizeMult = textSizeMult,
+                                textWidthMult = textWidthMult,
+                                verticalOffset = verticalOffset,
+                                textColor = textColor,
+                                textAlpha = textAlpha,
+                                bgBlur = bgBlur,
+                                bgDarkness = bgDarkness,
+                                isBold = isBold,
+                                useShadow = useShadow,
+                                fontFamilyStr = fontFamilyStr,
+                                showEditHint = true,
+                                strings = strings,
+                                showBubbleHint = imageUri != null && !hasSeenEditHint,
+                                onClick = {
+                                    performHaptic(HapticFeedbackType.LongPress)
+                                    launcher.launch("image/*")
+                                },
+                                onEditClick = {
+                                    performHaptic(HapticFeedbackType.LongPress)
+                                    isEditing = true
+                                    if (!hasSeenEditHint) {
+                                        hasSeenEditHint = true
+                                        prefs.edit().putBoolean("has_seen_edit_hint", true).apply()
+                                    }
+                                },
+                                isFavorite = isCurrentVerseFavorite,
+                                onFavoriteToggle = {
+                                    performHaptic(HapticFeedbackType.LongPress)
+                                    onFavoriteToggle()
                                 }
-                            },
-                            isFavorite = isCurrentVerseFavorite,
-                            onFavoriteToggle = {
-                                performHaptic(HapticFeedbackType.LongPress)
-                                onFavoriteToggle()
-                            }
-                        )
+                            )
+                        }
                     } else if (page == 1) {
-                        WallpaperScreen(
-                            strings = strings,
-                            showNotification = showNotification,
-                            onWallpaperChanged = {
-                                imageUri = WallpaperManager.activeWallpaperUri(context)
-                                reloadPreviewData()
-                            }
-                        )
+                        // Pill-shaped translucent container — same color
+                        // family as the verse-settings panel
+                        // (surfaceContainerLow) but at 50% alpha, with all
+                        // four corners rounded. Gives the wallpaper screen a
+                        // clear visual boundary so the user can see where
+                        // the screen content ends and the page indicator
+                        // dots below begin.
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(28.dp))
+                                .background(
+                                    MaterialTheme.colorScheme.surfaceContainerLow
+                                        .copy(alpha = 0.5f)
+                                )
+                        ) {
+                            WallpaperScreen(
+                                strings = strings,
+                                showNotification = showNotification,
+                                onWallpaperChanged = {
+                                    imageUri = WallpaperManager.activeWallpaperUri(context)
+                                    reloadPreviewData()
+                                },
+                                pageHeight = splitPageHeight
+                            )
+                        }
                     } else {
-                        FavoritesScreen(
-                            strings = strings,
-                            appLang = appLang,
-                            favorites = favoritesList,
-                            onSetAsWallpaper = { fav ->
-                                prefs.edit()
-                                    .putBoolean("use_custom_verse", true)
-                                    .putString("custom_verse_text", fav.text)
-                                    .putString("custom_verse_ref", fav.ref)
-                                    .apply()
-                                reloadPreviewData()
-                                scope2.launch { pagerState.animateScrollToPage(0) }
-                                showNotification(strings.setAsWallpaper, NotificationType.SUCCESS)
-                            },
-                            onShare = { fav -> shareFavoriteVerse(fav) },
-                            onRemove = { fav ->
-                                FavoriteVersesManager.removeFavorite(context, fav.text, fav.ref, fav.lang)
-                                favoritesRefreshTrigger++
-                                showNotification(strings.removedFromFavorites, NotificationType.INFO)
-                            },
-                            performHaptic = performHaptic
-                        )
+                        // Same pill-shaped container for the favorites screen.
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(28.dp))
+                                .background(
+                                    MaterialTheme.colorScheme.surfaceContainerLow
+                                        .copy(alpha = 0.5f)
+                                )
+                        ) {
+                            FavoritesScreen(
+                                strings = strings,
+                                appLang = appLang,
+                                favorites = favoritesList,
+                                onSetAsWallpaper = { fav ->
+                                    disableAutoVerseChangeIfActive()
+                                    prefs.edit()
+                                        .putBoolean("use_custom_verse", true)
+                                        .putString("custom_verse_text", fav.text)
+                                        .putString("custom_verse_ref", fav.ref)
+                                        .apply()
+                                    reloadPreviewData()
+                                    scope2.launch { pagerState.animateScrollToPage(0) }
+                                    showNotification(strings.setAsWallpaper, NotificationType.SUCCESS)
+                                },
+                                onShare = { fav -> shareFavoriteVerse(fav) },
+                                onRemove = { fav ->
+                                    FavoriteVersesManager.removeFavorite(context, fav.text, fav.ref, fav.lang)
+                                    favoritesRefreshTrigger++
+                                    showNotification(strings.removedFromFavorites, NotificationType.INFO)
+                                },
+                                performHaptic = performHaptic,
+                                pageHeight = splitPageHeight
+                            )
+                        }
                     }
                 }
 
@@ -1516,6 +1591,7 @@ fun MainScreen(
                                     onClick = {
                                         focusManager.clearFocus()
                                         if (localVerse.isNotBlank()) {
+                                            disableAutoVerseChangeIfActive()
                                             versePair = Pair(localVerse, localRef)
                                             prefs.edit()
                                                 .putString("custom_verse_text", localVerse)
@@ -1766,27 +1842,20 @@ fun MainScreen(
                 } // end settings Column
             } // end settingsSectionContent
 
-            // Always mounted — never conditionally swapped for a
-            // different top-level structure. Only its effective page
-            // count changes reactively, via outerPagerState's pageCount
-            // lambda declared above. Keeping this permanently mounted
-            // means the inner HorizontalPager nested inside page 0 never
-            // gets torn down and rebuilt either, which is what was
-            // causing a visible discontinuity landing exactly on the
-            // wallpaper/favorites boundary — the one boundary that used
-            // to trigger a structural swap here.
-            // Computed once here so both branches below can use it.
-            val isFavoritesSplitMode = pagerState.settledPage == 2
+            // Whether the currently-settled inner page is wallpaper or
+            // favorites (both of which no longer show verse settings at
+            // all — only the preview page does).
+            val isSplitMode = pagerState.settledPage >= 1
 
-            // Smoothly drives the cross-fade / slide between the inline
-            // settings layout (preview & wallpaper pages) and the
-            // arrow-at-bottom split layout (favorites page). 0f = inline
-            // settings shown, 1f = split mode with the swipe-down arrow.
-            // Using a continuous float rather than a hard if/else lets the
-            // verse-settings panel slide all the way down off-screen
-            // instead of being yanked abruptly when settledPage flips to 2.
+            // Drives the slide-down + fade-out of the verse-settings panel
+            // when leaving the preview page. 0f = settings shown inline
+            // under the preview, 1f = settings fully slid away and no
+            // longer rendered (wallpaper/favorites pages). Using a
+            // continuous float rather than a hard if/else lets the panel
+            // slide all the way down off-screen instead of being yanked
+            // away abruptly the instant the page changes.
             val splitProgress by animateFloatAsState(
-                targetValue = if (isFavoritesSplitMode) 1f else 0f,
+                targetValue = if (isSplitMode) 1f else 0f,
                 animationSpec = tween(durationMillis = 500, easing = FastOutSlowInEasing),
                 label = "splitModeProgress"
             )
@@ -1811,9 +1880,10 @@ fun MainScreen(
                         // down transition the user can still see (and
                         // scroll) the settings panel as it animates out.
                         // Once splitProgress reaches 1f the settings panel
-                        // is gone, scroll is disabled, and the outerPager's
-                        // swipe-down gesture takes over cleanly to reveal
-                        // the settings on page 1.
+                        // is gone for good on this inner page (wallpaper
+                        // or favorites) and scroll is disabled, since
+                        // there's nothing left below the pager section to
+                        // scroll to.
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -1848,54 +1918,6 @@ fun MainScreen(
                                 }
                             }
                         }
-
-                        // "Swipe down for settings" affordance — anchored
-                        // to the bottom of the viewport and fades in as
-                        // splitProgress → 1f. Lives in the outer Box
-                        // (not the scrollable column) so it stays put
-                        // regardless of scroll position, mirroring the
-                        // old `Spacer(weight = 1f)` + Icon arrangement
-                        // without needing weight inside a scrollable
-                        // column (which wouldn't work).
-                        if (splitProgress > 0f) {
-                            val settingsHintTransition = rememberInfiniteTransition(label = "settings_hint_bounce")
-                            val settingsHintOffsetY by settingsHintTransition.animateFloat(
-                                initialValue = 0f,
-                                targetValue = 10f,
-                                animationSpec = infiniteRepeatable(
-                                    animation = tween(700, easing = FastOutSlowInEasing),
-                                    repeatMode = RepeatMode.Reverse
-                                ),
-                                label = "settingsHintOffsetY"
-                            )
-                            Icon(
-                                imageVector = Icons.Default.KeyboardArrowDown,
-                                contentDescription = strings.settings,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
-                                modifier = Modifier
-                                    .align(Alignment.BottomCenter)
-                                    .padding(bottom = 8.dp)
-                                    .size(28.dp)
-                                    .offset(y = settingsHintOffsetY.dp)
-                                    .graphicsLayer { alpha = splitProgress }
-                                    .clickable {
-                                        performHaptic(HapticFeedbackType.LongPress)
-                                        scope2.launch { outerPagerState.animateScrollToPage(1) }
-                                    }
-                            )
-                        }
-                    }
-                } else {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .pointerInput(Unit) {
-                                detectTapGestures(onTap = { focusManager.clearFocus() })
-                            }
-                            .verticalScroll(scrollState),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        settingsSectionContent()
                     }
                 }
             }
@@ -1906,29 +1928,6 @@ fun MainScreen(
             if (pagerState.currentPage != 0 && !hasSeenSwipeHint) {
                 hasSeenSwipeHint = true
                 prefs.edit().putBoolean("has_seen_swipe_hint", true).apply()
-            }
-        }
-
-        // ...and also once they've discovered the settings page below —
-        // reaching it either way means they're comfortable navigating.
-        LaunchedEffect(outerPagerState.currentPage) {
-            if (outerPagerState.currentPage != 0 && !hasSeenSwipeHint) {
-                hasSeenSwipeHint = true
-                prefs.edit().putBoolean("has_seen_swipe_hint", true).apply()
-            }
-        }
-
-        // Always land on the favorites list itself (not settings) when
-        // arriving at the favorites page — without this, if the user had
-        // previously scrolled into settings from here, left, and came
-        // back, they'd land straight on settings again since outerPagerState
-        // keeps its position across the split-mode Composable being torn
-        // down and rebuilt. Keyed on settledPage, matching the main
-        // structural switch above, so it fires once a swipe fully lands
-        // on favorites rather than repeatedly while dragging across it.
-        LaunchedEffect(pagerState.settledPage) {
-            if (pagerState.settledPage == 2) {
-                outerPagerState.scrollToPage(0)
             }
         }
 
@@ -1951,7 +1950,7 @@ fun MainScreen(
         // earlier val is out of scope this far down — pagerState, however,
         // is declared in the outer Box scope and remains visible here.
         LaunchedEffect(pagerState.settledPage) {
-            if (pagerState.settledPage == 2 && scrollState.value > 0) {
+            if (pagerState.settledPage >= 1 && scrollState.value > 0) {
                 scrollState.animateScrollTo(
                     value = 0,
                     animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing)

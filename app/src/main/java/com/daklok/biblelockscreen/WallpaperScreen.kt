@@ -29,11 +29,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.IntOffset
 import coil.compose.AsyncImage
 import kotlinx.coroutines.Job
@@ -52,7 +54,8 @@ import kotlin.math.roundToInt
 fun WallpaperScreen(
     strings: AppStrings,
     showNotification: (String, NotificationType) -> Job,
-    onWallpaperChanged: () -> Unit
+    onWallpaperChanged: () -> Unit,
+    pageHeight: Dp = LocalConfiguration.current.screenHeightDp.dp * 0.88f
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -171,9 +174,25 @@ fun WallpaperScreen(
         )
     }
 
+    // Pinned to a fixed height (passed in by the caller, sized to the
+    // actual space available). Without this, WallpaperScreen wraps its
+    // content — when the content is shorter than the screen (e.g.
+    // auto-cycling off), the HorizontalPager's `animateContentSize`
+    // shrinks the pager and the page-indicator dots below it get
+    // pushed up. And when auto-cycling gets toggled on, the expanded
+    // sub-settings grow the pager, jostling the dots again.
+    //
+    // A fixed height + verticalScroll means: the pager page is always
+    // the same height, the dots stay at a consistent position, and any
+    // content that doesn't fit (e.g. auto-cycling sub-settings expanded)
+    // just scrolls inside the frame instead of resizing it.
+    val wallpaperScrollState = rememberScrollState()
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
+            .height(pageHeight)
+            .verticalScroll(wallpaperScrollState)
             .padding(horizontal = 20.dp)
             .padding(top = 16.dp, bottom = 40.dp),
         verticalArrangement = Arrangement.spacedBy(20.dp)

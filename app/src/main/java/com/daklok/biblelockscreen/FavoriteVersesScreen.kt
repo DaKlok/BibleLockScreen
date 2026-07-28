@@ -1,8 +1,13 @@
 package com.daklok.biblelockscreen
 
 import com.daklok.biblelockscreen.strings.AppStrings
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -20,34 +25,48 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.input.pointer.positionChange
 import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.Dp
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import kotlin.math.abs
+import kotlin.math.roundToInt
 
 /**
  * Favorite-verses page — the third page of the main [HorizontalPager]
  * (page 0 = lock-screen preview, page 1 = [WallpaperScreen], page 2 = this).
  *
- * The whole page is pinned to a **fixed height** equal to the preview
- * page's height (`screenHeightDp * 0.75f`, same constant `Pixel6LockScreenPreview`
- * uses). That's the fix for "the page turning gets weird once the list is
- * long": if this page's height instead grew with the number of favorites,
- * the pager (which auto-sizes to the current page via `animateContentSize`)
- * would resize — sometimes drastically — every time the user swiped onto
- * or off of it. Pinning the height means favorites just scroll *inside*
- * a stable frame, so page 0 ↔ page 2 transitions never jump, no matter
- * how many verses are saved. The empty state is vertically centered in
- * that same frame so it never looks like a mostly-blank page either.
+ * The whole page is pinned to a **fixed height**. That's the fix for "the
+ * page turning gets weird once the list is long": if this page's height
+ * instead grew with the number of favorites, the pager (which auto-sizes
+ * to the current page via `animateContentSize`) would resize — sometimes
+ * drastically — every time the user swiped onto or off of it. Pinning
+ * the height means favorites just scroll *inside* a stable frame, so
+ * page 0 ↔ page 2 transitions never jump, no matter how many verses are
+ * saved. The empty state is vertically centered in that same frame so it
+ * never looks like a mostly-blank page either.
+ *
+ * Unlike the preview page (pinned to `screenHeightDp * 0.75f` to match
+ * `Pixel6LockScreenPreview`'s phone-mockup proportions), this page has no
+ * verse settings or swipe-down arrow underneath it anymore, so its
+ * [pageHeight] is computed by the caller from the actual space available
+ * rather than a fixed fraction of the screen.
  *
  * Each row is intentionally minimal: tapping the whole card applies that
  * verse as the current wallpaper (mirrors the "tap a thumbnail to select
@@ -63,12 +82,10 @@ fun FavoritesScreen(
     onSetAsWallpaper: (FavoriteVerse) -> Unit,
     onShare: (FavoriteVerse) -> Unit,
     onRemove: (FavoriteVerse) -> Unit,
-    performHaptic: (HapticFeedbackType) -> Unit
+    performHaptic: (HapticFeedbackType) -> Unit,
+    pageHeight: Dp = LocalConfiguration.current.screenHeightDp.dp * 0.88f
 ) {
     var pendingRemove by remember { mutableStateOf<FavoriteVerse?>(null) }
-
-    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
-    val pageHeight = screenHeight * 0.75f
 
     Column(
         modifier = Modifier
@@ -260,43 +277,119 @@ private fun FavoriteVerseRow(
 ) {
     var menuExpanded by remember { mutableStateOf(false) }
 
-    // Swiping left reveals a delete background and opens the confirmation
-    // dialog — it never dismisses the row directly (confirmValueChange
-    // always returns false), so the card springs back while the dialog is
-    // shown, and only actually disappears once the user confirms removal
-    // (which drops it from the `favorites` list passed in from above).
-    val dismissState = rememberSwipeToDismissBoxState(
-        confirmValueChange = { value ->
-            if (value == SwipeToDismissBoxValue.EndToStart) {
-                onDeleteRequest()
-            }
-            false
-        }
-    )
+    // ─────────────────────────────────────────────────────────────────────
+    // Custom one-directional swipe-to-delete.
+    //
+    // Material3's SwipeToDismissBox consumes ALL horizontal drag gestures
+    // once it detects one — even when `enableDismissFromStartToEnd = false`.
+    // That means a rightward swipe (which should navigate the inner
+    // HorizontalPager back to the wallpaper page) gets eaten by the
+    // SwipeToDismissBox instead: the card bounces a few pixels and snaps
+    // back, and the pager never sees the gesture.
+    //
+    // This custom implementation only claims the gesture when the drag is
+    // LEFTWARD (negative X). Rightward drags are never consumed, so they
+    // propagate cleanly to the parent HorizontalPager for page navigation.
+    // ─────────────────────────────────────────────────────────────────────
+    val scope = rememberCoroutineScope()
+    val density = LocalDensity.current
+    val triggerDistance = with(density) { 120.dp.toPx() } // swipe this far left → trigger delete
+    val maxDrag = triggerDistance * 1.5f                  // clamp so card doesn't fly off-screen
+    val offsetX = remember { Animatable(0f) }
 
-    SwipeToDismissBox(
-        state = dismissState,
-        enableDismissFromStartToEnd = false,
-        enableDismissFromEndToStart = true,
-        backgroundContent = {
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .clip(RoundedCornerShape(20.dp))
-                    .background(MaterialTheme.colorScheme.errorContainer)
-                    .padding(horizontal = 24.dp),
-                contentAlignment = Alignment.CenterEnd
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Delete,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onErrorContainer
-                )
+    Box(
+        modifier = Modifier
+            .pointerInput(Unit) {
+                awaitEachGesture {
+                    awaitFirstDown(requireUnconsumed = false)
+                    var totalX = 0f
+                    var totalY = 0f
+                    var dragging = false
+
+                    while (true) {
+                        val event = awaitPointerEvent()
+                        val change = event.changes.firstOrNull() ?: break
+
+                        // Pointer lifted — gesture ended
+                        if (!change.pressed) {
+                            if (dragging) {
+                                scope.launch {
+                                    if (offsetX.value <= -triggerDistance) {
+                                        onDeleteRequest()
+                                    }
+                                    offsetX.animateTo(
+                                        targetValue = 0f,
+                                        animationSpec = spring(
+                                            dampingRatio = Spring.DampingRatioMediumBouncy,
+                                            stiffness = Spring.StiffnessMedium
+                                        )
+                                    )
+                                }
+                            }
+                            break
+                        }
+
+                        val dx = change.positionChange().x
+                        val dy = change.positionChange().y
+                        totalX += dx
+                        totalY += dy
+
+                        if (!dragging) {
+                            // Haven't committed to a direction yet — wait
+                            // until movement exceeds touch slop, then decide.
+                            val slop = viewConfiguration.touchSlop
+                            if (abs(totalX) > slop || abs(totalY) > slop) {
+                                if (abs(totalX) > abs(totalY) && totalX < 0) {
+                                    // Leftward horizontal drag — claim it
+                                    dragging = true
+                                    change.consume()
+                                    scope.launch {
+                                        offsetX.snapTo(
+                                            (offsetX.value + totalX).coerceIn(-maxDrag, 0f)
+                                        )
+                                    }
+                                } else {
+                                    // Rightward or vertical — bail out
+                                    // WITHOUT consuming. The parent
+                                    // HorizontalPager can then claim the
+                                    // gesture for page navigation.
+                                    break
+                                }
+                            }
+                        } else {
+                            // Already tracking a leftward drag — follow finger
+                            change.consume()
+                            scope.launch {
+                                offsetX.snapTo(
+                                    (offsetX.value + dx).coerceIn(-maxDrag, 0f)
+                                )
+                            }
+                        }
+                    }
+                }
             }
-        }
     ) {
+        // Background — delete icon revealed as card slides left
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .clip(RoundedCornerShape(20.dp))
+                .background(MaterialTheme.colorScheme.errorContainer)
+                .padding(horizontal = 24.dp),
+            contentAlignment = Alignment.CenterEnd
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Delete,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.onErrorContainer
+            )
+        }
+
+        // Foreground — the card itself, offset left by the drag amount
         SettingsCard(
-            modifier = Modifier.clickable(onClick = onSetAsWallpaper)
+            modifier = Modifier
+                .offset { IntOffset(offsetX.value.roundToInt(), 0) }
+                .clickable(onClick = onSetAsWallpaper)
         ) {
             Row(verticalAlignment = Alignment.Top) {
                 Column(modifier = Modifier.weight(1f)) {
