@@ -201,6 +201,9 @@ val plStrings = AppStrings(
 
     vdbSourceDefault = "Wbudowane",
     vdbSourceCustom = "Własne",
+    vdbSourceFavoritesDesc = "Ulubione",
+    vdbFavoritesCycling = "Przełączanie %d ulubionych wersetów",
+    vdbFavoritesEmptyCta = "Najpierw dodaj ulubione",
     vdbEmptyCustom = "Brak własnych baz danych",
     vdbEmptyCustomDesc = "Utwórz własną kolekcję wersetów — np. KJV lub inne tłumaczenie.",
     vdbEmptyCustomCta = "Utwórz nową bazę danych",

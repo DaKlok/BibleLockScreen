@@ -18,6 +18,34 @@ Both are required for a complete translation. The app currently supports:
 
 ---
 
+## Fallback behavior (read this — it makes partial translations okay)
+
+**English is the default language.** If a user's system language isn't one
+of the supported languages above, the app falls back to English — not
+Slovak, even though Slovak is the original source language the app was
+first written in.
+
+**Missing strings fall back to English too, one string at a time.** Every
+string in the app has an English default built in. A `StringsXX.kt` file
+only needs to include the fields it has actually translated — any field
+left out simply shows the English text in the running app instead of
+failing to build or showing blank. This means:
+
+- You do **not** need to finish translating all ~230 UI strings before
+  opening a PR. A partial file with 20 translated strings is a perfectly
+  good first contribution — the other ~210 will just show in English
+  until someone (maybe you, in a follow-up PR) translates them.
+- You also don't need to touch `AppStrings.kt` for this — the fallback is
+  automatic. `AppStrings.kt` is only for adding a *new* string key that
+  doesn't exist yet in any language.
+
+This does **not** change the recommendation below to start from
+`StringsTemplate.kt.txt` — it just means you're free to leave lines as
+`<TODO>` (or delete them) instead of feeling like the PR isn't "done"
+until every single line is translated.
+
+---
+
 ## ⚠️ IMPORTANT: Bible copyright rules
 
 Bible translations are **copyrighted works**. You may NOT paste verses from
@@ -60,11 +88,18 @@ Use an ISO 639-1 code in **uppercase**. Examples: `PT` (Portuguese),
 
 ### Step 2 — Create the strings file
 
-1. Copy `StringsEN.kt` and rename it to `StringsXX.kt` (replace `XX` with your code).
-   (There is also a `StringsTemplate.kt.txt` starter file you can use, but
-   copying an existing language is easier because every field is already
-   filled in as a reference.)
-2. Open the file in any text editor (GitHub's web editor works fine).
+1. Copy [`StringsTemplate.kt.txt`](app/src/main/java/com/daklok/biblelockscreen/strings/StringsTemplate.kt.txt)
+   and rename it to `StringsXX.kt` (replace `XX` with your code, and note
+   the extension changes from `.kt.txt` to just `.kt`).
+2. Open the file in any text editor (GitHub's web editor works fine). Every
+   field looks like this:
+   ```kotlin
+   settings = "<TODO>", // "App Settings"
+   ```
+   The `// "App Settings"` part is the English original, there only for
+   context — it's a comment, not code. Replace `<TODO>` with your
+   translation (most editors let you double-click it to select it, then
+   just type over it). **Do not change the property names on the left of `=`.**
 3. Change the top two lines so they read:
    ```kotlin
    package com.daklok.biblelockscreen.strings
@@ -74,9 +109,10 @@ Use an ISO 639-1 code in **uppercase**. Examples: `PT` (Portuguese),
    ```
    Use the **lowercase** code for the variable name (`ptStrings`, `ruStrings`,
    `ukStrings`, etc.).
-4. Replace every English string on the right-hand side of `=` with your
-   translation. **Do not change the property names on the left** — those are
-   the keys the app reads.
+4. Translate as many fields as you have time for. You don't have to finish
+   every single line in one sitting — anything left as `<TODO>` (or simply
+   deleted from the file) falls back to showing English in the app instead
+   of breaking the build. See "Fallback behavior" above.
 5. Preserve any `%s` placeholders verbatim — they are filled in at runtime
    (e.g. `"Active (every day at %s:00)"` becomes `"Ativo (todos os dias às %s:00)"`).
 6. Preserve any escaped quotes (`\"`) and HTML-style markup exactly as in the
@@ -122,15 +158,18 @@ fun getDefaultAppLanguage(): String {
 
 Open `app/src/main/java/com/daklok/biblelockscreen/MainActivity.kt` and find
 the `when` block that maps language codes to string instances (search for
-`"EN" -> enStrings`). Add your case:
+`"EN" -> enStrings`). Add your case — and note the fallback at the bottom
+is `enStrings`, not `skStrings`, even though Slovak was the original
+language the app was written in:
 
 ```kotlin
 "EN" -> enStrings
+"SK" -> skStrings
 "CZ" -> czStrings
 // ... existing cases ...
 "PL" -> plStrings
 "PT" -> ptStrings   // ← add this line
-else -> skStrings
+else -> enStrings
 ```
 
 ### Step 5 — Add the verse content
@@ -155,9 +194,9 @@ submit a partial file with 20 verses and the maintainer can merge it as a
    `i18n: add Portuguese translation (UI + verses)`
 2. Push to your fork and open a Pull Request against `master`.
 3. In the PR description, include:
-   - The language code and name
-   - The Bible version you used (and confirm it's public domain)
-   - Your name/handle for the credits file (see below)
+    - The language code and name
+    - The Bible version you used (and confirm it's public domain)
+    - Your name/handle for the credits file (see below)
 
 The CI workflow will automatically validate your files. If something is
 wrong, it will leave a comment on the PR explaining what to fix.

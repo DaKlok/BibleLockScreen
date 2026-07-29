@@ -206,6 +206,9 @@ val huStrings = AppStrings(
     // Verse language source toggle (in Settings)
     vdbSourceDefault = "Beépített",
     vdbSourceCustom = "Saját",
+    vdbSourceFavoritesDesc = "Kedvencek",
+    vdbFavoritesCycling = "Váltakozás %d kedvenc vers között",
+    vdbFavoritesEmptyCta = "Adj hozzá előbb kedvenceket",
     vdbEmptyCustom = "Még nincsenek saját adatbázisok",
     vdbEmptyCustomDesc = "Hozd létre a saját versgyűjteményedet — például KJV vagy más fordítás.",
     vdbEmptyCustomCta = "Új adatbázis létrehozása",

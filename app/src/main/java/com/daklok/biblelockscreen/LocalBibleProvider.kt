@@ -17,6 +17,7 @@ object LocalBibleProvider {
 
     const val SOURCE_BUILTIN = "BUILTIN"
     const val SOURCE_CUSTOM = "CUSTOM"
+    const val SOURCE_FAVORITES = "FAVORITES"
 
     fun getDefaultLanguage(): String {
         return when (val sysLang = Locale.getDefault().language.uppercase()) {
@@ -30,6 +31,12 @@ object LocalBibleProvider {
      * Loads JSON for a language, respecting the source.
      *
      * - SOURCE_CUSTOM → only loads from the user's custom databases.
+     * - SOURCE_FAVORITES → ignores `lang` entirely and loads every verse
+     *   the user has favorited (they can be a mix of languages/sources —
+     *   that's the point of cycling through "your favorites" as a set).
+     *   Always returns valid JSON, even "[]" when there are none yet, so
+     *   callers see the normal "no verses found" path rather than an
+     *   error.
      * - SOURCE_BUILTIN (default) → only loads from bundled assets.
      *
      * This separation is what lets a user have a custom DB with the same
@@ -42,6 +49,12 @@ object LocalBibleProvider {
                 VerseJsonManager.loadCustomVerses(context, lang)?.let { verses ->
                     if (verses.isNotEmpty()) Gson().toJson(verses) else null
                 }
+            }
+            SOURCE_FAVORITES -> {
+                val favorites = FavoriteVersesManager.listFavorites(context).map { fav ->
+                    Verse(text = fav.text, ref = fav.ref, lang = fav.lang)
+                }
+                Gson().toJson(favorites)
             }
             else -> {
                 try {

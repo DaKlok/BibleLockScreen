@@ -275,8 +275,12 @@ fun MainScreen(
     }
 
     // Strings
+    // Falls back to English for any code that isn't (yet) matched below —
+    // e.g. a language a translator is mid-way through adding, or a stale
+    // "app_lang" pref value left over from a language that got removed.
     val strings = when (appLang) {
         "EN" -> enStrings
+        "SK" -> skStrings
         "CZ" -> czStrings
         "ES" -> esStrings
         "IT" -> itStrings
@@ -284,7 +288,7 @@ fun MainScreen(
         "DE" -> deStrings
         "HU" -> huStrings
         "PL" -> plStrings
-        else -> skStrings
+        else -> enStrings
     }
 
     // Edit Mode a Settings
@@ -532,12 +536,28 @@ fun MainScreen(
     }
 
     // Whether the verse currently shown in the preview is already a
+    // The language to use when checking/adding/removing the *currently
+    // displayed* verse against favorites. Normally this is just verseLang.
+    // But while cycling through favorites (SOURCE_FAVORITES), verseLang is
+    // stale — it's whatever Default/Custom code was last picked, not the
+    // language of whichever favorite happens to be showing right now
+    // (favorites can mix languages). Look the real one up from the
+    // favorites list instead, matched by (text, ref).
+    val effectiveVerseLang = if (verseLangSource == LocalBibleProvider.SOURCE_FAVORITES) {
+        versePair?.let { (text, ref) ->
+            favoritesList.find { it.text == text && it.ref == ref }?.lang
+        } ?: verseLang
+    } else {
+        verseLang
+    }
+
+    // Whether the CURRENTLY DISPLAYED verse (not necessarily verseLang) is a
     // favorite — recomputed whenever the verse, its language, or the
     // favorites list itself changes.
-    val isCurrentVerseFavorite by remember(versePair, verseLang, favoritesRefreshTrigger) {
+    val isCurrentVerseFavorite by remember(versePair, effectiveVerseLang, favoritesRefreshTrigger) {
         mutableStateOf(
             versePair?.let { (text, ref) ->
-                FavoriteVersesManager.isFavorite(context, text, ref, verseLang)
+                FavoriteVersesManager.isFavorite(context, text, ref, effectiveVerseLang)
             } ?: false
         )
     }
@@ -549,8 +569,8 @@ fun MainScreen(
             showNotification(strings.shareFailed, NotificationType.ERROR)
         } else {
             val (text, ref) = current
-            if (FavoriteVersesManager.isFavorite(context, text, ref, verseLang)) {
-                FavoriteVersesManager.removeFavorite(context, text, ref, verseLang)
+            if (FavoriteVersesManager.isFavorite(context, text, ref, effectiveVerseLang)) {
+                FavoriteVersesManager.removeFavorite(context, text, ref, effectiveVerseLang)
                 showNotification(strings.removedFromFavorites, NotificationType.INFO)
             } else {
                 FavoriteVersesManager.addFavorite(
@@ -558,7 +578,7 @@ fun MainScreen(
                     FavoriteVerse(
                         text = text,
                         ref = ref,
-                        lang = verseLang,
+                        lang = effectiveVerseLang,
                         source = if (verseLangSource == LocalBibleProvider.SOURCE_CUSTOM) "custom" else "builtin",
                         addedAt = System.currentTimeMillis()
                     )
@@ -2036,6 +2056,7 @@ fun MainScreen(
                             selectedCode = verseLang,
                             selectedSource = verseLangSource,
                             customDbs = customDbs,
+                            favoritesCount = favoritesList.size,
                             onSelect = { code, source ->
                                 if (verseLang != code || verseLangSource != source) {
                                     verseLang = code
@@ -2060,6 +2081,9 @@ fun MainScreen(
                             onCreateCustom = {
                                 dbSheetOpenCreate = true
                                 showDbSheet = true
+                            },
+                            onGoToFavorites = {
+                                scope2.launch { pagerState.animateScrollToPage(2) }
                             },
                             onSegmentChange = { newSource ->
                                 // The user tapped the segmented toggle. Auto-apply
@@ -2106,6 +2130,20 @@ fun MainScreen(
                                                 scope.launch {
                                                     versePair = LocalBibleProvider.getVerseForInterval(context, code, autoIntervalHours, newSource)
                                                 }
+                                            }
+                                        }
+                                    }
+                                    LocalBibleProvider.SOURCE_FAVORITES -> {
+                                        // No per-segment code to remember here — the source
+                                        // is "all of the user's favorites" as a set, not any
+                                        // single language/database, so verseLang is left as-is
+                                        // (it's simply unused while this source is active).
+                                        if (verseLangSource != newSource) {
+                                            verseLangSource = newSource
+                                            prefs.edit().putString("verse_lang_source", newSource).apply()
+                                            versePair = null
+                                            scope.launch {
+                                                versePair = LocalBibleProvider.getVerseForInterval(context, verseLang, autoIntervalHours, newSource)
                                             }
                                         }
                                     }

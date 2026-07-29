@@ -1553,18 +1553,33 @@ fun VerseLanguagePicker(
     selectedCode: String,
     selectedSource: String,
     customDbs: List<CustomVerseDb>,
+    // Live count of favorited verses — drives the empty-state CTA vs. the
+    // "cycling through N favorites" status row in the Favorites segment.
+    favoritesCount: Int,
     onSelect: (code: String, source: String) -> Unit,
     onCreateCustom: () -> Unit,
-    // Fired when the user taps the Default or Custom segmented button.
-    // The parent uses this to auto-apply the last-selected code for that
-    // segment (so switching back to Default restores e.g. Slovak).
+    // Fired when the empty-favorites CTA is tapped, so the parent can jump
+    // to the Favorites tab (there's nothing to configure here otherwise).
+    onGoToFavorites: () -> Unit = {},
+    // Fired when the user taps the Default, Custom, or Favorites segmented
+    // button. The parent uses this to auto-apply the last-selected code
+    // for that segment (so switching back to Default restores e.g. Slovak).
     onSegmentChange: (source: String) -> Unit = {}
 ) {
     val haptic = LocalHapticFeedback.current
     // The active segment is driven by selectedSource — this is the key fix:
     // a custom DB with code "EN" no longer pretends to be the built-in "EN".
     val isCustomSelected = selectedSource == LocalBibleProvider.SOURCE_CUSTOM
-    var segment by remember(isCustomSelected) { mutableStateOf(if (isCustomSelected) 1 else 0) }
+    val isFavoritesSelected = selectedSource == LocalBibleProvider.SOURCE_FAVORITES
+    var segment by remember(isCustomSelected, isFavoritesSelected) {
+        mutableStateOf(
+            when {
+                isFavoritesSelected -> 2
+                isCustomSelected -> 1
+                else -> 0
+            }
+        )
+    }
     // Which picker dialog is open: 0 = none, 1 = default, 2 = custom
     var dialogOpen by remember { mutableStateOf(0) }
 
@@ -1575,7 +1590,11 @@ fun VerseLanguagePicker(
             fontWeight = FontWeight.Medium
         )
 
-        // ── Default / Custom segmented toggle ────────────────────────────
+        // ── Default / Custom / Favorites segmented toggle ────────────────
+        // The Favorites segment is icon-only (a heart) rather than a text
+        // label — with three segments sharing the row, a translated label
+        // like "Favorites" would either wrap or get truncated in several
+        // languages, where a heart reads unambiguously at any width.
         SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
             SegmentedButton(
                 selected = segment == 0,
@@ -1585,9 +1604,11 @@ fun VerseLanguagePicker(
                     dialogOpen = 0
                     // Notify parent so it can auto-apply the last-selected
                     // built-in code. Only fires when actually switching.
-                    if (isCustomSelected) onSegmentChange(LocalBibleProvider.SOURCE_BUILTIN)
+                    if (selectedSource != LocalBibleProvider.SOURCE_BUILTIN) {
+                        onSegmentChange(LocalBibleProvider.SOURCE_BUILTIN)
+                    }
                 },
-                shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2)
+                shape = SegmentedButtonDefaults.itemShape(index = 0, count = 3)
             ) { Text(strings.vdbSourceDefault, maxLines = 1) }
 
             SegmentedButton(
@@ -1600,8 +1621,26 @@ fun VerseLanguagePicker(
                     // custom code (or the first custom DB if none yet).
                     if (!isCustomSelected) onSegmentChange(LocalBibleProvider.SOURCE_CUSTOM)
                 },
-                shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2)
+                shape = SegmentedButtonDefaults.itemShape(index = 1, count = 3)
             ) { Text(strings.vdbSourceCustom, maxLines = 1) }
+
+            SegmentedButton(
+                selected = segment == 2,
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    segment = 2
+                    dialogOpen = 0
+                    // Notify parent so it can start cycling favorites.
+                    if (!isFavoritesSelected) onSegmentChange(LocalBibleProvider.SOURCE_FAVORITES)
+                },
+                shape = SegmentedButtonDefaults.itemShape(index = 2, count = 3)
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Favorite,
+                    contentDescription = strings.vdbSourceFavoritesDesc,
+                    modifier = Modifier.size(18.dp)
+                )
+            }
         }
 
         // ── Compact dropdown button / CTA per segment ────────────────────
@@ -1659,6 +1698,53 @@ fun VerseLanguagePicker(
                         Text(buttonLabel)
                         Spacer(modifier = Modifier.weight(1f))
                         Icon(Icons.Default.ArrowDropDown, null)
+                    }
+                }
+            }
+            2 -> {
+                if (favoritesCount == 0) {
+                    OutlinedButton(
+                        onClick = {
+                            haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                            onGoToFavorites()
+                        },
+                        modifier = Modifier.fillMaxWidth().height(48.dp),
+                        shape = RoundedCornerShape(14.dp),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)
+                        ),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.4f))
+                    ) {
+                        Icon(Icons.Filled.Favorite, null, modifier = Modifier.size(18.dp), tint = MaterialTheme.colorScheme.primary)
+                        Spacer(Modifier.width(8.dp))
+                        Text(strings.vdbFavoritesEmptyCta, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Medium)
+                    }
+                } else {
+                    // Just a status row, not a button — there's nothing left
+                    // to pick here; the source is "all of your favorites".
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(48.dp)
+                            .background(
+                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+                                RoundedCornerShape(14.dp)
+                            )
+                            .padding(horizontal = 14.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            Icons.Filled.Favorite,
+                            null,
+                            modifier = Modifier.size(16.dp),
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        Text(
+                            String.format(strings.vdbFavoritesCycling, favoritesCount),
+                            style = MaterialTheme.typography.bodyMedium,
+                            maxLines = 1
+                        )
                     }
                 }
             }

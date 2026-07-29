@@ -216,6 +216,9 @@ val skStrings = AppStrings(
     // Verse language source toggle (in Settings)
     vdbSourceDefault = "Vstavané",
     vdbSourceCustom = "Vlastné",
+    vdbSourceFavoritesDesc = "Obľúbené",
+    vdbFavoritesCycling = "Striedanie %d obľúbených veršov",
+    vdbFavoritesEmptyCta = "Najprv pridaj nejaké obľúbené",
     vdbEmptyCustom = "Zatiaľ žiadne vlastné databázy",
     vdbEmptyCustomDesc = "Vytvor si vlastnú zbierku veršov — napríklad pre KJV alebo iný preklad.",
     vdbEmptyCustomCta = "Vytvoriť novú databázu",

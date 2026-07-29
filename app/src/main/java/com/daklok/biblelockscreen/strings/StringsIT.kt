@@ -205,6 +205,9 @@ val itStrings = AppStrings(
     // Verse language source toggle (in Settings)
     vdbSourceDefault = "Predefinite",
     vdbSourceCustom = "Personalizzate",
+    vdbSourceFavoritesDesc = "Preferiti",
+    vdbFavoritesCycling = "Ciclo tra %d versetti preferiti",
+    vdbFavoritesEmptyCta = "Aggiungi prima dei preferiti",
     vdbEmptyCustom = "Nessun database personalizzato",
     vdbEmptyCustomDesc = "Crea la tua raccolta di versetti, ad esempio KJV o un'altra traduzione.",
     vdbEmptyCustomCta = "Crea nuovo database",
