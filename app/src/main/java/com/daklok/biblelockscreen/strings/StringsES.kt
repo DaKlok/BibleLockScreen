@@ -205,7 +205,7 @@ val esStrings = AppStrings(
     // Verse language source toggle (in Settings)
     vdbSourceDefault = "Predeterminadas",
     vdbSourceCustom = "Personalizadas",
-    vdbSourceFavoritesDesc = "Favoritos",
+    vdbSourceFavorites = "Favoritos",
     vdbFavoritesCycling = "Alternando entre %d versículos favoritos",
     vdbFavoritesEmptyCta = "Añade primero algunos favoritos",
     vdbEmptyCustom = "Aún no hay bases de datos personalizadas",

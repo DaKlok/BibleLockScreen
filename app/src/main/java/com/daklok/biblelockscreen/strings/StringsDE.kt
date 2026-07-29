@@ -205,7 +205,7 @@ val deStrings = AppStrings(
     // Verse language source toggle (in Settings)
     vdbSourceDefault = "Standard",
     vdbSourceCustom = "Eigene",
-    vdbSourceFavoritesDesc = "Favoriten",
+    vdbSourceFavorites = "Favoriten",
     vdbFavoritesCycling = "Wechsel zwischen %d Favoriten-Versen",
     vdbFavoritesEmptyCta = "Füge zuerst Favoriten hinzu",
     vdbEmptyCustom = "Noch keine eigenen Datenbanken",

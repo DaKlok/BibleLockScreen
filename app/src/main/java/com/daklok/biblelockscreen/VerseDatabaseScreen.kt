@@ -1591,10 +1591,6 @@ fun VerseLanguagePicker(
         )
 
         // ── Default / Custom / Favorites segmented toggle ────────────────
-        // The Favorites segment is icon-only (a heart) rather than a text
-        // label — with three segments sharing the row, a translated label
-        // like "Favorites" would either wrap or get truncated in several
-        // languages, where a heart reads unambiguously at any width.
         SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
             SegmentedButton(
                 selected = segment == 0,
@@ -1634,13 +1630,7 @@ fun VerseLanguagePicker(
                     if (!isFavoritesSelected) onSegmentChange(LocalBibleProvider.SOURCE_FAVORITES)
                 },
                 shape = SegmentedButtonDefaults.itemShape(index = 2, count = 3)
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Favorite,
-                    contentDescription = strings.vdbSourceFavoritesDesc,
-                    modifier = Modifier.size(18.dp)
-                )
-            }
+            ) { Text(strings.vdbSourceFavorites, maxLines = 1) }
         }
 
         // ── Compact dropdown button / CTA per segment ────────────────────

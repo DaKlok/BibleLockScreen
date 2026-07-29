@@ -29,6 +29,9 @@ import java.util.Locale
 // below with its English text as the default — that's the one place
 // English text for a field lives now.
 
+// Every default value below IS the English text — there's no separate
+// StringsEN.kt to keep in sync anymore, this is the single source of truth
+// for it. When you change a string's English wording, change it here.
 data class AppStrings(
     val test: String = "Generate",
     val generatingBtn: String = "Generating...",
@@ -234,7 +237,7 @@ data class AppStrings(
     // Verse language source toggle (in Settings)
     val vdbSourceDefault: String = "Default",
     val vdbSourceCustom: String = "Custom",
-    val vdbSourceFavoritesDesc: String = "Favorites",
+    val vdbSourceFavorites: String = "Favorites",
     val vdbFavoritesCycling: String = "Cycling through %d favorite verses",
     val vdbFavoritesEmptyCta: String = "Add some favorites first",
     val vdbEmptyCustom: String = "No custom databases yet",

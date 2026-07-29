@@ -205,7 +205,7 @@ val czStrings = AppStrings(
     // Verse language source toggle (in Settings)
     vdbSourceDefault = "Vestavěné",
     vdbSourceCustom = "Vlastní",
-    vdbSourceFavoritesDesc = "Oblíbené",
+    vdbSourceFavorites = "Oblíbené",
     vdbFavoritesCycling = "Střídání %d oblíbených veršů",
     vdbFavoritesEmptyCta = "Nejdřív přidej nějaké oblíbené",
     vdbEmptyCustom = "Zatím žádné vlastní databáze",

@@ -201,7 +201,7 @@ val plStrings = AppStrings(
 
     vdbSourceDefault = "Wbudowane",
     vdbSourceCustom = "Własne",
-    vdbSourceFavoritesDesc = "Ulubione",
+    vdbSourceFavorites = "Ulubione",
     vdbFavoritesCycling = "Przełączanie %d ulubionych wersetów",
     vdbFavoritesEmptyCta = "Najpierw dodaj ulubione",
     vdbEmptyCustom = "Brak własnych baz danych",
