@@ -250,5 +250,13 @@ val huStrings = AppStrings(
     confirmRemoveFavoriteDesc = "Ez az igevers törlődik a kedvenceid közül.",
     addedToFavorites = "Igevers hozzáadva a kedvencekhez",
     removedFromFavorites = "Igevers eltávolítva a kedvencek közül",
-    addedOn = "Hozzáadva: %s"
+    addedOn = "Hozzáadva: %s",
+    favoritesSubtitle = "Koppints egy versre, hogy háttérkép legyen",
+    favCardStyleLabel = "Kedvenc kártyastílus",
+    favCardStyleQuote = "Részletes",
+    favCardStyleCompact = "Kompakt",
+    favCardStyleHero = "Idézet",
+    favCardStyleQuoteDesc = "Vers műveletsávval",
+    favCardStyleCompactDesc = "Kompakt sor",
+    favCardStyleHeroDesc = "Nagy, poszterszerű idézet"
 )

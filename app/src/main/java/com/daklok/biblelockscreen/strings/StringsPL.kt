@@ -245,5 +245,13 @@ val plStrings = AppStrings(
     confirmRemoveFavoriteDesc = "Ten werset zostanie usunięty z Twoich ulubionych.",
     addedToFavorites = "Werset dodany do ulubionych",
     removedFromFavorites = "Werset usunięty z ulubionych",
-    addedOn = "Dodano %s"
+    addedOn = "Dodano %s",
+    favoritesSubtitle = "Dotknij wersetu, aby ustawić go jako tapetę",
+    favCardStyleLabel = "Styl karty ulubionych",
+    favCardStyleQuote = "Szczegółowy",
+    favCardStyleCompact = "Kompaktowy",
+    favCardStyleHero = "Cytat",
+    favCardStyleQuoteDesc = "Werset z paskiem akcji",
+    favCardStyleCompactDesc = "Kompaktowy wiersz",
+    favCardStyleHeroDesc = "Duży cytat jak plakat"
 )

@@ -279,7 +279,26 @@ data class AppStrings(
     val confirmRemoveFavoriteDesc: String = "This verse will be removed from your favorites.",
     val addedToFavorites: String = "Verse added to favorites",
     val removedFromFavorites: String = "Verse removed from favorites",
-    val addedOn: String = "Added %s"
+    val addedOn: String = "Added %s",
+    // Subtitle under the Favorites page header — same pattern as wpScreenSubtitle.
+    val favoritesSubtitle: String = "Tap a verse to make it your wallpaper",
+    // --- Favorite card style (Settings → Appearance) ---
+    val favCardStyleLabel: String = "Favorite card style",
+    val favCardStyleQuote: String = "Detailed",
+    val favCardStyleCompact: String = "Compact",
+    val favCardStyleHero: String = "Quote",
+    val favCardStyleQuoteDesc: String = "Verse with an action bar",
+    val favCardStyleCompactDesc: String = "Compact list row",
+    val favCardStyleHeroDesc: String = "Large, poster-like quote",
+    // --- Favorite multi-select (bulk delete) ---
+    val favSelectMode: String = "Select",
+    val favDeleteSelected: String = "Remove selected",
+    val favSelected: String = "selected",
+    val favSelectAll: String = "Select all",
+    val favDeselectAll: String = "Deselect all",
+    val favDeleteConfirm: String = "Remove selected verses?",
+    val favDeleteConfirmDesc: String = "These verses will be removed from your favorites.",
+    val favRemovedCount: String = "%d verses removed"
 )
 
 // --- LANGUAGE DETECTION ---

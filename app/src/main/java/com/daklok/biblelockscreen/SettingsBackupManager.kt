@@ -28,6 +28,14 @@ import java.util.zip.ZipOutputStream
  * Restore writes everything back and the caller should recreate() the Activity
  * so all `remember { prefs... }` state re-initializes from the freshly-written
  * SharedPreferences.
+ *
+ * Note: `prefs.json` is written generically — it dumps *every* key in
+ * `bible_app_prefs`. That means any new preference added to the app is
+ * backed up/restored for free as long as it's stored in SharedPreferences
+ * (which is the established pattern — e.g. `favorite_card_style`, the
+ * theme mode, haptics toggle, etc.). Only data kept in separate files
+ * (wallpapers, favorite_verses.json, custom verse DBs) needs an explicit
+ * export/import branch below.
  */
 object SettingsBackupManager {
 

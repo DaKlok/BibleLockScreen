@@ -249,5 +249,13 @@ val deStrings = AppStrings(
     confirmRemoveFavoriteDesc = "Dieser Vers wird aus deinen Favoriten entfernt.",
     addedToFavorites = "Vers zu Favoriten hinzugefügt",
     removedFromFavorites = "Vers aus Favoriten entfernt",
-    addedOn = "Hinzugefügt am %s"
+    addedOn = "Hinzugefügt am %s",
+    favoritesSubtitle = "Tippe auf einen Vers, um ihn als Hintergrund festzulegen",
+    favCardStyleLabel = "Favoriten-Kartenstil",
+    favCardStyleQuote = "Detailliert",
+    favCardStyleCompact = "Kompakt",
+    favCardStyleHero = "Zitat",
+    favCardStyleQuoteDesc = "Vers mit Aktionsleiste",
+    favCardStyleCompactDesc = "Kompakte Zeile",
+    favCardStyleHeroDesc = "Großes Zitat wie ein Poster"
 )

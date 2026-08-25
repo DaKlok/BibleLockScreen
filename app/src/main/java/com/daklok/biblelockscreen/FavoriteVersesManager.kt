@@ -23,6 +23,38 @@ data class FavoriteVerse(
 )
 
 /**
+ * Visual style used to render a favorite-verse card on the Favorites page.
+ *
+ * The user picks this in Settings → Appearance. It only affects presentation,
+ * not data — every style renders the same [FavoriteVerse] and offers the same
+ * actions (set as wallpaper / share / swipe-remove), so switching it never
+ * changes what's stored.
+ *
+ * Values are stored in prefs as their [name] (see [FavoriteCardStyle.fromPref]),
+ * which keeps old installs forward-compatible: an unrecognized value (or an
+ * app downgrade) gracefully falls back to the default instead of crashing.
+ */
+enum class FavoriteCardStyle {
+    /** Verse-as-headline with a divider + explicit action row below. */
+    QUOTE,
+
+    /** Compact one-liner-ish card: pill + text + trailing icons in a row. */
+    COMPACT,
+
+    /** Large, almost-poster-like quote with a small attribution line. */
+    HERO;
+
+    companion object {
+        /** Preference key this style is stored under. */
+        const val PREF_KEY = "favorite_card_style"
+
+        /** Parses a stored pref value; falls back to [QUOTE] for anything unknown/blank. */
+        fun fromPref(value: String?): FavoriteCardStyle =
+            entries.firstOrNull { it.name == value } ?: QUOTE
+    }
+}
+
+/**
  * Stores the user's favorite verses in `filesDir/favorite_verses.json`.
  *
  * Follows the same on-disk-JSON pattern as [VerseJsonManager] (no Room, no

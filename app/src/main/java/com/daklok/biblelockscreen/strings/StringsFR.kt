@@ -249,5 +249,13 @@ val frStrings = AppStrings(
     confirmRemoveFavoriteDesc = "Ce verset sera retiré de vos favoris.",
     addedToFavorites = "Verset ajouté aux favoris",
     removedFromFavorites = "Verset retiré des favoris",
-    addedOn = "Ajouté le %s"
+    addedOn = "Ajouté le %s",
+    favoritesSubtitle = "Touchez un verset pour en faire votre fond d'écran",
+    favCardStyleLabel = "Style de carte favoris",
+    favCardStyleQuote = "Détaillé",
+    favCardStyleCompact = "Compact",
+    favCardStyleHero = "Citation",
+    favCardStyleQuoteDesc = "Verset avec barre d'actions",
+    favCardStyleCompactDesc = "Ligne compacte",
+    favCardStyleHeroDesc = "Grande citation façon poster"
 )

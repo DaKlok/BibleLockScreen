@@ -249,5 +249,13 @@ val czStrings = AppStrings(
     confirmRemoveFavoriteDesc = "Tento verš bude odebrán z vašich oblíbených.",
     addedToFavorites = "Verš přidán do oblíbených",
     removedFromFavorites = "Verš odebrán z oblíbených",
-    addedOn = "Přidáno %s"
+    addedOn = "Přidáno %s",
+    favoritesSubtitle = "Klepnutím na verš ho nastavíte jako tapetu",
+    favCardStyleLabel = "Styl karty oblíbených",
+    favCardStyleQuote = "Detailní",
+    favCardStyleCompact = "Kompaktní",
+    favCardStyleHero = "Citát",
+    favCardStyleQuoteDesc = "Verš s panelem akcí",
+    favCardStyleCompactDesc = "Kompaktní řádek",
+    favCardStyleHeroDesc = "Velký citát jako plakát"
 )

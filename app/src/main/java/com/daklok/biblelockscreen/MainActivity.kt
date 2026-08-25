@@ -249,6 +249,12 @@ fun MainScreen(
     var useHaptics by remember { mutableStateOf(prefs.getBoolean("use_haptics", true)) }
     // 0 = Lock screen only, 1 = Home screen only, 2 = Both
     var wallpaperTarget by remember { mutableIntStateOf(prefs.getInt("wallpaper_target", 0)) }
+    // How favorite-verse cards are rendered on the Favorites page. Pure
+    // presentation choice (see FavoriteCardStyle); defaults to QUOTE so
+    // existing users get the new, richer layout rather than a sudden switch.
+    var favoriteCardStyle by remember {
+        mutableStateOf(FavoriteCardStyle.fromPref(prefs.getString(FavoriteCardStyle.PREF_KEY, FavoriteCardStyle.QUOTE.name)))
+    }
 
     var appLang by remember { mutableStateOf(prefs.getString("app_lang", defaultSystemLang) ?: defaultSystemLang) }
     var verseLang by remember { mutableStateOf(prefs.getString("verse_lang", defaultSystemLang) ?: defaultSystemLang) }
@@ -992,6 +998,7 @@ fun MainScreen(
                                 strings = strings,
                                 appLang = appLang,
                                 favorites = favoritesList,
+                                cardStyle = favoriteCardStyle,
                                 onSetAsWallpaper = { fav ->
                                     disableAutoVerseChangeIfActive()
                                     prefs.edit()
@@ -2256,6 +2263,35 @@ fun MainScreen(
                                 Switch(checked = useDynamicColor, onCheckedChange = { onDynamicColorChange(it) })
                             }
                         }
+
+                        // Favorite card style — three live previews so the user
+                        // picks by look, not by label. Each preview is a real
+                        // (non-interactive) miniature of the matching card style
+                        // so the choice is unambiguous.
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(
+                                Icons.Filled.Star,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Text(strings.favCardStyleLabel, style = MaterialTheme.typography.bodyMedium)
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        FavoriteCardStylePicker(
+                            selected = favoriteCardStyle,
+                            strings = strings,
+                            onSelect = {
+                                favoriteCardStyle = it
+                                prefs.edit().putString(FavoriteCardStyle.PREF_KEY, it.name).apply()
+                                performHaptic(HapticFeedbackType.TextHandleMove)
+                            }
+                        )
                     }
 
                     Spacer(Modifier.height(24.dp))

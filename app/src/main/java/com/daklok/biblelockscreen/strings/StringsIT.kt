@@ -249,5 +249,13 @@ val itStrings = AppStrings(
     confirmRemoveFavoriteDesc = "Questo versetto verrà rimosso dai tuoi preferiti.",
     addedToFavorites = "Versetto aggiunto ai preferiti",
     removedFromFavorites = "Versetto rimosso dai preferiti",
-    addedOn = "Aggiunto %s"
+    addedOn = "Aggiunto %s",
+    favoritesSubtitle = "Tocca un versetto per impostarlo come sfondo",
+    favCardStyleLabel = "Stile scheda preferiti",
+    favCardStyleQuote = "Dettagliato",
+    favCardStyleCompact = "Compatto",
+    favCardStyleHero = "Citazione",
+    favCardStyleQuoteDesc = "Versetto con barra azioni",
+    favCardStyleCompactDesc = "Riga compatta",
+    favCardStyleHeroDesc = "Citazione grande come poster"
 )
