@@ -44,6 +44,16 @@ This does **not** change the recommendation below to start from
 `<TODO>` (or delete them) instead of feeling like the PR isn't "done"
 until every single line is translated.
 
+> **Note on the file format.** `AppStrings` is a regular Kotlin `class`
+> with `var` fields + English defaults — it used to be a `data class`, but
+> with ~250 string fields the synthetic default-args constructor exceeded
+> the JVM method-parameter limit and crashed the app on launch
+> (`VerifyError: StringsENKt.<clinit>`). That's why `StringsXX.kt` files
+> look like `val xxStrings = AppStrings().apply { field = "..." }` rather
+> than the more familiar `AppStrings(field = "...")` constructor-call
+> syntax. Omitted fields in the `apply` block simply keep the English
+> default — same partial-translation workflow as before.
+
 ---
 
 ## ⚠️ IMPORTANT: Bible copyright rules
@@ -94,21 +104,26 @@ Use an ISO 639-1 code in **uppercase**. Examples: `PT` (Portuguese),
 2. Open the file in any text editor (GitHub's web editor works fine). Every
    field looks like this:
    ```kotlin
-   settings = "<TODO>", // "App Settings"
+   settings = "<TODO>" // "App Settings"
    ```
    The `// "App Settings"` part is the English original, there only for
    context — it's a comment, not code. Replace `<TODO>` with your
    translation (most editors let you double-click it to select it, then
    just type over it). **Do not change the property names on the left of `=`.**
+   Note: there is **no comma** at the end of the line — the file uses the
+   `AppStrings().apply { ... }` block syntax (assignments separated by
+   newlines), not the old constructor-argument syntax.
 3. Change the top two lines so they read:
    ```kotlin
    package com.daklok.biblelockscreen.strings
 
    // ptStrings -- Portuguese translation by <Your Name>
-   val ptStrings = AppStrings(
+   val ptStrings = AppStrings().apply {
    ```
    Use the **lowercase** code for the variable name (`ptStrings`, `ruStrings`,
-   `ukStrings`, etc.).
+   `ukStrings`, etc.). The `apply { ... }` block opens here and closes with
+   a matching `}` at the bottom of the file (above the optional
+   `xxLocalizedLangNames` section — see Step 4b).
 4. Translate as many fields as you have time for. You don't have to finish
    every single line in one sitting — anything left as `<TODO>` (or simply
    deleted from the file) falls back to showing English in the app instead
@@ -172,6 +187,42 @@ language the app was written in:
 else -> enStrings
 ```
 
+### Step 4b — Optional: localized language names map
+
+This step is **optional** — if you skip it, the Settings → App Language /
+Verse Language pickers will still work, they'll just show language names
+in English (e.g. a Slovak user would see `"Slovenčina (Slovak)"` instead
+of `"Slovenčina"`).
+
+If you want language names displayed in your language too (e.g. a Slovak
+user sees `"Italiano (Taliančina)"` instead of `"Italiano (Italian)"`),
+edit your `StringsXX.kt` file:
+
+1. At the bottom of the file (after the closing `}` of the `apply` block),
+   add a top-level `val` like this (rename `xx` to your lowercase code,
+   e.g. `ptLocalizedLangNames`):
+   ```kotlin
+   val ptLocalizedLangNames: Map<String, String> = mapOf(
+       "EN" to "Inglês",
+       "SK" to "Eslovaco",
+       "CZ" to "Checo",
+       // ... one entry per supported language, in YOUR language
+   )
+   ```
+2. Open `AppStrings.kt` and find the `localizedLangNamesFor()` function.
+   Add your case to the `when` block:
+   ```kotlin
+   fun localizedLangNamesFor(appLang: String): Map<String, String> = when (appLang) {
+       "EN" -> enLocalizedLangNames
+       // ... existing cases ...
+       "PT" -> ptLocalizedLangNames   // ← add this line
+       else -> enLocalizedLangNames
+   }
+   ```
+
+That's it — the `langLabel()` function will automatically pick your map
+when your language is the active app language.
+
 ### Step 5 — Add the verse content
 
 Without verse content, users selecting your language will see UI in your
@@ -230,8 +281,11 @@ python3 scripts/validate_translations.py
 ```
 
 It checks:
-- Every property assigned in a `StringsXX.kt` file exists in the `AppStrings`
-  schema (catches typos).
+- Every property assigned in a `StringsXX.kt` file exists as a `var` field
+  on the `AppStrings` class (catches typos). Note: if you maintain this
+  script and the codebase was previously using `data class AppStrings(field: ...)`
+  constructor parameters, the parser needs to read `var` property declarations
+  in the class body instead — see `AppStrings.kt` for the current shape.
 - Every language code in `availableLanguages` has a corresponding
   `StringsXX.kt` file, and vice versa.
 - Every `verses_XX.json` file is valid JSON and every entry has the

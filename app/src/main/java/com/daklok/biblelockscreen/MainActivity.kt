@@ -2051,7 +2051,8 @@ fun MainScreen(
                                 prefs.edit().putString("app_lang", it).apply()
                             },
                             dismissLabel = strings.cancel,
-                            dialogIcon = Icons.Default.Language
+                            dialogIcon = Icons.Default.Language,
+                            appLang = appLang
                         )
                         HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
                         // Verse language is now selected via the new picker —
@@ -2155,7 +2156,8 @@ fun MainScreen(
                                         }
                                     }
                                 }
-                            }
+                            },
+                            appLang = appLang
                         )
                     }
 
@@ -2507,7 +2509,48 @@ fun MainScreen(
                 onDbChanged = {
                     customDbs = VerseJsonManager.listCustomDatabases(context)
                 },
-                openCreate = dbSheetOpenCreate
+                openCreate = dbSheetOpenCreate,
+                // The "Use" button on each custom DB row. Lets the user
+                // activate a database directly from the manager screen — the
+                // discoverability fix for the "imported but couldn't use"
+                // case. Switches source to CUSTOM, applies the code as the
+                // active verse language, persists prefs, dismisses the sheet,
+                // and reloads the current verse.
+                onUseCustom = { code ->
+                    val normalizedCode = code.uppercase()
+                    val needsReload = verseLang != normalizedCode ||
+                        verseLangSource != LocalBibleProvider.SOURCE_CUSTOM
+                    verseLang = normalizedCode
+                    verseLangSource = LocalBibleProvider.SOURCE_CUSTOM
+                    lastCustomCode = normalizedCode
+                    prefs.edit().putString("verse_lang", normalizedCode).apply()
+                    prefs.edit().putString(
+                        "verse_lang_source",
+                        LocalBibleProvider.SOURCE_CUSTOM
+                    ).apply()
+                    prefs.edit().putString("last_custom_code", normalizedCode).apply()
+                    showDbSheet = false
+                    if (needsReload) {
+                        versePair = null
+                        scope.launch {
+                            versePair = LocalBibleProvider.getVerseForInterval(
+                                context,
+                                normalizedCode,
+                                autoIntervalHours,
+                                LocalBibleProvider.SOURCE_CUSTOM
+                            )
+                        }
+                    }
+                    showNotification(
+                        "${strings.vdbUsed} · $normalizedCode",
+                        NotificationType.SUCCESS
+                    )
+                },
+                // Highlight the row whose code matches the currently-active
+                // custom source — null when no custom DB is active.
+                activeCustomCode = if (verseLangSource == LocalBibleProvider.SOURCE_CUSTOM) {
+                    verseLang
+                } else null
             )
         }
 
@@ -2832,10 +2875,28 @@ fun LanguageDropdown(
     showLabel: Boolean = true,
     onSelect: (String) -> Unit,
     dismissLabel: String = "Cancel",
-    dialogIcon: androidx.compose.ui.graphics.vector.ImageVector? = null
+    dialogIcon: androidx.compose.ui.graphics.vector.ImageVector? = null,
+    // When provided, each picker entry is rendered as "Native (Localized)"
+    // — e.g. a Slovak user sees "Italiano (Taliančina)". Pass the active
+    // app language code (e.g. "SK"); null preserves the old behavior of
+    // showing only the native endonym.
+    //
+    // Why this takes `appLang` (not the AppStrings instance): the localized
+    // language-name map lives at the top level of the strings package
+    // (outside the AppStrings data class) — AppStrings is already at the JVM
+    // constructor-parameter ceiling, so adding it as a field would trigger a
+    // VerifyError crash on StringsENKt.<clinit>.
+    appLang: String? = null
 ) {
     var expanded by remember { mutableStateOf(false) }
     val selectedLabel = options.find { it.first == selectedCode }?.second ?: selectedCode
+    // Render the selected button label with the localized parenthetical
+    // too, so the inline button matches what the user saw in the dialog.
+    val selectedDisplay = if (appLang != null) {
+        options.find { it.first == selectedCode }?.let { (code, native) ->
+            langLabel(appLang, code, native)
+        } ?: selectedCode
+    } else selectedLabel
 
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (showLabel) {
@@ -2846,7 +2907,7 @@ fun LanguageDropdown(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(14.dp)
         ) {
-            Text(selectedLabel)
+            Text(selectedDisplay)
             Spacer(modifier = Modifier.weight(1f))
             Icon(Icons.Default.ArrowDropDown, null)
         }
@@ -2858,7 +2919,12 @@ fun LanguageDropdown(
             title = label,
             dismissLabel = dismissLabel,
             icon = dialogIcon,
-            items = options.map { (code, name) -> LanguagePickerItem(code = code, title = name) },
+            items = options.map { (code, name) ->
+                LanguagePickerItem(
+                    code = code,
+                    title = if (appLang != null) langLabel(appLang, code, name) else name
+                )
+            },
             selectedCode = selectedCode,
             onSelect = {
                 onSelect(it)
@@ -4846,4 +4912,4 @@ fun scheduleWallpaperCycling(context: Context) {
             scheduleExactWallpaperAlarm(context, "WallpaperCycling", System.currentTimeMillis() + initialDelayMs, "wallpaper")
         }
     }
-}
+}

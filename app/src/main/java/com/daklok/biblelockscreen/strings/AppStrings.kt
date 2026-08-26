@@ -32,274 +32,276 @@ import java.util.Locale
 // Every default value below IS the English text — there's no separate
 // StringsEN.kt to keep in sync anymore, this is the single source of truth
 // for it. When you change a string's English wording, change it here.
-data class AppStrings(
-    val test: String = "Generate",
-    val generatingBtn: String = "Generating...",
-    val generating: String = "Generating wallpaper...",
-    val done: String = "Done",
-    val updateTime: String = "Time of daily update",
-    val tapToEdit: String = "Tap to edit position and size",
-    val appName: String = "Bible Lock Screen",
-    val settings: String = "App Settings",
-    val dailyWallpaper: String = "Daily Wallpaper Change",
-    val active: String = "Active (every day at %s:00)",
-    val inactive: String = "Disabled",
-    val textCustomization: String = "Text Customization",
-    val bold: String = "Bold",
-    val shadow: String = "Shadow",
-    val textSize: String = "Text Size",
-    val textWidth: String = "Text Width",
-    val textHeight: String = "Text Position",
-    val textAlpha: String = "Transparency",
-    val bgBlur: String = "Background Blur",
-    val bgDarknessLabel: String = "Background Darkness",
-    val anotherPhoto: String = "Change Photo",
-    val selectPhotoFirst: String = "Select a photo first",
-    val appearance: String = "Appearance",
-    val system: String = "System",
-    val light: String = "Light",
-    val dark: String = "Dark",
-    val dynamicColor: String = "Material You (System Colors)",
-    val haptics: String = "Haptic Feedback",
-    val hapticsDesc: String = "Vibrations when editing the widget",
-    val support: String = "Support",
-    val supportDesc: String = "If you like the app and want to support its development, you can buy me a coffee ☕",
-    val donate: String = "Donate",
-    val close: String = "Close",
-    val dragHint: String = "Drag dots for size and width\nDrag the center to move",
-    val cancel: String = "Cancel",
-    val clickToSelect: String = "Tap to select photo",
-    val loading: String = "Loading verse...",
-    val appLanguage: String = "App Language",
-    val verseLanguage: String = "Verse Language",
-    val language: String = "Language",
-    val dailyWorkerOn: String = "Enabled!\nWallpaper will change tomorrow at %s:00.",
-    val dailyWorkerOff: String = "Daily change disabled.",
-    val fontModern: String = "Modern",
-    val fontBook: String = "Book",
-    val fontMono: String = "Typewriter",
-    val fontCursive: String = "Cursive",
-    val fontLight: String = "Light",
-    val fontCondensed: String = "Condensed",
-    val langSk: String = "Slovenčina",
-    val langEn: String = "English",
-    val langCz: String = "Čeština",
+class AppStrings {
+    var test: String = "Generate"
+    var generatingBtn: String = "Generating..."
+    var generating: String = "Generating wallpaper..."
+    var done: String = "Done"
+    var updateTime: String = "Time of daily update"
+    var tapToEdit: String = "Tap to edit position and size"
+    var appName: String = "Bible Lock Screen"
+    var settings: String = "App Settings"
+    var dailyWallpaper: String = "Daily Wallpaper Change"
+    var active: String = "Active (every day at %s:00)"
+    var inactive: String = "Disabled"
+    var textCustomization: String = "Text Customization"
+    var bold: String = "Bold"
+    var shadow: String = "Shadow"
+    var textSize: String = "Text Size"
+    var textWidth: String = "Text Width"
+    var textHeight: String = "Text Position"
+    var textAlpha: String = "Transparency"
+    var bgBlur: String = "Background Blur"
+    var bgDarknessLabel: String = "Background Darkness"
+    var anotherPhoto: String = "Change Photo"
+    var selectPhotoFirst: String = "Select a photo first"
+    var appearance: String = "Appearance"
+    var system: String = "System"
+    var light: String = "Light"
+    var dark: String = "Dark"
+    var dynamicColor: String = "Material You (System Colors)"
+    var haptics: String = "Haptic Feedback"
+    var hapticsDesc: String = "Vibrations when editing the widget"
+    var support: String = "Support"
+    var supportDesc: String = "If you like the app and want to support its development, you can buy me a coffee ☕"
+    var donate: String = "Donate"
+    var close: String = "Close"
+    var dragHint: String = "Drag dots for size and width\nDrag the center to move"
+    var cancel: String = "Cancel"
+    var clickToSelect: String = "Tap to select photo"
+    var loading: String = "Loading verse..."
+    var appLanguage: String = "App Language"
+    var verseLanguage: String = "Verse Language"
+    var language: String = "Language"
+    var dailyWorkerOn: String = "Enabled!\nWallpaper will change tomorrow at %s:00."
+    var dailyWorkerOff: String = "Daily change disabled."
+    var fontModern: String = "Modern"
+    var fontBook: String = "Book"
+    var fontMono: String = "Typewriter"
+    var fontCursive: String = "Cursive"
+    var fontLight: String = "Light"
+    var fontCondensed: String = "Condensed"
+    var langSk: String = "Slovenčina"
+    var langEn: String = "English"
+    var langCz: String = "Čeština"
 
     // Battery strings
-    val batteryWarningTitle: String = "Battery Warning",
-    val batteryWarningDesc: String = "For the automatic wallpaper change to work reliably in the background, please disable battery optimization for this app.",
-    val batteryWarningButton: String = "Disable Optimization",
+    var batteryWarningTitle: String = "Battery Warning"
+    var batteryWarningDesc: String = "For the automatic wallpaper change to work reliably in the background, please disable battery optimization for this app."
+    var batteryWarningButton: String = "Disable Optimization"
     // Custom Verse strings
-    val customVerseTitle: String = "Custom Text",
-    val customVerseHint: String = "Verse text...",
-    val customRefHint: String = "Coordinates (e.g. John 3:16)",
-    val applyCustom: String = "Apply",
+    var customVerseTitle: String = "Custom Text"
+    var customVerseHint: String = "Verse text..."
+    var customRefHint: String = "Coordinates (e.g. John 3:16)"
+    var applyCustom: String = "Apply"
     // Automatic Wallpaper Change strings
-    val autoWallpaper: String = "Automatic Wallpaper Change",
-    val autoWallpaperIntervalLabel: String = "Change interval",
-    val autoWallpaperEvery1h: String = "Every hour",
-    val autoWallpaperEvery2h: String = "Every 2 hours",
-    val autoWallpaperEvery3h: String = "Every 3 hours",
-    val autoWallpaperEvery6h: String = "Every 6 hours",
-    val autoWallpaperEvery12h: String = "Every 12 hours",
-    val autoWallpaperEvery24h: String = "Every 24 hours (daily)",
-    val autoWallpaperOnScreenOff: String = "On screen off",
-    val autoWallpaperOnScreenOffDesc: String = "Verse changes every time you lock the phone",
-    val autoWallpaperTimeLabel: String = "Daily change time",
-    val autoWallpaperActiveHourly: String = "Active (every %sh)",
-    val autoWallpaperActiveDaily: String = "Active (daily at %s:00)",
-    val autoWallpaperActiveScreenOff: String = "Active (on lock)",
-    val autoWorkerOn: String = "Enabled! Wallpaper will change based on your interval.",
-    val autoWorkerOff: String = "Automatic change disabled.",
+    var autoWallpaper: String = "Automatic Wallpaper Change"
+    var autoWallpaperIntervalLabel: String = "Change interval"
+    var autoWallpaperEvery1h: String = "Every hour"
+    var autoWallpaperEvery2h: String = "Every 2 hours"
+    var autoWallpaperEvery3h: String = "Every 3 hours"
+    var autoWallpaperEvery6h: String = "Every 6 hours"
+    var autoWallpaperEvery12h: String = "Every 12 hours"
+    var autoWallpaperEvery24h: String = "Every 24 hours (daily)"
+    var autoWallpaperOnScreenOff: String = "On screen off"
+    var autoWallpaperOnScreenOffDesc: String = "Verse changes every time you lock the phone"
+    var autoWallpaperTimeLabel: String = "Daily change time"
+    var autoWallpaperActiveHourly: String = "Active (every %sh)"
+    var autoWallpaperActiveDaily: String = "Active (daily at %s:00)"
+    var autoWallpaperActiveScreenOff: String = "Active (on lock)"
+    var autoWorkerOn: String = "Enabled! Wallpaper will change based on your interval."
+    var autoWorkerOff: String = "Automatic change disabled."
     // Color picker
-    val colorPickerTitle: String = "Select color",
-    val colorPickerBrightness: String = "Brightness",
-    val colorPickerVerseColor: String = "Verse color",
+    var colorPickerTitle: String = "Select color"
+    var colorPickerBrightness: String = "Brightness"
+    var colorPickerVerseColor: String = "Verse color"
     // Wallpaper target
-    val wallpaperTargetLabel: String = "Apply wallpaper to",
-    val wallpaperTargetLock: String = "Lock screen",
-    val wallpaperTargetHome: String = "Home screen",
-    val wallpaperTargetBoth: String = "Both",
+    var wallpaperTargetLabel: String = "Apply wallpaper to"
+    var wallpaperTargetLock: String = "Lock screen"
+    var wallpaperTargetHome: String = "Home screen"
+    var wallpaperTargetBoth: String = "Both"
     // Verse database section
-    val vdbTitle: String = "Verse databases",
-    val vdbSubtitle: String = "Create, import or export collections",
-    val vdbManage: String = "Manage",
-    val vdbNewDatabase: String = "New database",
-    val vdbEditPrefix: String = "Edit ·",
-    val vdbImportExport: String = "Import / Export",
-    val vdbCreateNew: String = "Create new",
-    val vdbSectionCustom: String = "Custom",
-    val vdbSectionBuiltIn: String = "Built-in",
-    val vdbHint: String = "Select a custom DB via Settings → Verse Language",
-    val vdbDeleteTitle: String = "Delete",
-    val vdbDeleteText: String = "verses will be permanently removed.",
-    val vdbDelete: String = "Delete",
-    val vdbDeleted: String = "Deleted",
-    val vdbVerses: String = "verses",
-    val vdbCustomLabel: String = "Custom",
-    val vdbCodeLabel: String = "Code",
-    val vdbCodePlaceholder: String = "e.g. KJV",
-    val vdbCodeHint: String = "Select this in Settings → Verse Language",
-    val vdbUpdate: String = "Update",
-    val vdbSave: String = "Save",
-    val vdbNoVerses: String = "No verses — tap + below to add",
-    val vdbVersesFilled: String = "filled",
-    val vdbVerse: String = "verse",
-    val vdbVersePlural: String = "verses",
-    val vdbClearAll: String = "Clear all",
-    val vdbNoVersesYet: String = "No verses yet",
-    val vdbAddFirstVerse: String = "Tap the button below to add your first verse",
-    val vdbAddVerse: String = "Add verse",
-    val vdbVerseText: String = "Verse text",
-    val vdbReference: String = "Reference",
-    val vdbReferencePlaceholder: String = "e.g. John 3:16",
-    val vdbVerseCard: String = "Verse",
-    val vdbUpdated: String = "Updated",
-    val vdbCreated: String = "Created",
-    val vdbErrorCode: String = "Enter a database code",
-    val vdbErrorVerse: String = "Add at least one verse",
-    val vdbErrorFailed: String = "Failed",
-    val vdbImportTitle: String = "Import",
-    val vdbImportJson: String = "Import JSON file",
-    val vdbImportDesc: String = "Pick a verse .json from your device",
-    val vdbBrowse: String = "Browse",
-    val vdbImporting: String = "Importing...",
-    val vdbImportCodeTitle: String = "Database code",
-    val vdbImportCodeDesc: String = "Enter a short code for this database (e.g. KJV). It overrides a built-in database if the code matches.",
-    val vdbImport: String = "Import",
-    val vdbImportSuccess: String = "Imported %d verses as",
-    val vdbImportFailed: String = "Import failed",
-    val vdbExportCustom: String = "Export — Custom",
-    val vdbExportBuiltIn: String = "Export — Built-in",
-    val vdbExport: String = "Export",
-    val vdbExporting: String = "Saving to Downloads…",
-    val vdbExportDone: String = "Saved to Downloads",
-    val vdbExportFailed: String = "Export failed",
-    val vdbJsonFormat: String = "JSON format",
+    var vdbTitle: String = "Verse databases"
+    var vdbSubtitle: String = "Create, import or export collections"
+    var vdbManage: String = "Manage"
+    var vdbNewDatabase: String = "New database"
+    var vdbEditPrefix: String = "Edit ·"
+    var vdbImportExport: String = "Import / Export"
+    var vdbCreateNew: String = "Create new"
+    var vdbSectionCustom: String = "Custom"
+    var vdbSectionBuiltIn: String = "Built-in"
+    var vdbHint: String = "Tap \"Use\" on a custom database to make it your active verse source — or pick it later via Settings → Verse Language."
+    var vdbUse: String = "Use"
+    var vdbUsed: String = "Activated"
+    var vdbDeleteTitle: String = "Delete"
+    var vdbDeleteText: String = "verses will be permanently removed."
+    var vdbDelete: String = "Delete"
+    var vdbDeleted: String = "Deleted"
+    var vdbVerses: String = "verses"
+    var vdbCustomLabel: String = "Custom"
+    var vdbCodeLabel: String = "Code"
+    var vdbCodePlaceholder: String = "e.g. KJV"
+    var vdbCodeHint: String = "Select this in Settings → Verse Language"
+    var vdbUpdate: String = "Update"
+    var vdbSave: String = "Save"
+    var vdbNoVerses: String = "No verses — tap + below to add"
+    var vdbVersesFilled: String = "filled"
+    var vdbVerse: String = "verse"
+    var vdbVersePlural: String = "verses"
+    var vdbClearAll: String = "Clear all"
+    var vdbNoVersesYet: String = "No verses yet"
+    var vdbAddFirstVerse: String = "Tap the button below to add your first verse"
+    var vdbAddVerse: String = "Add verse"
+    var vdbVerseText: String = "Verse text"
+    var vdbReference: String = "Reference"
+    var vdbReferencePlaceholder: String = "e.g. John 3:16"
+    var vdbVerseCard: String = "Verse"
+    var vdbUpdated: String = "Updated"
+    var vdbCreated: String = "Created"
+    var vdbErrorCode: String = "Enter a database code"
+    var vdbErrorVerse: String = "Add at least one verse"
+    var vdbErrorFailed: String = "Failed"
+    var vdbImportTitle: String = "Import"
+    var vdbImportJson: String = "Import JSON file"
+    var vdbImportDesc: String = "Pick a verse .json from your device"
+    var vdbBrowse: String = "Browse"
+    var vdbImporting: String = "Importing..."
+    var vdbImportCodeTitle: String = "Database code"
+    var vdbImportCodeDesc: String = "Enter a short code for this database (e.g. KJV). It overrides a built-in database if the code matches."
+    var vdbImport: String = "Import"
+    var vdbImportSuccess: String = "Imported %d verses as"
+    var vdbImportFailed: String = "Import failed"
+    var vdbExportCustom: String = "Export — Custom"
+    var vdbExportBuiltIn: String = "Export — Built-in"
+    var vdbExport: String = "Export"
+    var vdbExporting: String = "Saving to Downloads…"
+    var vdbExportDone: String = "Saved to Downloads"
+    var vdbExportFailed: String = "Export failed"
+    var vdbJsonFormat: String = "JSON format"
     // Backup & Restore
-    val backupTitle: String = "Backup & Restore",
-    val backupExport: String = "Back up settings",
-    val backupExportDesc: String = "Saves all settings, wallpaper, and databases to a single file",
-    val backupImport: String = "Restore from backup",
-    val backupImportDesc: String = "Replaces all current settings, wallpaper, and databases",
-    val backupExporting: String = "Backing up…",
-    val backupImporting: String = "Restoring…",
-    val backupExportSuccess: String = "Backup saved · %d settings, %d databases",
-    val backupImportSuccess: String = "Backup restored · %d settings, %d databases. Restarting…",
-    val backupExportFailed: String = "Backup failed",
-    val backupImportFailed: String = "Restore failed",
-    val backupConfirmTitle: String = "Restore from backup?",
-    val backupConfirmDesc: String = "This will replace all your current settings, wallpaper, and databases. This cannot be undone.",
+    var backupTitle: String = "Backup & Restore"
+    var backupExport: String = "Back up settings"
+    var backupExportDesc: String = "Saves all settings, wallpaper, and databases to a single file"
+    var backupImport: String = "Restore from backup"
+    var backupImportDesc: String = "Replaces all current settings, wallpaper, and databases"
+    var backupExporting: String = "Backing up…"
+    var backupImporting: String = "Restoring…"
+    var backupExportSuccess: String = "Backup saved · %d settings, %d databases"
+    var backupImportSuccess: String = "Backup restored · %d settings, %d databases. Restarting…"
+    var backupExportFailed: String = "Backup failed"
+    var backupImportFailed: String = "Restore failed"
+    var backupConfirmTitle: String = "Restore from backup?"
+    var backupConfirmDesc: String = "This will replace all your current settings, wallpaper, and databases. This cannot be undone."
     // Wallpaper gallery screen
-    val wpScreenTitle: String = "Wallpapers",
-    val wpScreenSubtitle: String = "Manage your wallpapers and auto-cycling",
-    val wpGalleryEmpty: String = "No wallpapers",
-    val wpGalleryEmptyDesc: String = "Add your first wallpaper — pick a photo from your gallery.",
-    val wpAdd: String = "Add wallpaper",
-    val wpSetActive: String = "Set active",
-    val wpActive: String = "Active",
-    val wpDelete: String = "Remove",
-    val wpDeleteConfirm: String = "Remove this wallpaper?",
-    val wpDeleteConfirmDesc: String = "The wallpaper will be permanently removed from the app.",
-    val wpCycleTitle: String = "Auto-cycling",
-    val wpCycleDesc: String = "Automatically cycle through wallpapers on a schedule",
-    val wpCycleInterval: String = "Cycle interval",
-    val wpCycleDailyHour: String = "Daily change time",
-    val wpCycleOnScreenOff: String = "On lock",
-    val wpCycleOnScreenOffDesc: String = "Change wallpaper every time you lock the phone",
-    val wpNightMode: String = "Night mode",
-    val wpNightModeDesc: String = "Use a different wallpaper at night",
-    val wpNightStart: String = "Night starts",
-    val wpNightEnd: String = "Night ends",
-    val wpActiveBadge: String = "Active",
-    val wpNightBadge: String = "Night",
-    val wpCycleModeVerse: String = "On verse change",
-    val wpCycleModeInterval: String = "Custom interval",
-    val wpCycleModeScreenOff: String = "On every lock",
-    val wpCycleModeDayNight: String = "Day / Night",
-    val wpCycleModeVerseDesc: String = "Wallpaper changes with the verse",
-    val wpCycleModeDayNightDesc: String = "Automatically switch between day and night wallpaper",
-    val wpCycleDayWallpaper: String = "Day wallpaper",
-    val wpCycleNightWallpaper: String = "Night wallpaper",
-    val wpCycleModeIntervalDesc: String = "Change at fixed intervals",
-    val wpCycleModeScreenOffDesc: String = "Change on every screen lock",
-    val wpDualLockWarning: String = "It could take up to 3 seconds to update wallpaper while screen is off.",
-    val wpDayStart: String = "Day starts",
-    val wpDayEnd: String = "Day ends",
-    val wpViewAll: String = "View all",
-    val wpViewAllTitle: String = "All wallpapers",
-    val wpSelectMode: String = "Select",
-    val wpDeleteSelected: String = "Delete selected",
-    val wpSelected: String = "selected",
-    val wpDeleteAllConfirm: String = "Delete selected wallpapers?",
-    val wpDeleteAllConfirmDesc: String = "The selected wallpapers will be permanently removed from the app.",
-    val wpPageHint: String = "Swipe left for wallpapers →",
+    var wpScreenTitle: String = "Wallpapers"
+    var wpScreenSubtitle: String = "Manage your wallpapers and auto-cycling"
+    var wpGalleryEmpty: String = "No wallpapers"
+    var wpGalleryEmptyDesc: String = "Add your first wallpaper — pick a photo from your gallery."
+    var wpAdd: String = "Add wallpaper"
+    var wpSetActive: String = "Set active"
+    var wpActive: String = "Active"
+    var wpDelete: String = "Remove"
+    var wpDeleteConfirm: String = "Remove this wallpaper?"
+    var wpDeleteConfirmDesc: String = "The wallpaper will be permanently removed from the app."
+    var wpCycleTitle: String = "Auto-cycling"
+    var wpCycleDesc: String = "Automatically cycle through wallpapers on a schedule"
+    var wpCycleInterval: String = "Cycle interval"
+    var wpCycleDailyHour: String = "Daily change time"
+    var wpCycleOnScreenOff: String = "On lock"
+    var wpCycleOnScreenOffDesc: String = "Change wallpaper every time you lock the phone"
+    var wpNightMode: String = "Night mode"
+    var wpNightModeDesc: String = "Use a different wallpaper at night"
+    var wpNightStart: String = "Night starts"
+    var wpNightEnd: String = "Night ends"
+    var wpActiveBadge: String = "Active"
+    var wpNightBadge: String = "Night"
+    var wpCycleModeVerse: String = "On verse change"
+    var wpCycleModeInterval: String = "Custom interval"
+    var wpCycleModeScreenOff: String = "On every lock"
+    var wpCycleModeDayNight: String = "Day / Night"
+    var wpCycleModeVerseDesc: String = "Wallpaper changes with the verse"
+    var wpCycleModeDayNightDesc: String = "Automatically switch between day and night wallpaper"
+    var wpCycleDayWallpaper: String = "Day wallpaper"
+    var wpCycleNightWallpaper: String = "Night wallpaper"
+    var wpCycleModeIntervalDesc: String = "Change at fixed intervals"
+    var wpCycleModeScreenOffDesc: String = "Change on every screen lock"
+    var wpDualLockWarning: String = "It could take up to 3 seconds to update wallpaper while screen is off."
+    var wpDayStart: String = "Day starts"
+    var wpDayEnd: String = "Day ends"
+    var wpViewAll: String = "View all"
+    var wpViewAllTitle: String = "All wallpapers"
+    var wpSelectMode: String = "Select"
+    var wpDeleteSelected: String = "Delete selected"
+    var wpSelected: String = "selected"
+    var wpDeleteAllConfirm: String = "Delete selected wallpapers?"
+    var wpDeleteAllConfirmDesc: String = "The selected wallpapers will be permanently removed from the app."
+    var wpPageHint: String = "Swipe left for wallpapers →"
     // Verse language source toggle (in Settings)
-    val vdbSourceDefault: String = "Default",
-    val vdbSourceCustom: String = "Custom",
-    val vdbSourceFavorites: String = "Favorites",
-    val vdbFavoritesCycling: String = "Cycling through %d favorite verses",
-    val vdbFavoritesEmptyCta: String = "Add some favorites first",
-    val vdbEmptyCustom: String = "No custom databases yet",
-    val vdbEmptyCustomDesc: String = "Create your own verse collection — for example KJV or another translation.",
-    val vdbEmptyCustomCta: String = "Create new database",
+    var vdbSourceDefault: String = "Default"
+    var vdbSourceCustom: String = "Custom"
+    var vdbSourceFavorites: String = "Favorites"
+    var vdbFavoritesCycling: String = "Cycling through %d favorite verses"
+    var vdbFavoritesEmptyCta: String = "Add some favorites first"
+    var vdbEmptyCustom: String = "No custom databases yet"
+    var vdbEmptyCustomDesc: String = "Create your own verse collection — for example KJV or another translation."
+    var vdbEmptyCustomCta: String = "Create new database"
     // Duplicate-code warnings + import conflict dialog
-    val vdbWarningCodeBuiltin: String = "Code \"%s\" is already used by a built-in database. You can still use it — the custom DB will share the code.",
-    val vdbWarningCodeCustom: String = "Code \"%s\" already exists as a custom database. Saving will overwrite it.",
-    val vdbImportConflictTitle: String = "Code already exists",
-    val vdbImportConflictDesc: String = "A custom database with code \"%s\" already exists. Enter a different code, or keep \"%s\" to overwrite.",
-    val vdbImportConflictAction: String = "Import with this code",
+    var vdbWarningCodeBuiltin: String = "Code \"%s\" is already used by a built-in database. You can still use it — the custom DB will share the code."
+    var vdbWarningCodeCustom: String = "Code \"%s\" already exists as a custom database. Saving will overwrite it."
+    var vdbImportConflictTitle: String = "Code already exists"
+    var vdbImportConflictDesc: String = "A custom database with code \"%s\" already exists. Enter a different code, or keep \"%s\" to overwrite."
+    var vdbImportConflictAction: String = "Import with this code"
     // Overwrite confirmation dialog (CreateEditScreen — Save with existing custom code)
-    val vdbOverwriteTitle: String = "Overwrite database?",
-    val vdbOverwriteDesc: String = "A custom database with code \"%s\" already exists. Saving will permanently replace its verses. This action cannot be undone.",
-    val vdbOverwriteConfirm: String = "Overwrite",
+    var vdbOverwriteTitle: String = "Overwrite database?"
+    var vdbOverwriteDesc: String = "A custom database with code \"%s\" already exists. Saving will permanently replace its verses. This action cannot be undone."
+    var vdbOverwriteConfirm: String = "Overwrite"
     // --- Share verse as image ---
-    val share: String = "Share",
-    val shareDialogTitle: String = "Share verse",
-    val shareDialogDesc: String = "Choose an action",
-    val shareAction: String = "Share",
-    val shareActionDesc: String = "Send the image via other apps",
-    val saveToGalleryAction: String = "Save to gallery",
-    val saveToGalleryActionDesc: String = "Save the image to this device",
-    val shareSuccess: String = "Verse shared",
-    val shareFailed: String = "Failed to share verse",
-    val saveSuccess: String = "Verse saved to gallery",
-    val saveFailed: String = "Failed to save to gallery",
-    val shareImageDesc: String = "Image with verse for sharing",
+    var share: String = "Share"
+    var shareDialogTitle: String = "Share verse"
+    var shareDialogDesc: String = "Choose an action"
+    var shareAction: String = "Share"
+    var shareActionDesc: String = "Send the image via other apps"
+    var saveToGalleryAction: String = "Save to gallery"
+    var saveToGalleryActionDesc: String = "Save the image to this device"
+    var shareSuccess: String = "Verse shared"
+    var shareFailed: String = "Failed to share verse"
+    var saveSuccess: String = "Verse saved to gallery"
+    var saveFailed: String = "Failed to save to gallery"
+    var shareImageDesc: String = "Image with verse for sharing"
     // --- Favorite verses ---
-    val favorites: String = "Favorites",
-    val favoritesTitle: String = "Favorite verses",
-    val favoritesEmpty: String = "You don't have any favorite verses yet",
-    val favoritesEmptyDesc: String = "Add a verse by tapping the star in the preview.",
-    val addToFavorites: String = "Add to favorites",
-    val removeFromFavorites: String = "Remove from favorites",
-    val favoritesCount: String = "%d favorites",
-    val setAsWallpaper: String = "Set as wallpaper",
-    val confirmRemoveFavoriteTitle: String = "Remove from favorites?",
-    val confirmRemoveFavoriteDesc: String = "This verse will be removed from your favorites.",
-    val addedToFavorites: String = "Verse added to favorites",
-    val removedFromFavorites: String = "Verse removed from favorites",
-    val addedOn: String = "Added %s",
+    var favorites: String = "Favorites"
+    var favoritesTitle: String = "Favorite verses"
+    var favoritesEmpty: String = "You don't have any favorite verses yet"
+    var favoritesEmptyDesc: String = "Add a verse by tapping the star in the preview."
+    var addToFavorites: String = "Add to favorites"
+    var removeFromFavorites: String = "Remove from favorites"
+    var favoritesCount: String = "%d favorites"
+    var setAsWallpaper: String = "Set as wallpaper"
+    var confirmRemoveFavoriteTitle: String = "Remove from favorites?"
+    var confirmRemoveFavoriteDesc: String = "This verse will be removed from your favorites."
+    var addedToFavorites: String = "Verse added to favorites"
+    var removedFromFavorites: String = "Verse removed from favorites"
+    var addedOn: String = "Added %s"
     // Subtitle under the Favorites page header — same pattern as wpScreenSubtitle.
-    val favoritesSubtitle: String = "Tap a verse to make it your wallpaper",
+    var favoritesSubtitle: String = "Tap a verse to make it your wallpaper"
     // --- Favorite card style (Settings → Appearance) ---
-    val favCardStyleLabel: String = "Favorite card style",
-    val favCardStyleQuote: String = "Detailed",
-    val favCardStyleCompact: String = "Compact",
-    val favCardStyleHero: String = "Quote",
-    val favCardStyleQuoteDesc: String = "Verse with an action bar",
-    val favCardStyleCompactDesc: String = "Compact list row",
-    val favCardStyleHeroDesc: String = "Large, poster-like quote",
+    var favCardStyleLabel: String = "Favorite card style"
+    var favCardStyleQuote: String = "Detailed"
+    var favCardStyleCompact: String = "Compact"
+    var favCardStyleHero: String = "Quote"
+    var favCardStyleQuoteDesc: String = "Verse with an action bar"
+    var favCardStyleCompactDesc: String = "Compact list row"
+    var favCardStyleHeroDesc: String = "Large, poster-like quote"
     // --- Favorite multi-select (bulk delete) ---
-    val favSelectMode: String = "Select",
-    val favDeleteSelected: String = "Remove selected",
-    val favSelected: String = "selected",
-    val favSelectAll: String = "Select all",
-    val favDeselectAll: String = "Deselect all",
-    val favDeleteConfirm: String = "Remove selected verses?",
-    val favDeleteConfirmDesc: String = "These verses will be removed from your favorites.",
-    val favRemovedCount: String = "%d verses removed"
-)
+    var favSelectMode: String = "Select"
+    var favDeleteSelected: String = "Remove selected"
+    var favSelected: String = "selected"
+    var favSelectAll: String = "Select all"
+    var favDeselectAll: String = "Deselect all"
+    var favDeleteConfirm: String = "Remove selected verses?"
+    var favDeleteConfirmDesc: String = "These verses will be removed from your favorites."
+    var favRemovedCount: String = "%d verses removed"
+}
 
 // --- LANGUAGE DETECTION ---
 fun getDefaultAppLanguage(): String {
@@ -323,3 +325,76 @@ val availableLanguages = listOf(
     "HU" to "Magyar",
     "PL" to "Polski"
 )
+
+// ─────────────────────────────────────────────────────────────────────────────
+// LOCALIZED LANGUAGE NAMES (top-level, NOT a field of AppStrings)
+// ─────────────────────────────────────────────────────────────────────────────
+// Historical context: AppStrings used to be a `data class`, and adding a
+// `Map<String, String>` field would have pushed its synthetic default-args
+// constructor past the JVM method-parameter limit (255) and triggered a
+// `VerifyError: StringsENKt.<clinit>` crash. We've since converted AppStrings
+// to a regular `class` with `var` fields, so technically this map COULD be
+// moved back in as another `var` field.
+//
+// We keep it as a top-level val anyway, because:
+//   - It's a fundamentally different shape (a Map<String, String> lookup
+//     table) than a single UI string field.
+//   - It needs to be looked up by active app language code, not accessed
+//     as a property of the active AppStrings instance — `langLabel(appLang, ...)`
+//     takes the appLang code precisely so it can pick the right map regardless
+//     of which AppStrings instance the caller happens to hold.
+//
+// Translator workflow: a translator adds their own `xxLocalizedLangNames`
+// val in StringsXX.kt and registers it in `localizedLangNamesFor()` below.
+// If they skip it, the picker falls back to English `enLocalizedLangNames`.
+
+/** English fallback — used when no localized map exists for the active appLang. */
+val enLocalizedLangNames: Map<String, String> = mapOf(
+    "EN" to "English",
+    "SK" to "Slovak",
+    "CZ" to "Czech",
+    "ES" to "Spanish",
+    "IT" to "Italian",
+    "FR" to "French",
+    "DE" to "German",
+    "HU" to "Hungarian",
+    "PL" to "Polish"
+)
+
+/**
+ * Returns the localized-language-names map for the active app language.
+ *
+ * Falls back to English when [appLang] has no per-language map — mirrors
+ * the existing "missing string → English default" fallback pattern.
+ */
+fun localizedLangNamesFor(appLang: String): Map<String, String> = when (appLang) {
+    "EN" -> enLocalizedLangNames
+    "SK" -> skLocalizedLangNames
+    "CZ" -> czLocalizedLangNames
+    "ES" -> esLocalizedLangNames
+    "IT" -> itLocalizedLangNames
+    "FR" -> frLocalizedLangNames
+    "DE" -> deLocalizedLangNames
+    "HU" -> huLocalizedLangNames
+    "PL" -> plLocalizedLangNames
+    else -> enLocalizedLangNames
+}
+
+/**
+ * Renders a language picker entry as "Native name (Localized name)" —
+ * e.g. with appLang = "SK", code = "IT", nativeName = "Italiano" →
+ * "Italiano (Taliančina)".
+ *
+ * When the localized name equals the native name (e.g. Slovak viewing
+ * "Slovenčina"), the redundant parenthetical is omitted. Also falls back to
+ * English if [appLang] has no per-language map.
+ */
+fun langLabel(appLang: String, code: String, nativeName: String): String {
+    val map = localizedLangNamesFor(appLang)
+    val localized = map[code]
+    return if (!localized.isNullOrBlank() && localized != nativeName) {
+        "$nativeName ($localized)"
+    } else {
+        nativeName
+    }
+}

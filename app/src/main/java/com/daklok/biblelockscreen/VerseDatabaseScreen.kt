@@ -61,7 +61,17 @@ fun VerseDatabaseSection(
     // If provided, the "Manage" button delegates to the caller (who is then
     // responsible for showing VerseDatabaseSheet). If null, the section
     // manages its own sheet internally — preserves backward compatibility.
-    onManage: (() -> Unit)? = null
+    onManage: (() -> Unit)? = null,
+    // Fired when the user taps "Use" on a custom DB inside the sheet.
+    // The host (MainActivity) switches verse source to CUSTOM, sets the
+    // code as the active verse language, persists prefs, and dismisses
+    // the sheet. If null, the "Use" button is hidden — preserves
+    // backward compatibility.
+    onUseCustom: ((code: String) -> Unit)? = null,
+    // The currently-active custom code (so the row can show an
+    // "✓ Active" badge instead of the "Use" button). Pass null (or a
+    // value that doesn't match any row) when no custom DB is active.
+    activeCustomCode: String? = null
 ) {
     var showSheet by remember { mutableStateOf(false) }
 
@@ -109,7 +119,9 @@ fun VerseDatabaseSection(
             strings = strings,
             showNotification = showNotification,
             onDismiss = { showSheet = false },
-            onDbChanged = onDbChanged
+            onDbChanged = onDbChanged,
+            onUseCustom = onUseCustom,
+            activeCustomCode = activeCustomCode
         )
     }
 }
@@ -136,7 +148,15 @@ fun VerseDatabaseSheet(
     showNotification: (String, NotificationType) -> Job,
     onDismiss: () -> Unit,
     onDbChanged: () -> Unit = {},
-    openCreate: Boolean = false
+    openCreate: Boolean = false,
+    // Fired when the user taps "Use" on a custom DB row. The host
+    // switches verse source to CUSTOM and applies the DB's code as the
+    // active verse language. If null, the "Use" button is hidden.
+    onUseCustom: ((code: String) -> Unit)? = null,
+    // The currently-active custom code — drives the "✓ Active" badge
+    // on the matching row instead of the "Use" button. null/blank or a
+    // non-matching value means none is marked active.
+    activeCustomCode: String? = null
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var nav by remember { mutableStateOf<DbNav>(if (openCreate) DbNav.Create else DbNav.Home) }
@@ -211,7 +231,9 @@ fun VerseDatabaseSheet(
                             onCreate = { nav = DbNav.Create },
                             onEdit = { nav = DbNav.Edit(it) },
                             onImportExport = { nav = DbNav.ImportExport },
-                            onDbChanged = onDbChanged
+                            onDbChanged = onDbChanged,
+                            onUseCustom = onUseCustom,
+                            activeCustomCode = activeCustomCode
                         )
                         is DbNav.Create -> CreateEditScreen(
                             strings = strings,
@@ -250,7 +272,9 @@ private fun HomeScreen(
     onCreate: () -> Unit,
     onEdit: (CustomVerseDb) -> Unit,
     onImportExport: () -> Unit,
-    onDbChanged: () -> Unit = {}
+    onDbChanged: () -> Unit = {},
+    onUseCustom: ((code: String) -> Unit)? = null,
+    activeCustomCode: String? = null
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
@@ -357,6 +381,9 @@ private fun HomeScreen(
                     CustomDbRow(
                         strings = strings,
                         db = db,
+                        isActive = activeCustomCode != null &&
+                            activeCustomCode.equals(db.lang, ignoreCase = true),
+                        onUse = onUseCustom?.let { callback -> { callback(db.lang) } },
                         onEdit = {
                             haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
                             onEdit(db)
@@ -429,8 +456,14 @@ private fun CustomDbRow(
     strings: AppStrings,
     db: CustomVerseDb,
     onEdit: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    // Fired when the user taps "Use". Null = button hidden.
+    onUse: (() -> Unit)? = null,
+    // True when this DB is the currently-active custom source — swaps
+    // the "Use" button for a non-interactive "✓ Active" badge.
+    isActive: Boolean = false
 ) {
+    val haptic = LocalHapticFeedback.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -464,6 +497,48 @@ private fun CustomDbRow(
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
+        }
+        // Use / Active badge — the discoverability fix. Lets the user
+        // activate a custom DB directly from the manager screen instead
+        // of hunting for it in Settings → Verse Language.
+        if (isActive) {
+            Surface(
+                shape = RoundedCornerShape(10.dp),
+                color = Color(0xFF4CAF50).copy(alpha = 0.16f),
+                modifier = Modifier.height(34.dp)
+            ) {
+                Row(
+                    modifier = Modifier.padding(horizontal = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Icon(
+                        Icons.Default.Check, null,
+                        tint = Color(0xFF4CAF50),
+                        modifier = Modifier.size(14.dp)
+                    )
+                    Text(
+                        strings.vdbUsed,
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Color(0xFF388E3C)
+                    )
+                }
+            }
+        } else if (onUse != null) {
+            FilledTonalButton(
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    onUse()
+                },
+                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                modifier = Modifier.height(34.dp),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Icon(Icons.Default.PlayArrow, null, modifier = Modifier.size(14.dp))
+                Spacer(Modifier.width(4.dp))
+                Text(strings.vdbUse, style = MaterialTheme.typography.labelMedium)
+            }
         }
         // Edit
         IconButton(onClick = onEdit, modifier = Modifier.size(36.dp)) {
@@ -1564,7 +1639,11 @@ fun VerseLanguagePicker(
     // Fired when the user taps the Default, Custom, or Favorites segmented
     // button. The parent uses this to auto-apply the last-selected code
     // for that segment (so switching back to Default restores e.g. Slovak).
-    onSegmentChange: (source: String) -> Unit = {}
+    onSegmentChange: (source: String) -> Unit = {},
+    // Active app language code — drives the localized language labels
+    // ("Italiano (Taliančina)"). See AppStrings.kt for why this is passed
+    // separately rather than being a field on AppStrings.
+    appLang: String = "EN"
 ) {
     val haptic = LocalHapticFeedback.current
     // The active segment is driven by selectedSource — this is the key fix:
@@ -1643,6 +1722,11 @@ fun VerseLanguagePicker(
                     availableLanguages.find { it.first == selectedCode }?.second
                         ?: selectedCode
                 }
+                // Apply localized parenthetical ("Italiano (Taliančina)")
+                // to the button label too, so it matches the dialog entries.
+                val displayLabel = availableLanguages.find { it.first == selectedCode }
+                    ?.let { (code, native) -> langLabel(appLang, code, native) }
+                    ?: selectedLabel
                 OutlinedButton(
                     onClick = {
                         haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
@@ -1651,7 +1735,7 @@ fun VerseLanguagePicker(
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(14.dp)
                 ) {
-                    Text(selectedLabel)
+                    Text(displayLabel)
                     Spacer(modifier = Modifier.weight(1f))
                     Icon(Icons.Default.ArrowDropDown, null)
                 }
@@ -1749,7 +1833,12 @@ fun VerseLanguagePicker(
             dismissLabel = strings.cancel,
             icon = Icons.AutoMirrored.Outlined.LibraryBooks,
             items = availableLanguages.map { (code, name) ->
-                LanguagePickerItem(code = code, title = name)
+                LanguagePickerItem(
+                    code = code,
+                    // "Italiano (Taliančina)" — localized name in parentheses
+                    // so the user recognizes languages they don't natively read.
+                    title = langLabel(appLang, code, name)
+                )
             },
             // Only mark as selected if source is BUILTIN — this is the core
             // fix for the "EN looks selected in both lists" bug.
@@ -1966,4 +2055,4 @@ fun LanguagePickerDialog(
             }
         }
     }
-}
+}
