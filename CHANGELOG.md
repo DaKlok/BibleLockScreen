@@ -1,5 +1,30 @@
 # Changelog
 
+## [2.2](https://github.com/DaKlok/BibleLockScreen/releases/tag/2.2) — 2.2 (2026-08-28)
+
+# Changelog
+
+### ⭐ New: Favorite verses
+ 
+- You can now mark any verse as a favorite (heart/star toggle on the current verse) and browse them all on a dedicated **Favorites** screen.
+- Favorites are identified by the combination of text + reference + language, so importing the same verse from two different sources (built-in vs. a custom database) won't create duplicate entries.
+- Added a new wallpaper-cycling source, "Favorites" (`SOURCE_FAVORITES` in `LocalBibleProvider`) — you can now set the auto-changing wallpaper to cycle through **only your favorited verses** instead of a full built-in/custom database.
+- The Favorites screen supports swipe-to-remove, and per-verse actions to set a favorite directly as the wallpaper or share it.
+- Added a **card style** setting for the Favorites list (Settings → Appearance): choose between a "Quote" style (headline verse + divider + action row) and a "Compact" style. Purely visual — doesn't change what's stored.
+### 📤 New: Share a verse as an image
+ 
+- Added a new **share** action that renders the current verse (with your chosen background, font, size, color, and blur settings) into a shareable image, via a new `ShareVerseManager`.
+- The generated image can be shared directly through Android's share sheet, or saved to the gallery.
+- Saving to the gallery uses `MediaStore` on all supported versions — on Android 9 and below (API ≤ 28), this additionally requires the `WRITE_EXTERNAL_STORAGE` permission (scoped storage on API 29+ needs no extra permission).
+- Sharing goes through a new `FileProvider` (`res/xml/file_paths.xml`), since Android no longer allows sharing raw `file://` URIs between apps.
+### 🌍 New: Localized language names
+ 
+- Language names in the verse-language picker are now shown with a localized parenthetical alongside the native name — e.g. a Slovak-language user sees "Italiano (Taliančina)" instead of just "Italiano".
+- Makes it much easier to recognize a language you don't personally read/speak, since it's now shown in your own app language rather than only in its own native form.
+### 📚 New: Switch to a custom verse database directly from the Database screen
+- Added an option to use a custom verse database directly inside the cusotm databes screen via a new "use" button.
+
+
 ## [2.1](https://github.com/DaKlok/BibleLockScreen/releases/tag/2.1) — Release 2.1 (2026-07-05)
 
 # Changelog
