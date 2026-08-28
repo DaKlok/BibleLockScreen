@@ -11,10 +11,19 @@ Checks performed
 ----------------
 1. SCHEMA (UI strings)
    - Parse AppStrings.kt and extract the set of property names declared in
-     the data class. This is the source-of-truth schema.
+     the class body. This is the source-of-truth schema.
+     AppStrings is currently a regular `class` with `var` fields (it used
+     to be a `data class` with `val` constructor params, but with ~250
+     fields the synthetic default-args constructor exceeded the JVM
+     method-parameter limit and crashed on launch). The parser accepts
+     both legacy and current formats so it doesn't break on older branches.
    - For every StringsXX.kt file, verify each assigned property name exists
      in the schema (catches typos and references to renamed/removed fields).
    - Detect duplicate assignments within a single StringsXX.kt file.
+     Note: StringsXX.kt files use the `AppStrings().apply { field = "..." }`
+     block syntax (assignments separated by newlines, no trailing commas).
+     The parser regex matches `    fieldName = "..."` regardless of which
+     syntax wraps it.
 
 2. CROSS-FILE PARITY (UI strings <-> availableLanguages)
    - Every language code listed in `availableLanguages` must have a
@@ -111,9 +120,12 @@ class Report:
 #   identifier, optional whitespace, `=`). Does NOT match `val updateTime:`.
 ASSIGN_RE = re.compile(r'^\s+([A-Za-z_][A-Za-z0-9_]*)\s*=', re.MULTILINE)
 
-# Regex: property declaration inside AppStrings.kt data class body.
-#   Matches:  `    val propertyName: String = ...`
-DECL_RE = re.compile(r'^\s*val\s+([A-Za-z_][A-Za-z0-9_]*)\s*:\s*', re.MULTILINE)
+# Regex: property declaration inside AppStrings.kt class body.
+#   Matches both legacy and current formats:
+#     - Old `data class AppStrings(...)` constructor params:  `    val propertyName: String = ...`
+#     - New `class AppStrings { ... }` body fields:           `    var propertyName: String = ...`
+#   Accepting `val|var` keeps the validator resilient to either shape.
+DECL_RE = re.compile(r'^\s*(?:val|var)\s+([A-Za-z_][A-Za-z0-9_]*)\s*:\s*', re.MULTILINE)
 
 # Regex: language-code-to-name pair in `availableLanguages`.
 #   Matches:  `    "EN" to "English",`
@@ -159,25 +171,93 @@ def _extract_paren_block(text: str, start: int) -> int:
     return -1  # unbalanced
 
 
+def _extract_brace_block(text: str, start: int) -> int:
+    """
+    Given text and the index of an opening `{`, return the index of the
+    matching closing `}`. Handles nested braces and string literals
+    (Kotlin string literals don't span newlines in this codebase, so we
+    only need to track single-line strings).
+    """
+    depth = 0
+    i = start
+    in_string = False
+    while i < len(text):
+        c = text[i]
+        if in_string:
+            if c == '\\' and i + 1 < len(text):
+                i += 2  # skip escaped char
+                continue
+            if c == '"':
+                in_string = False
+            i += 1
+            continue
+        if c == '"':
+            in_string = True
+        elif c == '{':
+            depth += 1
+        elif c == '}':
+            depth -= 1
+            if depth == 0:
+                return i
+        i += 1
+    return -1  # unbalanced
+
+
 def parse_schema(report: Report) -> Set[str]:
-    """Return the set of property names declared in AppStrings.kt's data class."""
+    """
+    Return the set of property names declared in AppStrings.kt.
+
+    Supports two formats:
+      1. Legacy `data class AppStrings(...)` — properties are constructor
+         parameters between `(` and `)`.
+      2. Current `class AppStrings { ... }` — properties are `var` field
+         declarations in the class body between `{` and `}`.
+
+    The legacy `data class` shape hit a JVM method-parameter ceiling at
+    ~250 fields (VerifyError: StringsENKt.<clinit>), so AppStrings was
+    converted to a regular class. The validator accepts either format
+    so it doesn't break if someone reverts or runs against an older branch.
+    """
     if not APP_STRINGS_FILE.is_file():
         report.err(f"Missing file: {APP_STRINGS_FILE}")
         return set()
 
     text = APP_STRINGS_FILE.read_text(encoding="utf-8")
-    # Find `data class AppStrings(` and walk to the matching `)`.
+
+    # Try the current format first: `class AppStrings {` (regular class).
+    # Match `class AppStrings {` but NOT `data class AppStrings(` — the
+    # `(?<!data )` negative lookbehind would be ideal but Python's `re`
+    # requires fixed-width lookbehinds and "data " is 5 chars vs nothing.
+    # Simpler: try `data class AppStrings(` first; if it matches, use the
+    # legacy paren-block parser. Otherwise fall through to the brace-block
+    # parser for `class AppStrings {`.
     header = re.search(r'data class AppStrings\(', text)
-    if not header:
-        report.err("Could not locate `data class AppStrings(...)` in AppStrings.kt")
-        return set()
-    open_paren = header.end() - 1
-    close_paren = _extract_paren_block(text, open_paren)
-    if close_paren == -1:
-        report.err("Unbalanced parens in AppStrings data class declaration.")
-        return set()
-    body = text[open_paren + 1:close_paren]
-    props = set(DECL_RE.findall(body))
+    if header:
+        # Legacy format — extract properties from the constructor param list.
+        open_paren = header.end() - 1
+        close_paren = _extract_paren_block(text, open_paren)
+        if close_paren == -1:
+            report.err("Unbalanced parens in AppStrings data class declaration.")
+            return set()
+        body = text[open_paren + 1:close_paren]
+        props = set(DECL_RE.findall(body))
+    else:
+        # Current format — extract properties from the class body.
+        header = re.search(r'class AppStrings\s*\{', text)
+        if not header:
+            report.err(
+                "Could not locate `class AppStrings { ... }` (or legacy "
+                "`data class AppStrings(...)`) in AppStrings.kt"
+            )
+            return set()
+        open_brace = header.end() - 1
+        close_brace = _extract_brace_block(text, open_brace)
+        if close_brace == -1:
+            report.err("Unbalanced braces in AppStrings class body.")
+            return set()
+        body = text[open_brace + 1:close_brace]
+        props = set(DECL_RE.findall(body))
+
     if not props:
         report.err("Schema parser found zero properties in AppStrings.kt -- parser bug?")
     else:
