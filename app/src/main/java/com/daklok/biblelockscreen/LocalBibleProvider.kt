@@ -22,7 +22,7 @@ object LocalBibleProvider {
     fun getDefaultLanguage(): String {
         return when (val sysLang = Locale.getDefault().language.uppercase()) {
             "CS" -> "CZ"
-            "SK", "EN", "CZ", "ES", "IT", "FR", "DE", "HU", "PL" -> sysLang
+            "SK", "EN", "CZ", "ES", "IT", "FR", "DE", "HU", "PL", "ZH" -> sysLang
             else -> "EN"
         }
     }

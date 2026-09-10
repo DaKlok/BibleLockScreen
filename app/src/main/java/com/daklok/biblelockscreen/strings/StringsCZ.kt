@@ -274,5 +274,6 @@ val czLocalizedLangNames: Map<String, String> = mapOf(
     "FR" to "Francouzština",
     "DE" to "Němčina",
     "HU" to "Maďarština",
-    "PL" to "Polština"
+    "PL" to "Polština",
+    "ZH" to "简体中文"
 )
