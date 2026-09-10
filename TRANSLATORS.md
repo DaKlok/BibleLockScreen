@@ -42,6 +42,9 @@ section in alphabetical order by handle/name.
 - **DaKlok** — original UI strings and verse content
 - *Add yourself here*
 
+## Chinese (ZH) — *Simplified*
+- **asinker** — UI strings and verse content (和合本 / Chinese Union Version, 1919 — public domain)
+
 ---
 
 ## Notes for contributors

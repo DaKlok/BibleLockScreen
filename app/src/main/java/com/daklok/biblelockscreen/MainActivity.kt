@@ -294,6 +294,7 @@ fun MainScreen(
         "DE" -> deStrings
         "HU" -> huStrings
         "PL" -> plStrings
+        "ZH" -> zhStrings
         else -> enStrings
     }
 

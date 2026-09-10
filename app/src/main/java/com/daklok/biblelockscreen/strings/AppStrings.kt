@@ -308,7 +308,7 @@ fun getDefaultAppLanguage(): String {
     val sysLang = Locale.getDefault().language.uppercase()
     return when (sysLang) {
         "CS" -> "CZ"
-        "SK", "EN", "CZ", "ES", "IT", "FR", "DE", "HU", "PL" -> sysLang
+        "SK", "EN", "CZ", "ES", "IT", "FR", "DE", "HU", "PL", "ZH" -> sysLang
         else -> "EN"
     }
 }
@@ -323,7 +323,8 @@ val availableLanguages = listOf(
     "FR" to "Français",
     "DE" to "Deutsch",
     "HU" to "Magyar",
-    "PL" to "Polski"
+    "PL" to "Polski",
+    "ZH" to "简体中文"
 )
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -358,7 +359,8 @@ val enLocalizedLangNames: Map<String, String> = mapOf(
     "FR" to "French",
     "DE" to "German",
     "HU" to "Hungarian",
-    "PL" to "Polish"
+    "PL" to "Polish",
+    "ZH" to "Chinese"
 )
 
 /**
@@ -377,6 +379,7 @@ fun localizedLangNamesFor(appLang: String): Map<String, String> = when (appLang)
     "DE" -> deLocalizedLangNames
     "HU" -> huLocalizedLangNames
     "PL" -> plLocalizedLangNames
+    "ZH" -> zhLocalizedLangNames
     else -> enLocalizedLangNames
 }
 

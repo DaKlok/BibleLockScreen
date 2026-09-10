@@ -275,5 +275,6 @@ val huLocalizedLangNames: Map<String, String> = mapOf(
     "FR" to "Francia",
     "DE" to "Német",
     "HU" to "Magyar",
-    "PL" to "Lengyel"
+    "PL" to "Lengyel",
+    "ZH" to "简体中文"
 )
