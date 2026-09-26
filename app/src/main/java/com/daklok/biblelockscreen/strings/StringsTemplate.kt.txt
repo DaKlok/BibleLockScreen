@@ -293,6 +293,13 @@ val xxStrings = AppStrings().apply {
     addedToFavorites = "<TODO>" // "Verse added to favorites"
     removedFromFavorites = "<TODO>" // "Verse removed from favorites"
     addedOn = "<TODO>" // "Added %s"
+
+    // Credits (Settings → Credits)
+    creditsTitle = "<TODO>" // "Credits"
+    creditsTranslatorsLabel = "<TODO>" // "Translators"
+    creditsDeveloperDesc = "<TODO>" // "Developer · original UI strings and verses"
+    creditsTranslatorZhDesc = "<TODO>" // "Simplified Chinese (简体中文) translation"
+    creditsViewOnGithub = "<TODO>" // "View on GitHub"
 }
 
 // -----------------------------------------------------------------------------

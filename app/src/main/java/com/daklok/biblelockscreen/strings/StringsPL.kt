@@ -258,6 +258,12 @@ val plStrings = AppStrings().apply {
     favCardStyleCompactDesc = "Kompaktowy wiersz"
     favCardStyleHeroDesc = "Duży cytat jak plakat"
 
+    // --- Credits ---
+    creditsTitle = "Podziękowania"
+    creditsTranslatorsLabel = "Tłumacze"
+    creditsDeveloperDesc = "Deweloper · oryginalne teksty interfejsu i wersety"
+    creditsTranslatorZhDesc = "Tłumaczenie na chiński uproszczony (简体中文)"
+    creditsViewOnGithub = "Zobacz na GitHubie"
 }
 
 // Localized language names in Polish (top-level, see AppStrings.kt for why).

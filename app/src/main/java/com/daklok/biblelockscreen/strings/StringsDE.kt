@@ -262,6 +262,12 @@ val deStrings = AppStrings().apply {
     favCardStyleCompactDesc = "Kompakte Zeile"
     favCardStyleHeroDesc = "Großes Zitat wie ein Poster"
 
+    // --- Credits ---
+    creditsTitle = "Mitwirkende"
+    creditsTranslatorsLabel = "Übersetzer"
+    creditsDeveloperDesc = "Entwickler · ursprüngliche Oberflächentexte und Verse"
+    creditsTranslatorZhDesc = "Vereinfachte chinesische Übersetzung (简体中文)"
+    creditsViewOnGithub = "Auf GitHub ansehen"
 }
 
 // Localized language names in German (top-level, see AppStrings.kt for why).

@@ -263,6 +263,12 @@ val huStrings = AppStrings().apply {
     favCardStyleCompactDesc = "Kompakt sor"
     favCardStyleHeroDesc = "Nagy, poszterszerű idézet"
 
+    // --- Credits ---
+    creditsTitle = "Közreműködők"
+    creditsTranslatorsLabel = "Fordítók"
+    creditsDeveloperDesc = "Fejlesztő · eredeti felületi szövegek és versek"
+    creditsTranslatorZhDesc = "Egyszerűsített kínai (简体中文) fordítás"
+    creditsViewOnGithub = "Megtekintés GitHubon"
 }
 
 // Localized language names in Hungarian (top-level, see AppStrings.kt for why).

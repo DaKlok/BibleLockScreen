@@ -301,6 +301,17 @@ class AppStrings {
     var favDeleteConfirm: String = "Remove selected verses?"
     var favDeleteConfirmDesc: String = "These verses will be removed from your favorites."
     var favRemovedCount: String = "%d verses removed"
+    // --- Credits (Settings → Credits) ---
+    // Mirrors TRANSLATORS.md in the repo. Names/handles are NOT localized —
+    // only the section title, the "Translators" label and the per-person
+    // descriptions are. Add one `creditsTranslatorXXDesc` field per language
+    // that gains an external translator, plus a matching CreditRow in
+    // MainActivity's credits section.
+    var creditsTitle: String = "Credits"
+    var creditsTranslatorsLabel: String = "Translators"
+    var creditsDeveloperDesc: String = "Developer · original UI strings and verses"
+    var creditsTranslatorZhDesc: String = "Simplified Chinese (简体中文) translation"
+    var creditsViewOnGithub: String = "View on GitHub"
 }
 
 // --- LANGUAGE DETECTION ---

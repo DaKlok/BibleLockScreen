@@ -46,6 +46,9 @@ import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.StarBorder
 import androidx.compose.material.icons.outlined.BlurOn
 import androidx.compose.material.icons.outlined.TouchApp
+import androidx.compose.material.icons.outlined.Translate
+import androidx.compose.material.icons.outlined.OpenInNew
+import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
@@ -2494,6 +2497,53 @@ fun MainScreen(
                         }
                     }
 
+                    Spacer(Modifier.height(24.dp))
+
+                    // --- CREDITS SECTION ---
+                    // Mirrors TRANSLATORS.md from the repo. Tapping a person
+                    // opens their GitHub profile; the button below links to
+                    // the project repository itself.
+                    SettingsSectionHeader(
+                        icon = Icons.Outlined.Translate,
+                        title = strings.creditsTitle
+                    )
+                    SettingsCard {
+                        Text(
+                            strings.creditsTranslatorsLabel,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Bold
+                        )
+                        CreditRow(
+                            name = "DaKlok",
+                            description = strings.creditsDeveloperDesc,
+                            profileUrl = "https://github.com/DaKlok"
+                        )
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+                        CreditRow(
+                            name = "asinker",
+                            description = strings.creditsTranslatorZhDesc,
+                            profileUrl = "https://github.com/asinker"
+                        )
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+                        FilledTonalButton(
+                            onClick = {
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/DaKlok/BibleLockScreen"))
+                                context.startActivity(intent)
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(
+                                Icons.Outlined.Code,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(strings.creditsViewOnGithub)
+                        }
+                    }
+
                     Spacer(Modifier.height(8.dp))
                 }
             }
@@ -2962,6 +3012,61 @@ fun SettingsSectionHeader(icon: androidx.compose.ui.graphics.vector.ImageVector,
 }
 
 
+
+/**
+ * One person's row in the Settings → Credits card: a tonal avatar circle with
+ * the person's initial, their handle and a short localized description.
+ * Tapping the row opens the person's GitHub profile in the browser.
+ */
+@Composable
+fun CreditRow(name: String, description: String, profileUrl: String) {
+    val context = LocalContext.current
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp))
+            .clickable {
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(profileUrl))
+                context.startActivity(intent)
+            }
+            .padding(vertical = 8.dp)
+    ) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .size(36.dp)
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.12f))
+        ) {
+            Text(
+                name.take(1).uppercase(),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                name,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                description,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        Icon(
+            Icons.Outlined.OpenInNew,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(16.dp)
+        )
+    }
+}
 
 @Composable
 fun SettingsCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {

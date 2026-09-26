@@ -262,6 +262,12 @@ val czStrings = AppStrings().apply {
     favCardStyleCompactDesc = "Kompaktní řádek"
     favCardStyleHeroDesc = "Velký citát jako plakát"
 
+    // --- Credits ---
+    creditsTitle = "Poděkování"
+    creditsTranslatorsLabel = "Překladatelé"
+    creditsDeveloperDesc = "Vývojář · původní texty rozhraní a verše"
+    creditsTranslatorZhDesc = "Překlad do zjednodušené čínštiny (简体中文)"
+    creditsViewOnGithub = "Zobrazit na GitHubu"
 }
 
 // Localized language names in Czech (top-level, see AppStrings.kt for why).

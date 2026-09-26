@@ -274,6 +274,12 @@ val skStrings = AppStrings().apply {
     favCardStyleCompactDesc = "Kompaktný riadok"
     favCardStyleHeroDesc = "Veľký citát ako plagát"
 
+    // --- Credits ---
+    creditsTitle = "Poďakovanie"
+    creditsTranslatorsLabel = "Prekladatelia"
+    creditsDeveloperDesc = "Vývojár · pôvodné texty rozhrania a verše"
+    creditsTranslatorZhDesc = "Preklad do zjednodušenej čínštiny (简体中文)"
+    creditsViewOnGithub = "Zobraziť na GitHube"
 }
 
 // Localized language names in Slovak (top-level, see AppStrings.kt for why).

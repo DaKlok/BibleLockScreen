@@ -262,6 +262,12 @@ val itStrings = AppStrings().apply {
     favCardStyleCompactDesc = "Riga compatta"
     favCardStyleHeroDesc = "Citazione grande come poster"
 
+    // --- Credits ---
+    creditsTitle = "Crediti"
+    creditsTranslatorsLabel = "Traduttori"
+    creditsDeveloperDesc = "Sviluppatore · testi e versetti originali"
+    creditsTranslatorZhDesc = "Traduzione in cinese semplificato (简体中文)"
+    creditsViewOnGithub = "Vedi su GitHub"
 }
 
 // Localized language names in Italian (top-level, see AppStrings.kt for why).
