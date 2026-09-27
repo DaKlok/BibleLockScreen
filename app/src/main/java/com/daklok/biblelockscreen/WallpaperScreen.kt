@@ -188,6 +188,15 @@ fun WallpaperScreen(
     // just scrolls inside the frame instead of resizing it.
     val wallpaperScrollState = rememberScrollState()
 
+    // Interactive-walkthrough support: when the tour highlights the
+    // auto-cycling card, scroll it into view. It's the last section of this
+    // scrollable column, so scrolling to the end always reveals it.
+    LaunchedEffect(TutorialTargets.revealRequest) {
+        if (TutorialTargets.revealRequest == "tutorial_wp_cycle") {
+            wallpaperScrollState.animateScrollTo(wallpaperScrollState.maxValue)
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -353,7 +362,7 @@ fun WallpaperScreen(
         Card(
             shape = RoundedCornerShape(20.dp),
             colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth().tutorialTarget("tutorial_wp_cycle")
         ) {
             Column(
                 modifier = Modifier.padding(16.dp),

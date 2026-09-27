@@ -312,6 +312,54 @@ class AppStrings {
     var creditsDeveloperDesc: String = "Developer · original UI strings and verses"
     var creditsTranslatorZhDesc: String = "Simplified Chinese (简体中文) translation"
     var creditsViewOnGithub: String = "View on GitHub"
+    // --- Interactive walkthrough tutorial (TutorialScreen.kt) ---
+    // A coach-mark tour that spotlights the real UI and advances when
+    // the user performs the highlighted action. Chrome strings here +
+    // one title/description pair per step; steps whose target only
+    // exists once a photo is picked are conditionally skipped (see
+    // the steps list in MainScreen). Replayable from App Settings
+    // → Support. tutorialStepOf is a positional format string — keep
+    // the %1$d / %2$d placeholders intact.
+    var tutorialSkip: String = "Skip"
+    var tutorialNext: String = "Next"
+    var tutorialGetStarted: String = "Get started"
+    var tutorialStartTour: String = "Start the tour"
+    var tutorialStepOf: String = "Step %1\$d of %2\$d"
+    var tutorialTapHint: String = "Tap the highlighted area to continue"
+    var tutorialSwipeHint: String = "Swipe left to continue"
+    var tutorialScrollHint: String = "Scroll down to continue"
+    var tutorialTitleWelcome: String = "Welcome to Bible Lock Screen"
+    var tutorialDescWelcome: String = "Let's walk through the app together. I'll highlight exactly where to tap and swipe. It only takes a minute."
+    var tutorialTitlePreview: String = "This is your lock screen"
+    var tutorialDescPreview: String = "A live preview of your wallpaper and verse, showing exactly how they'll appear on your lock screen."
+    var tutorialTitlePickPhoto: String = "Choose a photo"
+    var tutorialDescPickPhoto: String = "Tap the preview to pick a background photo from your gallery. Go ahead, try it now!"
+    var tutorialTitleGenerate: String = "Set your wallpaper"
+    var tutorialDescGenerate: String = "Tap Generate to apply the verse to your photo and set it as your lock-screen wallpaper."
+    var tutorialTitleNoPhoto: String = "Pick a photo first"
+    var tutorialDescNoPhoto: String = "Once you've chosen a photo, your verse settings and the Generate button appear right below the preview."
+    var tutorialTitleVerseSettings: String = "Your verse settings live here"
+    var tutorialDescVerseSettings: String = "Style the verse (size, color, font, position) or write your own. Scroll through this panel to see everything."
+    var tutorialTitleEditor: String = "The fullscreen editor"
+    var tutorialDescEditor: String = "Tap the verse on the preview to open the fullscreen editor, then drag the verse exactly where you want it."
+    var tutorialTitleVerseCycling: String = "Verses can change on their own"
+    var tutorialDescVerseCycling: String = "Turn this on and a fresh verse is picked for you: daily at a set time, every few hours, or every time you unlock."
+    var tutorialTitleSwipeWallpapers: String = "Open the wallpaper manager"
+    var tutorialDescSwipeWallpapers: String = "Swipe left, or tap one of the dots, to switch pages."
+    var tutorialTitleWallpaperManager: String = "Your wallpaper collection"
+    var tutorialDescWallpaperManager: String = "All your wallpapers live here. Add photos, tap one to make it active, or delete the ones you don't need."
+    var tutorialTitleWallpaperCycling: String = "Wallpapers cycle separately"
+    var tutorialDescWallpaperCycling: String = "Here wallpapers rotate on their own schedule, independently of the verses. While it's off, the wallpaper simply follows the verse."
+    var tutorialTitleSwipeFavorites: String = "One more swipe"
+    var tutorialDescSwipeFavorites: String = "Swipe left once more to reach your favorite verses."
+    var tutorialTitleFavorites: String = "Keep the verses you love"
+    var tutorialDescFavorites: String = "Tap the heart on the preview to save a verse here. Set a favorite as your wallpaper verse again, or share it as an image."
+    var tutorialTitleAppSettings: String = "Everything else in App Settings"
+    var tutorialDescAppSettings: String = "Tap the gear for themes, languages, backup and more. Take a look around, the tour resumes when you close it."
+    var tutorialTitleDone: String = "You're all set!"
+    var tutorialDescDone: String = "That's the whole tour, and now you know your way around. You can replay it anytime from App Settings."
+    var tutorialReplayTitle: String = "Show the tutorial again"
+    var tutorialReplayDesc: String = "Replay the interactive walkthrough of the app's features"
 }
 
 // --- LANGUAGE DETECTION ---

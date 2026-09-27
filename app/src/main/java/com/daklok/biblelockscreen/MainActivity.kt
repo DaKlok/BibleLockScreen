@@ -49,6 +49,7 @@ import androidx.compose.material.icons.outlined.TouchApp
 import androidx.compose.material.icons.outlined.Translate
 import androidx.compose.material.icons.outlined.OpenInNew
 import androidx.compose.material.icons.outlined.Code
+import androidx.compose.material.icons.outlined.School
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
@@ -99,6 +100,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import com.daklok.biblelockscreen.ui.theme.BibleLockScreenTheme
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
@@ -305,10 +307,53 @@ fun MainScreen(
     var isEditing by remember { mutableStateOf(false) }
     var showSettings by remember { mutableStateOf(false) }
     var showDevMenu by remember { mutableStateOf(false) }
+
+    // First-launch walkthrough tutorial overlay (TutorialScreen.kt). Shown
+    // once per install until finished or skipped; replayable from
+    // App Settings → Support.
+    var showTutorial by remember { mutableStateOf(!prefs.getBoolean("has_seen_tutorial", false)) }
+    // Shared bus for the interactive walkthrough (TutorialScreen.kt): real
+    // UI interactions call notifyAction(...) so the tour can advance when
+    // the user actually performs the highlighted action.
+    val tutorialController = remember { InteractiveTutorialController() }
+    // Which walkthrough step is on screen. Hoisted OUT of the overlay so
+    // the tour position survives the overlay unmounting while the user
+    // finishes a task inside the fullscreen editor or the settings sheet —
+    // it resumes right where it left off when the modal closes.
+    val tutorialStepKey = remember { mutableStateOf<String?>(null) }
     // Verse-database sheet state — driven by both the "Manage" button in the
     // Verse databases section and the "Create new database" CTA inside the
     // VerseLanguagePicker (when the custom list is empty).
     var showDbSheet by remember { mutableStateOf(false) }
+    // Whether the user is currently allowed to swipe the preview/wallpaper/
+    // favorites pager. During the interactive tutorial this is locked down
+    // to ONLY the two steps that actually ask for a swipe — otherwise, e.g.
+    // while the tour is waiting for the user to tap "pick a photo" on page
+    // 0, a stray swipe could carry them off to page 1 or 2 mid-step, which
+    // left the tour's own state (and the step targets it was watching for)
+    // out of sync with what was actually on screen. Once the tutorial is
+    // finished or dismissed (or a modal like the editor/settings covers it),
+    // swiping is always free again.
+    val pagerSwipeEnabled by remember {
+        derivedStateOf {
+            val tutorialActive = showTutorial && !isEditing && !showSettings &&
+                !showDbSheet && !showDevMenu
+            !tutorialActive || tutorialStepKey.value in setOf("swipe_wallpapers", "swipe_favorites")
+        }
+    }
+    // Same idea as pagerSwipeEnabled, but for the vertical scroll gesture on
+    // the preview/settings column: only free to use outside the tutorial,
+    // or during the one step ("verse_settings") that's actually asking the
+    // user to scroll down. Without this, a step like "tap this button" left
+    // the column fully scrollable underneath, so the user could scroll away
+    // from the very thing the tour was pointing at.
+    val scrollGestureEnabled by remember {
+        derivedStateOf {
+            val tutorialActive = showTutorial && !isEditing && !showSettings &&
+                !showDbSheet && !showDevMenu
+            !tutorialActive || tutorialStepKey.value == "verse_settings"
+        }
+    }
     var dbSheetOpenCreate by remember { mutableStateOf(false) }
     // Hoisted so both the settings sheet (picker + manage button) and the
     // outer VerseDatabaseSheet host can read/refresh the same list.
@@ -785,6 +830,11 @@ fun MainScreen(
                         imageUri = null
                         imageUri = internalUriWithCacheBreaker
 
+                        // Interactive walkthrough: the "choose a photo" task
+                        // completes here — after the photo import finished —
+                        // so the tour advances only on a real pick.
+                        tutorialController.notifyAction("pick_photo")
+
                         val baseInternalUri = Uri.fromFile(destinationFile).toString()
                         prefs.edit().putString("bg_uri", baseInternalUri).apply()
                     }
@@ -846,8 +896,14 @@ fun MainScreen(
                     },
                     actions = {
                         FilledIconButton(
-                            onClick = { showSettings = true },
-                            modifier = Modifier.padding(end = 8.dp).size(40.dp),
+                            onClick = {
+                                showSettings = true
+                                tutorialController.notifyAction("open_settings")
+                            },
+                            modifier = Modifier
+                                .padding(end = 8.dp)
+                                .size(40.dp)
+                                .tutorialTarget("tutorial_settings_gear"),
                             colors = IconButtonDefaults.filledIconButtonColors(
                                 containerColor = MaterialTheme.colorScheme.onBackground.copy(alpha = 0.12f),
                                 contentColor = MaterialTheme.colorScheme.onSecondaryContainer
@@ -898,6 +954,7 @@ fun MainScreen(
                 //    settings below do not.
                 HorizontalPager(
                     state = pagerState,
+                    userScrollEnabled = pagerSwipeEnabled,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 8.dp)
@@ -907,6 +964,7 @@ fun MainScreen(
                                 stiffness = Spring.StiffnessLow
                             )
                         )
+                        .tutorialTarget("tutorial_pager")
                 ) { page ->
                     if (page == 0) {
                         // Parallax zoom-out on the preview only — as the user
@@ -916,7 +974,9 @@ fun MainScreen(
                         // depth as the settings panel rises over it.
                         // wallpaper & favorites pages don't get this effect.
                         Box(
-                            modifier = Modifier.graphicsLayer {
+                            modifier = Modifier
+                                .tutorialTarget("tutorial_preview")
+                                .graphicsLayer {
                                 val scrollOffset = scrollState.value.toFloat()
                                 val scale = (1f - (scrollOffset / 1500f)).coerceIn(0.6f, 1f)
                                 val alphaVal = (1f - (scrollOffset / 900f)).coerceIn(0.5f, 1f)
@@ -945,11 +1005,16 @@ fun MainScreen(
                                 showBubbleHint = imageUri != null && !hasSeenEditHint,
                                 onClick = {
                                     performHaptic(HapticFeedbackType.LongPress)
+                                    // The "pick_photo" task completion is
+                                    // reported by the launcher result callback
+                                    // — only once a photo was actually picked
+                                    // (cancelling keeps the tour waiting).
                                     launcher.launch("image/*")
                                 },
                                 onEditClick = {
                                     performHaptic(HapticFeedbackType.LongPress)
                                     isEditing = true
+                                    tutorialController.notifyAction("open_editor")
                                     if (!hasSeenEditHint) {
                                         hasSeenEditHint = true
                                         prefs.edit().putBoolean("has_seen_edit_hint", true).apply()
@@ -977,6 +1042,7 @@ fun MainScreen(
                                     MaterialTheme.colorScheme.surfaceContainerLow
                                         .copy(alpha = 0.5f)
                                 )
+                                .tutorialTarget("tutorial_wallpapers")
                         ) {
                             WallpaperScreen(
                                 strings = strings,
@@ -997,6 +1063,7 @@ fun MainScreen(
                                     MaterialTheme.colorScheme.surfaceContainerLow
                                         .copy(alpha = 0.5f)
                                 )
+                                .tutorialTarget("tutorial_favorites")
                         ) {
                             FavoritesScreen(
                                 strings = strings,
@@ -1030,7 +1097,8 @@ fun MainScreen(
                 // ── Page indicator dots (under the preview) ──────────────
                 Row(
                     modifier = Modifier
-                        .padding(top = 4.dp, bottom = 4.dp),
+                        .padding(top = 4.dp, bottom = 4.dp)
+                        .tutorialTarget("tutorial_dots"),
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -1049,7 +1117,7 @@ fun MainScreen(
                                     if (isSelected) MaterialTheme.colorScheme.primary
                                     else MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)
                                 )
-                                .clickable {
+                                .clickable(enabled = pagerSwipeEnabled) {
                                     scope2.launch {
                                         pagerState.animateScrollToPage(index)
                                     }
@@ -1058,40 +1126,9 @@ fun MainScreen(
                     }
                 }
 
-                // ── Swipe hint (shows on page 0 until user swipes once) ──
-                AnimatedVisibility(
-                    visible = pagerState.currentPage == 0 && !hasSeenSwipeHint,
-                    enter = fadeIn(tween(250)) + slideInVertically(
-                        initialOffsetY = { it / 2 },
-                        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy, stiffness = Spring.StiffnessMedium)
-                    ),
-                    exit = fadeOut(tween(200)) + slideOutVertically(
-                        targetOffsetY = { -it / 2 },
-                        animationSpec = tween(200)
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .padding(bottom = 4.dp)
-                            .clip(RoundedCornerShape(20.dp))
-                            .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.9f))
-                            .padding(horizontal = 16.dp, vertical = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.ArrowForward, null,
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Text(
-                            strings.wpPageHint,
-                            style = MaterialTheme.typography.labelMedium,
-                            fontWeight = FontWeight.Medium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    }
-                }
+                // (The one-time swipe-hint chip that used to live here was
+                // removed — the interactive walkthrough's swipe steps teach
+                // the gesture with a moving finger pointer instead.)
             } // end pagerSectionContent
 
             val settingsSectionContent: @Composable () -> Unit = {
@@ -1154,6 +1191,28 @@ fun MainScreen(
                             )
                     )
 
+                    // ── VERSE SETTINGS PANEL ─────────────────────────────
+                    // Hidden entirely until a background photo is chosen —
+                    // with no wallpaper set, these controls would only cause
+                    // confusion (user request). AnimatedVisibility gives the
+                    // panel a smooth expand the first time a photo is picked.
+                    AnimatedVisibility(
+                        visible = imageUri != null,
+                        enter = expandVertically(
+                            animationSpec = spring(
+                                dampingRatio = Spring.DampingRatioMediumBouncy,
+                                stiffness = Spring.StiffnessMediumLow
+                            )
+                        ) + fadeIn(tween(280)),
+                        exit = shrinkVertically(
+                            animationSpec = tween(220, easing = FastOutSlowInEasing)
+                        ) + fadeOut(tween(200))
+                    ) {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
+                        ) {
+
                     // AUTOMATIC WALLPAPER CHANGE — MAIN TOGGLE CARD
                     Card(
                         shape = RoundedCornerShape(24.dp),
@@ -1161,6 +1220,7 @@ fun MainScreen(
                             containerColor = MaterialTheme.colorScheme.surfaceVariant
                         ),
                         modifier = Modifier.fillMaxWidth()
+                            .tutorialTarget("tutorial_auto_verse")
                     ) {
                         Row(
                             modifier = Modifier
@@ -1647,7 +1707,8 @@ fun MainScreen(
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
 
                     // NASTAVENIA
-                    if (imageUri != null) {
+                    // (the old `if (imageUri != null)` gate moved up into the
+                    // AnimatedVisibility around the whole panel)
                         Row(
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -1788,6 +1849,7 @@ fun MainScreen(
                                 onClick = {
                                     if (imageUri != null) {
                                         performHaptic(HapticFeedbackType.LongPress)
+                                        tutorialController.notifyAction("generate")
                                         scope.launch {
                                             generationStatus = "generating"
                                             runOneTimeWorker(context)
@@ -1799,7 +1861,10 @@ fun MainScreen(
                                         }
                                     }
                                 },
-                                modifier = Modifier.weight(1f).height(52.dp),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(52.dp)
+                                    .tutorialTarget("tutorial_generate"),
                                 shape = RoundedCornerShape(16.dp)
                             ) {
                                 AnimatedContent(
@@ -1849,12 +1914,19 @@ fun MainScreen(
                                 style = MaterialTheme.typography.labelLarge
                             )
                         }
-                    } else {
+                        } // end inner verse-settings Column
+                    } // end AnimatedVisibility (verse settings panel)
+
+                    // Placeholder card while no photo is chosen — keeps the
+                    // panel from looking broken and doubles as the
+                    // walkthrough's "pick a photo first" spotlight target.
+                    if (imageUri == null) {
                         Card(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .height(110.dp)
-                                .clickable { launcher.launch("image/*") },
+                                .clickable { launcher.launch("image/*") }
+                                .tutorialTarget("tutorial_no_photo"),
                             shape = RoundedCornerShape(20.dp),
                             colors = CardDefaults.cardColors(
                                 containerColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.12f)
@@ -1918,7 +1990,8 @@ fun MainScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .let { if (splitProgress < 1f) it.verticalScroll(scrollState) else it },
+                                .let { if (splitProgress < 1f) it.verticalScroll(scrollState, enabled = scrollGestureEnabled) else it }
+                                .tutorialTarget("tutorial_viewport"),
                             horizontalAlignment = Alignment.CenterHorizontally
                         ) {
                             pagerSectionContent()
@@ -1954,11 +2027,65 @@ fun MainScreen(
             }
         } // end Scaffold content lambda
 
-        // Mark swipe hint as seen when user leaves page 0
+        // Mark swipe hint as seen when user leaves page 0, and report page
+        // changes to the interactive walkthrough (its swipe steps wait for
+        // these signals before advancing).
         LaunchedEffect(pagerState.currentPage) {
             if (pagerState.currentPage != 0 && !hasSeenSwipeHint) {
                 hasSeenSwipeHint = true
                 prefs.edit().putBoolean("has_seen_swipe_hint", true).apply()
+            }
+        }
+        LaunchedEffect(pagerState.settledPage) {
+            tutorialController.notifyAction("page_${pagerState.settledPage}")
+        }
+
+        // Walkthrough scroll task — the verse-settings step waits for the
+        // user to actually scroll all the way down the first page, to
+        // where the generate button sits at the bottom. Tied directly to
+        // scrollState reaching its max instead of guessing from a card's
+        // on-screen rect (that approach kept completing far too early,
+        // after only a small nudge of a scroll, because a rect entering
+        // the screen edge by a few pixels isn't the same as the user
+        // actually having scrolled to the bottom).
+        LaunchedEffect(imageUri) {
+            if (imageUri == null) return@LaunchedEffect
+            // The settings panel's enter animation (a bouncy spring inside
+            // expandVertically, see the AnimatedVisibility a bit above)
+            // takes a while to reach its full height. Right when imageUri
+            // first becomes non-null, scrollState.maxValue is still 0
+            // because the panel hasn't expanded yet — evaluating the
+            // condition immediately caught that transient "nothing to
+            // scroll yet" state and completed the whole scroll step right
+            // away, skipping straight to the generate-button step. Give
+            // the animation time to settle before checking anything.
+            delay(900)
+            snapshotFlow {
+                scrollState.maxValue <= 0 || scrollState.value >= scrollState.maxValue - 4
+            }.collect { reached ->
+                if (reached) tutorialController.notifyAction("scrolled_to_settings")
+            }
+        }
+
+
+        // Interactive walkthrough support — when the overlay highlights a
+        // target that lives below the fold, scroll it into view; targets on
+        // the preview page scroll back to the top. (WallpaperScreen runs its
+        // own reveal for the cycling card.)
+        LaunchedEffect(TutorialTargets.revealRequest, imageUri, pagerState.settledPage, isEditing) {
+            val targetKey = TutorialTargets.revealRequest ?: return@LaunchedEffect
+            if (pagerState.settledPage != 0) return@LaunchedEffect
+            when (targetKey) {
+                "tutorial_preview", "tutorial_verse_box", "tutorial_dots" ->
+                    scrollState.animateScrollTo(0)
+                // Delegates to Compose's own bring-into-view coordination
+                // with the scrollable column, rather than manually reading
+                // two Rects and computing a pixel offset ourselves — that
+                // approach could silently do nothing if it happened to read
+                // a target rect that hadn't been (re-)registered yet, e.g.
+                // right after the full-screen editor closed.
+                "tutorial_generate", "tutorial_auto_verse", "tutorial_no_photo" ->
+                    TutorialTargets.reveal(targetKey)
             }
         }
 
@@ -2095,7 +2222,9 @@ fun MainScreen(
                                 showDbSheet = true
                             },
                             onGoToFavorites = {
-                                scope2.launch { pagerState.animateScrollToPage(2) }
+                                if (pagerSwipeEnabled) {
+                                    scope2.launch { pagerState.animateScrollToPage(2) }
+                                }
                             },
                             onSegmentChange = { newSource ->
                                 // The user tapped the segmented toggle. Auto-apply
@@ -2473,6 +2602,55 @@ fun MainScreen(
                         title = strings.support
                     )
                     SettingsCard {
+                        // Replay-tutorial row — a shortcut for anyone who skipped
+                        // the first-launch walkthrough or wants a refresher.
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(14.dp))
+                                .clickable {
+                                    performHaptic(HapticFeedbackType.LongPress)
+                                    scope.launch {
+                                        settingsSheetState.hide()
+                                        showSettings = false
+                                        // Start the replay from the home page
+                                        // so the walkthrough begins where it
+                                        // expects to.
+                                        pagerState.animateScrollToPage(0)
+                                        scrollState.scrollTo(0)
+                                        showTutorial = true
+                                    }
+                                }
+                                .padding(vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(
+                                Icons.Outlined.School,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(22.dp)
+                            )
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    strings.tutorialReplayTitle,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    strings.tutorialReplayDesc,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Icon(
+                                Icons.Default.KeyboardArrowRight,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
                         Text(
                             strings.supportDesc,
                             style = MaterialTheme.typography.bodySmall,
@@ -2836,6 +3014,66 @@ fun MainScreen(
                     }
                 }
             }
+        }
+
+        // First-launch interactive walkthrough — spotlights the real UI and
+        // advances when the user actually taps / swipes the highlighted
+        // element. Hidden while a modal surface (fullscreen editor, settings
+        // sheet, ...) is open so it never floats above those; the tour just
+        // resumes when they close. (The ModalBottomSheets render in their
+        // own window above this, which is why the replay row dismisses the
+        // settings sheet before showing the tutorial.)
+        AnimatedVisibility(
+            visible = showTutorial && !isEditing && !showSettings && !showDbSheet && !showDevMenu,
+            enter = fadeIn(tween(350)),
+            exit = fadeOut(tween(300)) + scaleOut(targetScale = 0.97f, animationSpec = tween(300))
+        ) {
+            InteractiveWalkthroughTutorial(
+                strings = strings,
+                controller = tutorialController,
+                stepKeyState = tutorialStepKey,
+                // Steps are task-gated where it matters: pick_photo only
+                // completes when a photo is chosen, verse_settings only when
+                // the user scrolls down to the settings panel, the swipe
+                // steps only when the page is actually swiped, app_settings
+                // when the gear is tapped. Task steps have no Next button —
+                // doing the thing IS the "Next" button.
+                steps = listOf(
+                    TutorialStep("welcome", strings.tutorialTitleWelcome, strings.tutorialDescWelcome),
+                    TutorialStep("preview", strings.tutorialTitlePreview, strings.tutorialDescPreview, targetKeys = listOf("tutorial_preview")),
+                    TutorialStep("pick_photo", strings.tutorialTitlePickPhoto, strings.tutorialDescPickPhoto, targetKeys = listOf("tutorial_preview"), waitForAction = "pick_photo", gesture = TutorialGesture.TAP, condition = { imageUri == null }),
+                    TutorialStep("verse_settings", strings.tutorialTitleVerseSettings, strings.tutorialDescVerseSettings, targetKeys = listOf("tutorial_viewport"), waitForAction = "scrolled_to_settings", gesture = TutorialGesture.SCROLL, condition = { imageUri != null }),
+                    TutorialStep("generate", strings.tutorialTitleGenerate, strings.tutorialDescGenerate, targetKeys = listOf("tutorial_generate"), waitForAction = "generate", gesture = TutorialGesture.TAP, condition = { imageUri != null }),
+                    TutorialStep("editor", strings.tutorialTitleEditor, strings.tutorialDescEditor, targetKeys = listOf("tutorial_verse_box"), waitForAction = "open_editor", gesture = TutorialGesture.TAP, condition = { imageUri != null }),
+                    TutorialStep("verse_cycle", strings.tutorialTitleVerseCycling, strings.tutorialDescVerseCycling, targetKeys = listOf("tutorial_auto_verse"), condition = { imageUri != null }),
+                    TutorialStep("swipe_wallpapers", strings.tutorialTitleSwipeWallpapers, strings.tutorialDescSwipeWallpapers, targetKeys = listOf("tutorial_pager", "tutorial_dots"), waitForAction = "page_1", gesture = TutorialGesture.SWIPE_LEFT),
+                    TutorialStep("wallpaper_manager", strings.tutorialTitleWallpaperManager, strings.tutorialDescWallpaperManager, targetKeys = listOf("tutorial_wallpapers")),
+                    TutorialStep("wallpaper_cycle", strings.tutorialTitleWallpaperCycling, strings.tutorialDescWallpaperCycling, targetKeys = listOf("tutorial_wp_cycle")),
+                    TutorialStep("swipe_favorites", strings.tutorialTitleSwipeFavorites, strings.tutorialDescSwipeFavorites, targetKeys = listOf("tutorial_pager", "tutorial_dots"), waitForAction = "page_2", gesture = TutorialGesture.SWIPE_LEFT),
+                    TutorialStep("favorites", strings.tutorialTitleFavorites, strings.tutorialDescFavorites, targetKeys = listOf("tutorial_favorites")),
+                    TutorialStep("app_settings", strings.tutorialTitleAppSettings, strings.tutorialDescAppSettings, targetKeys = listOf("tutorial_settings_gear"), waitForAction = "open_settings", gesture = TutorialGesture.TAP),
+                    TutorialStep("done", strings.tutorialTitleDone, strings.tutorialDescDone)
+                ),
+                onFinished = { completed ->
+                    showTutorial = false
+                    // Reset the tour position so a replay starts fresh.
+                    tutorialStepKey.value = null
+                    prefs.edit().putBoolean("has_seen_tutorial", true).apply()
+                    if (completed) {
+                        // The walkthrough already demonstrated the swipe-to-
+                        // switch-page and tap-verse-to-edit gestures, so
+                        // retire those one-time micro-hints (both in this
+                        // session and on disk) instead of telling the user
+                        // the same thing twice.
+                        hasSeenEditHint = true
+                        hasSeenSwipeHint = true
+                        prefs.edit()
+                            .putBoolean("has_seen_edit_hint", true)
+                            .putBoolean("has_seen_swipe_hint", true)
+                            .apply()
+                    }
+                }
+            )
         }
 
     }
@@ -3675,6 +3913,7 @@ fun Pixel6LockScreenPreview(
                             .offset(y = totalOffset)
                             .width(maxWidth * 0.80f * textWidthMult)
                             .clickable { onEditClick() }
+                            .tutorialTarget("tutorial_verse_box")
                             .then(
                                 if (showEditHint) Modifier.drawBehind {
                                     drawRoundRect(
