@@ -1,5 +1,26 @@
 # Changelog
 
+## [2.3](https://github.com/DaKlok/BibleLockScreen/releases/tag/2.3) — Release 2.3 (2026-10-04)
+
+# Changelog
+
+### 🎓 New: Interactive onboarding tutorial
+
+- Added a full guided walkthrough (`TutorialScreen.kt`) that runs automatically the first time the app is opened, and can be replayed later from Settings.
+- Spotlight-style overlay that highlights the relevant part of the screen for each step, with a tooltip card explaining what to do.
+- Steps wait for the actual gesture they're teaching before advancing (tap, swipe, or scroll), rather than just auto-advancing on a timer — e.g. it won't move past "pick a photo" until you've actually picked one.
+- Covers the full first-run path: welcome → pick a photo → verse settings → generate the wallpaper → the verse editor → verse cycling → swiping between wallpapers → the wallpaper manager → wallpaper cycling → swiping to Favorites → Favorites → app settings.
+- Whether the tutorial has been seen is stored in preferences (`has_seen_tutorial`), so it only auto-shows once.
+
+### 🌍 New: Simplified Chinese (ZH) translation - <a href="https://github.com/asinker">Asinker</a>
+
+
+- Added a full Simplified Chinese translation (`StringsZH.kt`), contributed via a community pull request and reviewed for accuracy/safety before merging.
+- Includes localized verse content (`verses_ZH.json`, 和合本 / Chinese Union Version, public domain).
+- Chinese is now a selectable app language and verse language, with correct fallback wiring in `AppStrings.kt`, `MainActivity.kt`, and `LocalBibleProvider.kt`.
+- Includes its own localized-language-names map (`zhLocalizedLangNames`), so e.g. a Chinese-language user sees "Italiano (意大利语)" instead of just "Italiano".
+
+
 ## [2.2](https://github.com/DaKlok/BibleLockScreen/releases/tag/2.2) — 2.2 (2026-08-28)
 
 # Changelog
