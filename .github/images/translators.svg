@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="188" viewBox="0 0 520 188" role="img" aria-label="Translators and contributors">
+  <style>
+    .card{fill:#F3EDF7;stroke:#CAC4D0;stroke-width:1}
+    .ph{fill:#EADDFF}
+    .ini{fill:#21005D;font:600 24px system-ui,sans-serif}
+    .name{fill:#1D1B20;font:600 17px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+    .sub{fill:#49454F;font:400 14px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+    @media (prefers-color-scheme: dark){
+      .card{fill:#2B2930;stroke:#49454F}
+      .ph{fill:#4F378B}
+      .ini{fill:#EADDFF}
+      .name{fill:#E6E0E9}
+      .sub{fill:#CAC4D0}
+    }
+  </style>
+  <a href="https://github.com/DaKlok" target="_blank">
+    <rect x="0" y="0" width="520" height="88" rx="28" class="card"/>
+    <circle cx="44" cy="44" r="28" class="ph"/>
+       <text x="44" y="52" text-anchor="middle" class="ini">D</text>
+    <text x="88" y="40" class="name">DaKlok</text>
+    <text x="88" y="62" class="sub">Code · Translation</text>
+  </a>
+  <a href="https://github.com/asinker" target="_blank">
+    <rect x="0" y="100" width="520" height="88" rx="28" class="card"/>
+    <circle cx="44" cy="144" r="28" class="ph"/>
+       <text x="44" y="152" text-anchor="middle" class="ini">A</text>
+    <text x="88" y="140" class="name">asinker</text>
+    <text x="88" y="162" class="sub">Chinese UI strings + verses</text>
+  </a>
+</svg>

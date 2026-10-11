@@ -78,8 +78,29 @@ You are in complete control. Whether you prefer a minimalist, clean style or a b
 | IT   | Italian   |
 | HU   | Hungarian |
 | PL   | Polish    |
+| ZH   | Chinese (Simplified) |
 
 The app automatically detects your system language on first launch.
+
+---
+
+## 🌍 Translators
+
+<p>
+  <img src="https://img.shields.io/badge/Languages-10-6750A4?style=for-the-badge&labelColor=EADDFF&logoColor=21005D" alt="10 languages"/>
+  <a href="TRANSLATORS.md"><img src="https://img.shields.io/badge/Credits-TRANSLATORS.md-E8DEF8?style=for-the-badge&labelColor=E8DEF8&color=E8DEF8&logoColor=1D192B" alt="Translator credits"/></a>
+</p>
+
+Bible Lock Screen speaks your language thanks to these people. Thank you! 🙏
+
+
+<a href="TRANSLATORS.md"><img src=".github/images/translators.svg" width="520" alt="Translators and contributors"/></a>
+
+<p>
+  <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/Translate_the_app-6750A4?style=for-the-badge" alt="Translate the app"/></a>
+</p>
+
+Even a partial translation helps. See [CONTRIBUTING.md](CONTRIBUTING.md) to get started.
 
 ---
 
