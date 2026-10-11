@@ -65,6 +65,21 @@ You are in complete control. Whether you prefer a minimalist, clean style or a b
 
 ---
 
+## 📸 Screenshots
+<p align="center">
+  <img width="140" style="vertical-align:top" alt="Main Setup Screen" src=".github/images/phoneScreenshots/1.png" />
+  &nbsp;&nbsp;
+  <img width="140" style="vertical-align:top" alt="Main Screen" src=".github/images/phoneScreenshots/2.png" />
+  &nbsp;&nbsp;
+  <img width="140" style="vertical-align:top" alt="Layout Editor" src=".github/images/phoneScreenshots/3.png" />
+  &nbsp;&nbsp;
+  <img width="140" style="vertical-align:top" alt="Settings" src=".github/images/phoneScreenshots/4.png" />
+  &nbsp;&nbsp;
+  <img width="140" style="vertical-align:top" alt="Wallpaper Preview" src=".github/images/phoneScreenshots/5.png" />
+</p>
+
+---
+
 ## 🌍 Supported Languages
 
 | Code | Language  |
@@ -89,6 +104,7 @@ The app automatically detects your system language on first launch.
 <p>
   <img src="https://img.shields.io/badge/Languages-10-6750A4?style=for-the-badge&labelColor=EADDFF&logoColor=21005D" alt="10 languages"/>
   <a href="TRANSLATORS.md"><img src="https://img.shields.io/badge/Credits-TRANSLATORS.md-E8DEF8?style=for-the-badge&labelColor=E8DEF8&color=E8DEF8&logoColor=1D192B" alt="Translator credits"/></a>
+  <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/Translate_the_app-6750A4?style=for-the-badge" alt="Translate the app"/></a>
 </p>
 
 Bible Lock Screen speaks your language thanks to these people. Thank you! 🙏
@@ -101,26 +117,8 @@ Bible Lock Screen speaks your language thanks to these people. Thank you! 🙏
   </picture>
 </a>
 
-<p>
-  <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/Translate_the_app-6750A4?style=for-the-badge" alt="Translate the app"/></a>
-</p>
 
 Even a partial translation helps. See [CONTRIBUTING.md](CONTRIBUTING.md) to get started.
-
----
-
-## 📸 Screenshots
-<p align="center">
-  <img width="140" style="vertical-align:top" alt="Main Setup Screen" src=".github/images/phoneScreenshots/1.png" />
-  &nbsp;&nbsp;
-  <img width="140" style="vertical-align:top" alt="Main Screen" src=".github/images/phoneScreenshots/2.png" />
-  &nbsp;&nbsp;
-  <img width="140" style="vertical-align:top" alt="Layout Editor" src=".github/images/phoneScreenshots/3.png" />
-  &nbsp;&nbsp;
-  <img width="140" style="vertical-align:top" alt="Settings" src=".github/images/phoneScreenshots/4.png" />
-  &nbsp;&nbsp;
-  <img width="140" style="vertical-align:top" alt="Wallpaper Preview" src=".github/images/phoneScreenshots/5.png" />
-</p>
 
 ---
 
