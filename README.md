@@ -84,31 +84,23 @@ The app automatically detects your system language on first launch.
 
 ---
 
-## 🙏 Contributors & Translators
+## 🌍 Translators
 
-Huge thanks to everyone who helps make Bible Lock Screen available in more languages! 🌍
-Translation credits are tracked in [TRANSLATORS.md](TRANSLATORS.md) and updated automatically
-using [all-contributors](https://allcontributors.org).
+<p>
+  <img src="https://img.shields.io/badge/Languages-10-6750A4?style=for-the-badge&labelColor=EADDFF&logoColor=21005D" alt="10 languages"/>
+  <a href="TRANSLATORS.md"><img src="https://img.shields.io/badge/Credits-TRANSLATORS.md-E8DEF8?style=for-the-badge&labelColor=E8DEF8&color=E8DEF8&logoColor=1D192B" alt="Translator credits"/></a>
+</p>
 
-<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
-<!-- prettier-ignore-start -->
-<!-- markdownlint-disable -->
-<table>
-  <tbody>
-    <tr>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/DaKlok"><img src="https://github.com/DaKlok.png?s=100" width="100px;" alt="DaKlok"/><br /><sub><b>DaKlok</b></sub></a><br /><a href="https://github.com/DaKlok/BibleLockScreen/commits?author=DaKlok" title="Code">💻</a> <a href="#translation-DaKlok" title="Translation">🌍</a></td>
-      <td align="center" valign="top" width="14.28%"><a href="https://github.com/asinker"><img src="https://github.com/asinker.png?s=100" width="100px;" alt="asinker"/><br /><sub><b>asinker</b></sub></a><br /><a href="#translation-asinker" title="Translation">🌍</a></td>
-    </tr>
-  </tbody>
-</table>
+Bible Lock Screen speaks your language thanks to these people. Thank you! 🙏
 
-<!-- markdownlint-restore -->
-<!-- prettier-ignore-end -->
 
-<!-- ALL-CONTRIBUTORS-LIST:END -->
+<a href="TRANSLATORS.md"><img src=".github/images/translators.svg" width="520" alt="Translators and contributors"/></a>
 
-**Want to translate the app into your language?** Every contribution is welcome, even a partial one.
-See [CONTRIBUTING.md](CONTRIBUTING.md) for how to open a pull request, or open an issue and attach your files.
+<p>
+  <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/Translate_the_app-6750A4?style=for-the-badge" alt="Translate the app"/></a>
+</p>
+
+Even a partial translation helps. See [CONTRIBUTING.md](CONTRIBUTING.md) to get started.
 
 ---
 

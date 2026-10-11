@@ -14,7 +14,7 @@ There are two kinds of translation you can contribute:
 | **Verse content** — the Bible verses shown on the lock screen | `app/src/main/assets/verses_XX.json` | Easy, but see ⚠️ below |
 
 Both are required for a complete translation. The app currently supports:
-**English, Slovak, Czech, Spanish, Italian, French, German, Hungarian, Polish.**
+**English, Slovak, Czech, Spanish, Italian, French, German, Hungarian, Polish, Chinese (Simplified).**
 
 ---
 
@@ -247,7 +247,7 @@ submit a partial file with 20 verses and the maintainer can merge it as a
 3. In the PR description, include:
     - The language code and name
     - The Bible version you used (and confirm it's public domain)
-    - Your name/handle for the credits file (see below)
+    - Your GitHub handle for the credits (see "Credits" below)
 
 The CI workflow will automatically validate your files. If something is
 wrong, it will leave a comment on the PR explaining what to fix.
@@ -265,9 +265,26 @@ fixes are welcome.
 ---
 
 ## Credits
-Contributors are listed in [`TRANSLATORS.md`](/TRANSLATORS.md). When your PR
-is merged, please also submit a tiny follow-up PR adding yourself to that
-file under the appropriate language, or just ask the maintainer to do it.
+
+Every translator gets credited, and you don't need to edit anything yourself:
+
+- After your translation is merged, the maintainer adds you with the
+  [all-contributors](https://allcontributors.org) bot by commenting
+  `@all-contributors please add @your-handle for translation`.
+- The bot updates [`TRANSLATORS.md`](/TRANSLATORS.md) and the credits list,
+  and your card appears in the *Translators* section of the README
+  automatically.
+- A short description next to your name (e.g. "Romanian UI strings + verses")
+  is added by the maintainer — tell us in the PR/issue what you translated.
+
+**Not comfortable with Git or pull requests?** That's completely fine. Just
+attach your `StringsXX.kt` and `verses_XX.json` files as a comment on a
+GitHub issue (or send them to the maintainer) and they will be added to the
+app for you — with credit.
+
+Please also keep the per-language sections in `TRANSLATORS.md` accurate
+(which Bible version you used for the verses). The maintainer can do this
+for you if you prefer.
 
 ---
 

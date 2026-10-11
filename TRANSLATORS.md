@@ -6,6 +6,23 @@ their languages. Thank you all! 🙏
 If you add or improve a translation, please add yourself to the appropriate
 section in alphabetical order by handle/name.
 
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/DaKlok"><img src="https://github.com/DaKlok.png?s=100" width="100px;" alt="DaKlok"/><br /><sub><b>DaKlok</b></sub></a><br /><a href="https://github.com/DaKlok/BibleLockScreen/commits?author=DaKlok" title="Code">💻</a> <a href="#translation-DaKlok" title="Translation">🌍</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/asinker"><img src="https://github.com/asinker.png?s=100" width="100px;" alt="asinker"/><br /><sub><b>asinker</b></sub></a><br /><a href="#translation-asinker" title="Translation">🌍</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
 ---
 
 ## English (EN)

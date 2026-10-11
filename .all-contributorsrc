@@ -3,7 +3,9 @@
   "projectOwner": "DaKlok",
   "repoType": "github",
   "repoHost": "https://github.com",
-  "files": ["README.md"],
+  "files": [
+    "TRANSLATORS.md"
+  ],
   "imageSize": 100,
   "commit": false,
   "commitConvention": "angular",
@@ -15,14 +17,20 @@
       "name": "DaKlok",
       "avatar_url": "https://github.com/DaKlok.png",
       "profile": "https://github.com/DaKlok",
-      "contributions": ["code", "translation"]
+      "contributions": [
+        "code",
+        "translation"
+      ]
     },
     {
       "login": "asinker",
       "name": "asinker",
       "avatar_url": "https://github.com/asinker.png",
       "profile": "https://github.com/asinker",
-      "contributions": ["translation"]
+      "contributions": [
+        "translation"
+      ],
+      "role": "Chinese UI strings + verses"
     }
   ]
 }
