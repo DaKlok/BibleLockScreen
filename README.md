@@ -94,7 +94,12 @@ The app automatically detects your system language on first launch.
 Bible Lock Screen speaks your language thanks to these people. Thank you! 🙏
 
 
-<a href="TRANSLATORS.md"><img src=".github/images/translators.svg" width="520" alt="Translators and contributors"/></a>
+<a href="TRANSLATORS.md">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset=".github/images/translators-dark.png">
+    <img src=".github/images/translators-light.png" width="520" alt="Translators and contributors"/>
+  </picture>
+</a>
 
 <p>
   <a href="CONTRIBUTING.md"><img src="https://img.shields.io/badge/Translate_the_app-6750A4?style=for-the-badge" alt="Translate the app"/></a>
