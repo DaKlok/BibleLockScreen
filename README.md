@@ -78,8 +78,37 @@ You are in complete control. Whether you prefer a minimalist, clean style or a b
 | IT   | Italian   |
 | HU   | Hungarian |
 | PL   | Polish    |
+| ZH   | Chinese (Simplified) |
 
 The app automatically detects your system language on first launch.
+
+---
+
+## 🙏 Contributors & Translators
+
+Huge thanks to everyone who helps make Bible Lock Screen available in more languages! 🌍
+Translation credits are tracked in [TRANSLATORS.md](TRANSLATORS.md) and updated automatically
+using [all-contributors](https://allcontributors.org).
+
+<!-- ALL-CONTRIBUTORS-LIST:START - Do not remove or modify this section -->
+<!-- prettier-ignore-start -->
+<!-- markdownlint-disable -->
+<table>
+  <tbody>
+    <tr>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/DaKlok"><img src="https://github.com/DaKlok.png?s=100" width="100px;" alt="DaKlok"/><br /><sub><b>DaKlok</b></sub></a><br /><a href="https://github.com/DaKlok/BibleLockScreen/commits?author=DaKlok" title="Code">💻</a> <a href="#translation-DaKlok" title="Translation">🌍</a></td>
+      <td align="center" valign="top" width="14.28%"><a href="https://github.com/asinker"><img src="https://github.com/asinker.png?s=100" width="100px;" alt="asinker"/><br /><sub><b>asinker</b></sub></a><br /><a href="#translation-asinker" title="Translation">🌍</a></td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- markdownlint-restore -->
+<!-- prettier-ignore-end -->
+
+<!-- ALL-CONTRIBUTORS-LIST:END -->
+
+**Want to translate the app into your language?** Every contribution is welcome, even a partial one.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for how to open a pull request, or open an issue and attach your files.
 
 ---
 
