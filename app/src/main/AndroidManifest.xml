@@ -3,8 +3,8 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.SET_WALLPAPER" />
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <!--<uses-permission android:name="android.permission.READ_MEDIA_IMAGES" /> -->
+    <!--<uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" /> -->
     <!-- Needed only on API 24-28 for saving shared verse images to the gallery.
          API 29+ uses scoped storage and does not need this permission. -->
     <uses-permission
