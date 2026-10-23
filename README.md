@@ -2,44 +2,6 @@
 
 > A beautiful Android app that sets a new Bible verse as your lock screen wallpaper every day.
 
-[![Google Play – join the test](https://img.shields.io/badge/Google%20Play-Join%20the%20test-6750A4?style=for-the-badge&logo=googleplay&logoColor=white)](https://play.google.com/apps/testing/com.daklok.biblelockscreen)
-[![IzzyOnDroid](https://img.shields.io/badge/IzzyOnDroid-Get%20it-FFD8E4?style=for-the-badge&logo=android&logoColor=31111D&labelColor=FFD8E4&color=FFD8E4)](https://apt.izzysoft.de/packages/com.daklok.biblelockscreen)
-[![F-Droid](https://img.shields.io/badge/F--Droid-Get%20it-EADDFF?style=for-the-badge&logo=fdroid&logoColor=21005D&labelColor=EADDFF&color=EADDFF)](https://f-droid.org/packages/com.daklok.biblelockscreen)
-
-</div>
-
----
-
-<div align="center">
-
-<a href="https://play.google.com/apps/testing/com.daklok.biblelockscreen">
-  <img src=".github/images/testers-banner.png" alt="Help me launch on Google Play – 12 testers needed" width="100%">
-</a>
-
-</div>
-
-## 🙏 Help me launch on Google Play – testers needed!
-
-Bible Lock Screen is already available on **F-Droid** and **IzzyOnDroid**, and now I'm bringing it to **Google Play** too.
-Google requires every new app to pass a **closed test with at least 12 testers for 14 days** before it can be published – and that's where you come in.
-
-It costs you nothing, takes about a minute, and you don't need to do anything else afterwards.
-
-### How to become a tester
-
-| | Step | |
-| :-: | --- | --- |
-| **1** | **Join the test** – open the link below with the Google account you use on your phone and tap *Become a tester*. | [👉 Join the test](https://play.google.com/apps/testing/com.daklok.biblelockscreen) |
-| **2** | **Install the app** – download it from Google Play, just like any other app. | [👉 Open on Google Play](https://play.google.com/store/apps/details?id=com.daklok.biblelockscreen) |
-| **3** | **Keep it installed for 14 days.** That's it – opening it now and then is a bonus! 💜 | |
-
-> [!TIP]
-> If the test link says you don't have access, send me the email of your Google account (open an [issue](https://github.com/DaKlok/BibleLockScreen/issues) or a [discussion](https://github.com/DaKlok/BibleLockScreen/discussions)) and I'll add you.
-
-
-Thank you so much – every single tester gets this app one step closer to more people. ❤️
-
----
 
 <p align="center">
   <a href="https://apt.izzysoft.de/packages/com.daklok.biblelockscreen">
