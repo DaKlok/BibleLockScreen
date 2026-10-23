@@ -2,6 +2,47 @@
 
 > A beautiful Android app that sets a new Bible verse as your lock screen wallpaper every day.
 
+[![Google Play – join the test](https://img.shields.io/badge/Google%20Play-Join%20the%20test-6750A4?style=for-the-badge&logo=googleplay&logoColor=white)](https://groups.google.com/g/biblelockscreen-testers)
+[![IzzyOnDroid](https://img.shields.io/badge/IzzyOnDroid-Get%20it-FFD8E4?style=for-the-badge&logo=android&logoColor=31111D&labelColor=FFD8E4&color=FFD8E4)](https://apt.izzysoft.de/packages/com.daklok.biblelockscreen)
+[![F-Droid](https://img.shields.io/badge/F--Droid-Get%20it-EADDFF?style=for-the-badge&logo=fdroid&logoColor=21005D&labelColor=EADDFF&color=EADDFF)](https://f-droid.org/packages/com.daklok.biblelockscreen)
+
+</div>
+
+---
+
+<div align="center">
+
+<a href="https://groups.google.com/g/biblelockscreen-testers">
+  <img src=".github/images/testers-banner.png" alt="Help me launch on Google Play - 12 testers needed" width="100%">
+</a>
+
+</div>
+
+## 🙏 Help me launch on Google Play - testers needed!
+
+Bible Lock Screen is already available on **F-Droid** and **IzzyOnDroid**, and now I'm bringing it to **Google Play** too.
+Google requires every new app to pass a **closed test with at least 12 testers for 14 days** before it can be published, and that's where you come in.
+
+It costs you nothing, takes about two minutes, and you don't need to do anything else afterwards.
+
+### How to become a tester
+
+| | Step | |
+| :-: | --- | --- |
+| **1** | **Join the tester group** – open the link and tap *Join group* with the **same Google account you use on your phone's Play Store**. This is required, otherwise the test page says you're not invited. | [👉 Join the group](https://groups.google.com/g/biblelockscreen-testers) |
+| **2** | **Become a tester** – once you're in the group, open the test page and tap *Become a tester*. | [👉 Become a tester](https://play.google.com/apps/testing/com.daklok.biblelockscreen) |
+| **3** | **Install the app** – download it from Google Play, just like any other app. | [👉 Open on Google Play](https://play.google.com/store/apps/details?id=com.daklok.biblelockscreen) |
+| **4** | **Keep it installed for 14 days.** That's it, opening it now and then is a bonus! 💜 | |
+
+> [!TIP]
+> If the test page still says you're not invited, make sure you joined the group with the same Google account as on your phone, then wait a few minutes and try again.
+
+> [!NOTE]
+> 🇸🇰 **Po slovensky:** Hľadám 12 testerov na zverejnenie aplikácie v Google Play. Stačí sa pridať do Google skupiny, stať sa testerom, nainštalovať aplikáciu a nechať ju nainštalovanú 14 dní. Ďakujem! 🙏
+
+Thank you so much, every single tester gets this app one step closer to more people. ❤️
+
+---
 
 <p align="center">
   <a href="https://apt.izzysoft.de/packages/com.daklok.biblelockscreen">
