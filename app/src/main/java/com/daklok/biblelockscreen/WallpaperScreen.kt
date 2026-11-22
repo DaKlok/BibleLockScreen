@@ -408,6 +408,42 @@ fun WallpaperScreen(
                     )
                 }
 
+                // Plain-language explanation of what the switch means right
+                // now — users kept assuming this switch also controlled the
+                // verse (it doesn't; wallpapers and verses rotate separately).
+                AnimatedContent(
+                    targetState = settings.cycleEnabled,
+                    transitionSpec = {
+                        (fadeIn(tween(220)) + expandVertically(spring(Spring.DampingRatioLowBouncy, Spring.StiffnessMediumLow))) togetherWith
+                                (fadeOut(tween(150)) + shrinkVertically(tween(150)))
+                    },
+                    label = "wp_cycle_info"
+                ) { enabled ->
+                    Surface(
+                        shape = RoundedCornerShape(14.dp),
+                        color = if (enabled) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.45f)
+                        else MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.7f),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 10.dp),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp),
+                            verticalAlignment = Alignment.Top
+                        ) {
+                            Icon(
+                                Icons.Default.Info, null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(16.dp).padding(top = 2.dp)
+                            )
+                            Text(
+                                if (enabled) strings.wpCycleOnInfo else strings.wpCycleOffInfo,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+
                 // Sub-settings — only visible when enabled
                 AnimatedVisibility(
                     visible = settings.cycleEnabled,

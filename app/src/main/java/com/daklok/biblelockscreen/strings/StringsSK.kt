@@ -2,7 +2,7 @@ package com.daklok.biblelockscreen.strings
 
 // skStrings -- Slovak translations (source language).
 val skStrings = AppStrings().apply {
-    test = "Generovať"
+    test = "Nastaviť tapetu"
     generatingBtn = "Generuje sa..."
     generating = "Tapeta sa generuje..."
     done = "Hotovo"
@@ -37,7 +37,7 @@ val skStrings = AppStrings().apply {
     supportDesc = "Ak sa ti aplikácia páči a chceš podporiť jej vývoj, môžeš mi kúpiť kávu ☕"
     donate = "Prispieť"
     close = "Zavrieť"
-    dragHint = "Ťahaj body pre veľkosť a šírku\nŤahaj do stredu pre presun"
+    dragHint = "Potiahni verš a presuň ho kamkoľvek\nŤahaj body pre veľkosť a šírku"
 
     cancel = "Zrušiť"
     clickToSelect = "Klikni pre výber fotky"
@@ -67,7 +67,7 @@ val skStrings = AppStrings().apply {
     applyCustom = "Použiť"
 
     // Automatic Wallpaper Change strings
-    autoWallpaper = "Automatická zmena tapety"
+    autoWallpaper = "Automaticky meniť verš"
     autoWallpaperIntervalLabel = "Interval zmeny"
     autoWallpaperEvery1h = "Každú hodinu"
     autoWallpaperEvery2h = "Každé 2 hodiny"
@@ -97,7 +97,7 @@ val skStrings = AppStrings().apply {
 
     // Verse database section
     vdbTitle = "Databázy veršov"
-    vdbSubtitle = "Vytvor, importuj alebo exportuj zbierky"
+    vdbSubtitle = "Voliteľné: tvoje vlastné zbierky veršov"
     vdbManage = "Spravovať"
     vdbNewDatabase = "Nová databáza"
     vdbEditPrefix = "Upraviť ·"
@@ -105,7 +105,7 @@ val skStrings = AppStrings().apply {
     vdbCreateNew = "Vytvoriť novú"
     vdbSectionCustom = "Vlastné"
     vdbSectionBuiltIn = "Vstavaná"
-    vdbHint = "Klepni na „Použiť“ pri vlastnej databáze a nastav si ju ako aktívny zdroj veršov — alebo ju vyber neskôr cez Nastavenia → Jazyk veršov."
+    vdbHint = "Klikni na jazyk a verše sa budú brať z neho. Vlastné databázy sú voliteľné — potrebuješ ich len pre vlastné zbierky."
     vdbUse = "Použiť"
     vdbUsed = "Aktivovaná"
     vdbDeleteTitle = "Zmazať"
@@ -180,8 +180,10 @@ val skStrings = AppStrings().apply {
     wpDelete = "Odstrániť"
     wpDeleteConfirm = "Odstrániť túto tapetu?"
     wpDeleteConfirmDesc = "Tapeta bude natrvalo odstránená z aplikácie."
-    wpCycleTitle = "Automatické striedanie"
-    wpCycleDesc = "Striedaj tapety automaticky podľa intervalu"
+    wpCycleTitle = "Striedanie tapiet"
+    wpCycleDesc = "Automaticky prešívaj medzi tvojimi fotkami"
+    wpCycleOffInfo = "Vypnuté: aktívna tapeta zostáva stále rovnaká. Verš sa môže meniť aj tak — to nastavíš na hlavnej obrazovke."
+    wpCycleOnInfo = "Zapnuté: aplikácia strieda tvoje fotky. Funguje to nezávisle od zmeny veršov."
     wpCycleInterval = "Interval striedania"
     wpCycleDailyHour = "Čas dennej zmeny"
     wpCycleOnScreenOff = "Pri zamknutí"
@@ -297,13 +299,13 @@ val skStrings = AppStrings().apply {
     tutorialTitlePickPhoto = "Vyber fotku"
     tutorialDescPickPhoto = "Klikni na náhľad a vyber si fotku na pozadie z galérie. Poď, vyskúšaj to!"
     tutorialTitleGenerate = "Nastav si tapetu"
-    tutorialDescGenerate = "Stlač Generovať a verš sa ti použije na fotku a nastaví sa ako tapeta na uzamknutej obrazovke."
+    tutorialDescGenerate = "Stlač Nastaviť tapetu a verš sa ti použije na fotku a nastaví sa ako tapeta na uzamknutej obrazovke."
     tutorialTitleNoPhoto = "Najprv vyber fotku"
-    tutorialDescNoPhoto = "Keď si vyberieš fotku, nastavenia verša aj tlačidlo Generovať sa objavia hneď pod náhľadom."
+    tutorialDescNoPhoto = "Keď si vyberieš fotku, nastavenia verša aj tlačidlo Nastaviť tapetu sa objavia hneď pod náhľadom."
     tutorialTitleVerseSettings = "Tu nájdeš nastavenia verša"
     tutorialDescVerseSettings = "Uprav si verš (veľkosť, farbu, písmo, polohu) alebo si napíš vlastný. Prejdi celým panelom a pozri si všetko."
     tutorialTitleEditor = "Editor na celú obrazovku"
-    tutorialDescEditor = "Klikni na verš v náhľade a otvorí sa editor na celú obrazovku, v ktorom verš presunieš presne tam, kde ho chceš."
+    tutorialDescEditor = "Klikni na verš v náhľade a otvorí sa editor na celú obrazovku, v ktorom verš presunieš kamkoľvek: hore, dole, doľava aj doprava."
     tutorialTitleVerseCycling = "Verše sa môžu meniť aj samy"
     tutorialDescVerseCycling = "Toto zapni a nový verš sa ti vyberie sám: denne v nastavený čas, každých pár hodín, alebo pri každom odomknutí."
     tutorialTitleSwipeWallpapers = "Otvor správu tapiet"
@@ -311,17 +313,20 @@ val skStrings = AppStrings().apply {
     tutorialTitleWallpaperManager = "Tvoja zbierka tapiet"
     tutorialDescWallpaperManager = "Všetky tvoje tapety sú tu. Pridávaj fotky, jednu kliknutím aktivuj alebo zmaž tie, ktoré nepotrebuješ."
     tutorialTitleWallpaperCycling = "Tapety sa menia samostatne"
-    tutorialDescWallpaperCycling = "Tu sa tapety striedajú podľa vlastného rozvrhu, nezávisle od veršov. Pokým je to vypnuté, tapeta sa mení spolu s veršom."
+    tutorialDescWallpaperCycling = "Nechaj to vypnuté a tapeta zostane stále rovnaká — meniť sa bude iba verš. Zapni to, ak chceš striedať aj fotky."
     tutorialTitleSwipeFavorites = "Ešte jedno prejdenie"
     tutorialDescSwipeFavorites = "Prejdi prstom doľava ešte raz a dostaneš sa k obľúbeným veršom."
     tutorialTitleFavorites = "Zachovaj si verše, ktoré máš rád"
-    tutorialDescFavorites = "Kliknutím na srdiečko v náhľade si verš uložíš sem. Obľúbený verš znova nastav ako tapetu alebo ho zdieľaj ako obrázok."
+    tutorialDescFavorites = "Kliknutím na hviezdičku v náhľade si verš uložíš sem. Obľúbený verš znova nastav ako tapetu alebo ho zdieľaj ako obrázok."
     tutorialTitleAppSettings = "Ostatné v Nastaveniach aplikácie"
     tutorialDescAppSettings = "Klikni na ozubené koliesko a nájdeš motívy, jazyky, zálohu a ďalšie. Pozri sa okolo, prehliadka pokračuje, keď ich zavrieš."
     tutorialTitleDone = "Všetko máš pripravené!"
     tutorialDescDone = "To je celá prehliadka a teraz sa v aplikácii už vyznáš. Kedykoľvek ju môžeš zopakovať v Nastaveniach aplikácie."
     tutorialReplayTitle = "Zobraziť tutoriál znova"
     tutorialReplayDesc = "Zopakuj si interaktívnu prehliadku funkcií aplikácie"
+
+    autoVerseInfo = "Mení sa iba verš — fotka na tapete zostáva rovnaká. Ak chceš striedať aj fotky, prejdi doľava na Tapety."
+    textHorizontal = "Vodorovná poloha"
 }
 
 // Localized language names in Slovak (top-level, see AppStrings.kt for why).

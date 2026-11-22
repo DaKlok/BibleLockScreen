@@ -1,6 +1,5 @@
 package com.daklok.biblelockscreen
 
-import android.app.WallpaperManager
 import android.content.Context
 import android.graphics.Color
 import android.net.Uri
@@ -84,6 +83,7 @@ class DailyVerseWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
         val textSizeMult = prefs.getFloat("text_size_mult", 1.0f)
         val textWidthMult = prefs.getFloat("text_width_mult", 1.0f)
         val verticalOffset = prefs.getFloat("vertical_offset", 0.0f)
+        val horizontalOffset = prefs.getFloat("horizontal_offset", 0.0f)
         val textColor = prefs.getInt("text_color", Color.WHITE)
         val textAlpha = prefs.getFloat("text_alpha", 1.0f)
         val isBold = prefs.getBoolean("is_bold", true)
@@ -126,19 +126,14 @@ class DailyVerseWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
             useShadow = useShadow,
             fontFamilyStr = fontFamilyStr,
             bgBlurRadius = bgBlurRadius,
-            bgDarkness = bgDarkness
+            bgDarkness = bgDarkness,
+            horizontalOffset = horizontalOffset
         )
 
         if (finalBitmap != null) {
-            val wallpaperManager = WallpaperManager.getInstance(applicationContext)
             val target = prefs.getInt("wallpaper_target", 0)
-            val flag = when (target) {
-                1    -> WallpaperManager.FLAG_SYSTEM
-                2    -> WallpaperManager.FLAG_LOCK or WallpaperManager.FLAG_SYSTEM
-                else -> WallpaperManager.FLAG_LOCK
-            }
             try {
-                wallpaperManager.setBitmap(finalBitmap, null, true, flag)
+                WallpaperUtils.applyWallpaper(applicationContext, finalBitmap, target)
                 // Pre-render the next wallpaper for instant screen-off swaps
                 WallpaperCacheManager.prerenderNext(applicationContext, prefs)
                 AppLogger.i(applicationContext, "Worker", "Success: Wallpaper applied ($verseData)")

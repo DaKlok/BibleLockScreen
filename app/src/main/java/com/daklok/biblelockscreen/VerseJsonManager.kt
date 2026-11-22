@@ -1,8 +1,11 @@
 package com.daklok.biblelockscreen
 
+import android.content.ContentValues
 import android.content.Context
 import android.net.Uri
+import android.os.Build
 import android.os.Environment
+import android.provider.MediaStore
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import java.io.File
@@ -60,14 +63,52 @@ object VerseJsonManager {
         } catch (e: Exception) { null }
     }
 
+    /**
+     * Saves the database JSON into the public Downloads folder.
+     *
+     * On Android 10+ this goes through MediaStore, which needs no storage
+     * permission. Writing a plain File into the public Downloads directory
+     * (the old approach) silently fails there without WRITE_EXTERNAL_STORAGE,
+     * which is why exports "succeeded" but nothing ever showed up.
+     * Must be called off the main thread.
+     */
     fun exportToDownloads(context: Context, lang: String): String? {
         val json = exportAsJson(context, lang) ?: return null
+        val fileName = "verses_$lang.json"
         return try {
-            val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-            val file = File(dir, "verses_$lang.json")
-            file.writeText(json)
-            file.absolutePath
-        } catch (e: Exception) { null }
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                val resolver = context.contentResolver
+                val values = ContentValues().apply {
+                    put(MediaStore.Downloads.DISPLAY_NAME, fileName)
+                    put(MediaStore.Downloads.MIME_TYPE, "application/json")
+                    put(MediaStore.Downloads.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS)
+                    put(MediaStore.Downloads.IS_PENDING, 1)
+                }
+                val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+                    ?: return null
+                try {
+                    resolver.openOutputStream(uri)?.use { it.write(json.toByteArray()) }
+                        ?: throw IllegalStateException("Could not open output stream")
+                    values.clear()
+                    values.put(MediaStore.Downloads.IS_PENDING, 0)
+                    resolver.update(uri, values, null, null)
+                } catch (e: Exception) {
+                    resolver.delete(uri, null, null)
+                    throw e
+                }
+                "${Environment.DIRECTORY_DOWNLOADS}/$fileName"
+            } else {
+                @Suppress("DEPRECATION")
+                val dir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                dir.mkdirs()
+                val file = File(dir, fileName)
+                file.writeText(json)
+                file.absolutePath
+            }
+        } catch (e: Exception) {
+            AppLogger.e(context, "Export", "Export of $lang failed: ${e.message}")
+            null
+        }
     }
 
     fun deleteCustomDatabase(context: Context, lang: String) {

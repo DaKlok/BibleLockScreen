@@ -27,7 +27,8 @@ object WallpaperUtils {
         useShadow: Boolean = true,
         fontFamilyStr: String = "sans-serif",
         bgBlurRadius: Float = 0f,
-        bgDarkness: Float = 0.23f
+        bgDarkness: Float = 0.23f,
+        horizontalOffset: Float = 0.0f
     ): Bitmap? {
         try {
             val metrics = context.resources.displayMetrics
@@ -70,7 +71,7 @@ object WallpaperUtils {
                 workingBitmap, screenW, screenH, verse, ref,
                 textSizeMultiplier, textWidthMultiplier, verticalOffset,
                 textColorInt, textAlpha, isBold, useShadow, fontFamilyStr,
-                bgDarkness
+                bgDarkness, horizontalOffset
             )
         } catch (e: Exception) {
             e.printStackTrace()
@@ -96,7 +97,8 @@ object WallpaperUtils {
         isBold: Boolean = true,
         useShadow: Boolean = true,
         fontFamilyStr: String = "sans-serif",
-        bgDarkness: Float = 0.0f
+        bgDarkness: Float = 0.0f,
+        horizontalOffset: Float = 0.0f
     ): Bitmap? {
         try {
             val metrics = context.resources.displayMetrics
@@ -122,7 +124,7 @@ object WallpaperUtils {
                 workingBitmap, screenW, screenH, verse, ref,
                 textSizeMultiplier, textWidthMultiplier, verticalOffset,
                 textColorInt, textAlpha, isBold, useShadow, fontFamilyStr,
-                bgDarkness
+                bgDarkness, horizontalOffset
             )
         } catch (e: Exception) {
             e.printStackTrace()
@@ -152,7 +154,8 @@ object WallpaperUtils {
         isBold: Boolean,
         useShadow: Boolean,
         fontFamilyStr: String,
-        bgDarkness: Float
+        bgDarkness: Float,
+        horizontalOffset: Float = 0f
     ): Bitmap {
         val canvas = Canvas(workingBitmap)
 
@@ -212,7 +215,13 @@ object WallpaperUtils {
         val refHeight = fontMetrics.descent - fontMetrics.ascent
         val totalBlockHeight = staticLayout.height + gap + refHeight
 
-        val centerX = screenW / 2f
+        // Horizontal offset: -1 = box touches the left edge, 0 = centered,
+        // 1 = touches the right edge. Mirrors horizontalOffsetFraction() in
+        // the Compose preview so what you see is what gets rendered.
+        val maxShiftX = ((screenW - boxWidth) / 2f).coerceAtLeast(0f)
+        val shiftX = maxShiftX * horizontalOffset.coerceIn(-1f, 1f)
+
+        val centerX = screenW / 2f + shiftX
         val centerY = (screenH / 2f) - (totalBlockHeight / 2f)
 
         val defaultOffset = screenH * 0.05f
@@ -220,7 +229,7 @@ object WallpaperUtils {
         val blockTopY = centerY + userOffsetPixels + defaultOffset
 
         canvas.save()
-        val xPos = (screenW - textLayoutWidth) / 2f
+        val xPos = (screenW - textLayoutWidth) / 2f + shiftX
         canvas.translate(xPos, blockTopY)
         staticLayout.draw(canvas)
         canvas.restore()
@@ -229,6 +238,37 @@ object WallpaperUtils {
         canvas.drawText(cleanRef, centerX, refBaselineY, refPaint)
 
         return workingBitmap
+    }
+
+    /**
+     * Applies [bitmap] as the system wallpaper for the user's chosen target
+     * (0 = lock, 1 = home, 2 = both). Shared by the worker and the
+     * screen-off receiver so both paths behave identically.
+     *
+     * The bitmap is flattened onto an opaque black canvas first. Our render
+     * is ARGB_8888 and reports hasAlpha = true even though it's visually
+     * opaque; some OEM lock screens (seen on HyperOS with Bedtime grayscale)
+     * then treat it as translucent and blend the previous/home wallpaper
+     * through it, producing a "ghost" image. An opaque bitmap rules that out.
+     */
+    fun applyWallpaper(context: Context, bitmap: Bitmap, target: Int) {
+        val opaque = Bitmap.createBitmap(bitmap.width, bitmap.height, Bitmap.Config.ARGB_8888)
+        Canvas(opaque).apply {
+            drawColor(Color.BLACK)
+            drawBitmap(bitmap, 0f, 0f, null)
+        }
+        opaque.setHasAlpha(false)
+        try {
+            val wm = android.app.WallpaperManager.getInstance(context)
+            val flag = when (target) {
+                1 -> android.app.WallpaperManager.FLAG_SYSTEM
+                2 -> android.app.WallpaperManager.FLAG_LOCK or android.app.WallpaperManager.FLAG_SYSTEM
+                else -> android.app.WallpaperManager.FLAG_LOCK
+            }
+            wm.setBitmap(opaque, null, true, flag)
+        } finally {
+            opaque.recycle()
+        }
     }
 
     @Suppress("DEPRECATION")

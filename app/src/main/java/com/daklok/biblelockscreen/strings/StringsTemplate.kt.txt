@@ -343,6 +343,10 @@ val xxStrings = AppStrings().apply {
     tutorialDescDone = "<TODO>" // "That's the whole tour — you now know your way around. You can replay it anytime from App Settings."
     tutorialReplayTitle = "<TODO>" // "Show the tutorial again"
     tutorialReplayDesc = "<TODO>" // "Replay the interactive walkthrough of the app's features"
+    wpCycleOffInfo = "<TODO>" // "Off: your active wallpaper stays the same. The verse can still change on its own — set that up on the main screen."
+    wpCycleOnInfo = "<TODO>" // "On: the app switches between your photos. This runs independently of the verse changes."
+    autoVerseInfo = "<TODO>" // "Only the verse changes — your wallpaper photo stays the same. To rotate photos too, swipe left to Wallpapers."
+    textHorizontal = "<TODO>" // "Horizontal Position"
 }
 
 // -----------------------------------------------------------------------------

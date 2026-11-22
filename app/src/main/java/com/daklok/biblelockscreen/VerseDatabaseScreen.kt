@@ -39,9 +39,11 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Entry — drop inside SettingsCard in the settings sheet:
@@ -156,7 +158,12 @@ fun VerseDatabaseSheet(
     // The currently-active custom code — drives the "✓ Active" badge
     // on the matching row instead of the "Use" button. null/blank or a
     // non-matching value means none is marked active.
-    activeCustomCode: String? = null
+    activeCustomCode: String? = null,
+    // Same as onUseCustom / activeCustomCode, but for the built-in rows.
+    // Built-in rows used to look tappable without doing anything (GitHub
+    // feedback) — they're now real "use this language" actions.
+    onUseBuiltin: ((code: String) -> Unit)? = null,
+    activeBuiltinCode: String? = null
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     var nav by remember { mutableStateOf<DbNav>(if (openCreate) DbNav.Create else DbNav.Home) }
@@ -233,7 +240,9 @@ fun VerseDatabaseSheet(
                             onImportExport = { nav = DbNav.ImportExport },
                             onDbChanged = onDbChanged,
                             onUseCustom = onUseCustom,
-                            activeCustomCode = activeCustomCode
+                            activeCustomCode = activeCustomCode,
+                            onUseBuiltin = onUseBuiltin,
+                            activeBuiltinCode = activeBuiltinCode
                         )
                         is DbNav.Create -> CreateEditScreen(
                             strings = strings,
@@ -274,7 +283,9 @@ private fun HomeScreen(
     onImportExport: () -> Unit,
     onDbChanged: () -> Unit = {},
     onUseCustom: ((code: String) -> Unit)? = null,
-    activeCustomCode: String? = null
+    activeCustomCode: String? = null,
+    onUseBuiltin: ((code: String) -> Unit)? = null,
+    activeBuiltinCode: String? = null
 ) {
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
@@ -404,7 +415,19 @@ private fun HomeScreen(
                     modifier = Modifier.padding(horizontal = 16.dp),
                     color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f)
                 )
-                BuiltInDbRow(name = name, code = code)
+                BuiltInDbRow(
+                    strings = strings,
+                    name = name,
+                    code = code,
+                    isActive = activeBuiltinCode != null &&
+                        activeBuiltinCode.equals(code, ignoreCase = true),
+                    onUse = onUseBuiltin?.let { callback ->
+                        {
+                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                            callback(code)
+                        }
+                    }
+                )
             }
         }
 
@@ -560,13 +583,25 @@ private fun CustomDbRow(
 }
 
 // Built-in DB row — mirrors CustomDbRow styling for visual consistency, but
-// uses a muted badge (since these can't be edited/deleted).
+// uses a muted badge (since these can't be edited/deleted). The whole row is
+// tappable and makes that language the active verse source; the active one
+// shows the same "✓ Active" badge as custom rows.
 @Composable
-private fun BuiltInDbRow(name: String, code: String) {
+private fun BuiltInDbRow(
+    strings: AppStrings,
+    name: String,
+    code: String,
+    isActive: Boolean = false,
+    onUse: (() -> Unit)? = null
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 13.dp),
+            .then(
+                if (onUse != null && !isActive) Modifier.clickable { onUse() } else Modifier
+            )
+            .padding(start = 16.dp, end = 12.dp, top = 9.dp, bottom = 9.dp)
+            .heightIn(min = 36.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
@@ -587,8 +622,51 @@ private fun BuiltInDbRow(name: String, code: String) {
         Text(
             name,
             style = MaterialTheme.typography.bodyMedium,
+            fontWeight = if (isActive) FontWeight.SemiBold else FontWeight.Normal,
             modifier = Modifier.weight(1f)
         )
+        AnimatedContent(
+            targetState = isActive,
+            transitionSpec = {
+                (scaleIn(spring(Spring.DampingRatioMediumBouncy, Spring.StiffnessMedium), initialScale = 0.7f) + fadeIn(tween(180))) togetherWith
+                        (scaleOut(targetScale = 0.7f) + fadeOut(tween(120)))
+            },
+            label = "builtin_active"
+        ) { active ->
+            if (active) {
+                Surface(
+                    shape = RoundedCornerShape(10.dp),
+                    color = Color(0xFF4CAF50).copy(alpha = 0.16f),
+                    modifier = Modifier.height(32.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Check, null,
+                            tint = Color(0xFF4CAF50),
+                            modifier = Modifier.size(14.dp)
+                        )
+                        Text(
+                            strings.vdbUsed,
+                            style = MaterialTheme.typography.labelMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF388E3C)
+                        )
+                    }
+                }
+            } else if (onUse != null) {
+                TextButton(
+                    onClick = onUse,
+                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 0.dp),
+                    modifier = Modifier.height(32.dp)
+                ) {
+                    Text(strings.vdbUse, style = MaterialTheme.typography.labelMedium)
+                }
+            }
+        }
     }
 }
 
@@ -1219,18 +1297,17 @@ private fun ImportExportScreen(
     // Helper that exports a code and shows the animated popup
     fun doExport(code: String) {
         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        if (exportStatus == "exporting") return
         scope.launch {
             exportStatus = "exporting"
-            val path = VerseJsonManager.exportToDownloads(context, code)
-            delay(800) // slight delay so the popup is visible
-            if (path != null) {
-                exportStatus = "done"
-                delay(2000)
-                exportStatus = "idle"
-            } else {
-                exportStatus = "idle"
-                showNotification(strings.vdbExportFailed, NotificationType.ERROR)
-            }
+            val path = withContext(Dispatchers.IO) { VerseJsonManager.exportToDownloads(context, code) }
+            delay(600) // slight delay so the popup is visible
+            // The result is shown in this sheet's own popup — the app-wide
+            // notification overlay renders underneath the bottom sheet's
+            // window, so an error reported there was never actually seen.
+            exportStatus = if (path != null) "done" else "failed"
+            delay(2500)
+            exportStatus = "idle"
         }
     }
 
@@ -1553,9 +1630,11 @@ private fun ImportExportScreen(
                 enter = fadeIn() + slideInVertically { it / 2 } + scaleIn(initialScale = 0.9f),
                 exit = fadeOut() + slideOutVertically { it / 2 } + scaleOut(targetScale = 0.9f)
             ) {
+                val isFailed = exportStatus == "failed"
                 Surface(
                     shape = RoundedCornerShape(24.dp),
-                    color = MaterialTheme.colorScheme.secondaryContainer,
+                    color = if (isFailed) MaterialTheme.colorScheme.errorContainer
+                    else MaterialTheme.colorScheme.secondaryContainer,
                     tonalElevation = 6.dp,
                     shadowElevation = 4.dp
                 ) {
@@ -1564,20 +1643,35 @@ private fun ImportExportScreen(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        if (exportStatus == "exporting") {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(20.dp),
-                                strokeWidth = 2.dp,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer
-                            )
-                            Text(strings.vdbExporting, style = MaterialTheme.typography.labelLarge)
-                        } else {
-                            Icon(
-                                Icons.Default.Check, null,
-                                tint = Color(0xFF4CAF50),
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Text(strings.vdbExportDone, style = MaterialTheme.typography.labelLarge)
+                        when (exportStatus) {
+                            "exporting" -> {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(20.dp),
+                                    strokeWidth = 2.dp,
+                                    color = MaterialTheme.colorScheme.onSecondaryContainer
+                                )
+                                Text(strings.vdbExporting, style = MaterialTheme.typography.labelLarge)
+                            }
+                            "failed" -> {
+                                Icon(
+                                    Icons.Default.Warning, null,
+                                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Text(
+                                    strings.vdbExportFailed,
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = MaterialTheme.colorScheme.onErrorContainer
+                                )
+                            }
+                            else -> {
+                                Icon(
+                                    Icons.Default.Check, null,
+                                    tint = Color(0xFF4CAF50),
+                                    modifier = Modifier.size(20.dp)
+                                )
+                                Text(strings.vdbExportDone, style = MaterialTheme.typography.labelLarge)
+                            }
                         }
                     }
                 }
@@ -2055,4 +2149,4 @@ fun LanguagePickerDialog(
             }
         }
     }
-}
+}

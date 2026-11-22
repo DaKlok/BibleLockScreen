@@ -245,6 +245,8 @@ fun MainScreen(
     var textSizeMult by remember { mutableFloatStateOf(prefs.getFloat("text_size_mult", 1.0f)) }
     var textWidthMult by remember { mutableFloatStateOf(prefs.getFloat("text_width_mult", 1.0f)) }
     var verticalOffset by remember { mutableFloatStateOf(prefs.getFloat("vertical_offset", 0.0f)) }
+    // -1 = left edge, 0 = centered, 1 = right edge (see WallpaperUtils).
+    var horizontalOffset by remember { mutableFloatStateOf(prefs.getFloat("horizontal_offset", 0.0f)) }
     var textColor by remember { mutableIntStateOf(prefs.getInt("text_color", AndroidColor.WHITE)) }
     var textAlpha by remember { mutableFloatStateOf(prefs.getFloat("text_alpha", 1.0f)) }
     var bgBlur by remember { mutableFloatStateOf(prefs.getFloat("bg_blur", 0f)) }
@@ -522,6 +524,7 @@ fun MainScreen(
         val capturedTextSizeMult = textSizeMult
         val capturedTextWidthMult = textWidthMult
         val capturedVerticalOffset = verticalOffset
+        val capturedHorizontalOffset = horizontalOffset
         val capturedTextColor = textColor
         val capturedTextAlpha = textAlpha
         val capturedIsBold = isBold
@@ -549,7 +552,8 @@ fun MainScreen(
                     useShadow = capturedUseShadow,
                     fontFamilyStr = capturedFontFamilyStr,
                     bgBlur = capturedBgBlur,
-                    bgDarkness = capturedBgDarkness
+                    bgDarkness = capturedBgDarkness,
+                    horizontalOffset = capturedHorizontalOffset
                 )
 
                 val result = if (bitmap == null) {
@@ -658,6 +662,7 @@ fun MainScreen(
         val capturedTextSizeMult = textSizeMult
         val capturedTextWidthMult = textWidthMult
         val capturedVerticalOffset = verticalOffset
+        val capturedHorizontalOffset = horizontalOffset
         val capturedTextColor = textColor
         val capturedTextAlpha = textAlpha
         val capturedIsBold = isBold
@@ -683,7 +688,8 @@ fun MainScreen(
                     useShadow = capturedUseShadow,
                     fontFamilyStr = capturedFontFamilyStr,
                     bgBlur = capturedBgBlur,
-                    bgDarkness = capturedBgDarkness
+                    bgDarkness = capturedBgDarkness,
+                    horizontalOffset = capturedHorizontalOffset
                 )
                 val result = if (bitmap == null) {
                     ShareVerseManager.Result.Failure("Bitmap generation failed")
@@ -746,6 +752,7 @@ fun MainScreen(
             .putFloat("text_size_mult", textSizeMult)
             .putFloat("text_width_mult", textWidthMult)
             .putFloat("vertical_offset", verticalOffset)
+            .putFloat("horizontal_offset", horizontalOffset)
             .putInt("text_color", textColor)
             .putFloat("text_alpha", textAlpha)
             .putFloat("bg_blur", bgBlur)
@@ -1020,6 +1027,7 @@ fun MainScreen(
                                         prefs.edit().putBoolean("has_seen_edit_hint", true).apply()
                                     }
                                 },
+                                horizontalOffset = horizontalOffset,
                                 isFavorite = isCurrentVerseFavorite,
                                 onFavoriteToggle = {
                                     performHaptic(HapticFeedbackType.LongPress)
@@ -1277,6 +1285,28 @@ fun MainScreen(
                                 onCheckedChange = { toggleAutoWorker(it) }
                             )
                         }
+                    }
+
+                    // Plain-language note: this switch changes the VERSE
+                    // only. The "I want one wallpaper with hourly verses"
+                    // setup was possible all along, just never explained.
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 6.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.Top
+                    ) {
+                        Icon(
+                            Icons.Default.Info, null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(16.dp).padding(top = 2.dp)
+                        )
+                        Text(
+                            strings.autoVerseInfo,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
 
                     // AUTO WALLPAPER SUB-MENU (visible only when toggle is on)
@@ -1799,6 +1829,17 @@ fun MainScreen(
                                     icon = Icons.Default.SwapVert,
                                     performHaptic = performHaptic,
                                     onValueChange = { verticalOffset = it; saveSettings() }
+                                )
+                                HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f))
+                                EnhancedSlider(
+                                    label = strings.textHorizontal,
+                                    value = horizontalOffset,
+                                    range = -1.0f..1.0f,
+                                    defaultVal = 0.0f,
+                                    steps = 19,
+                                    icon = Icons.Default.SwapHoriz,
+                                    performHaptic = performHaptic,
+                                    onValueChange = { horizontalOffset = it; saveSettings() }
                                 )
                                 HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f))
                                 EnhancedSlider(
@@ -2779,6 +2820,31 @@ fun MainScreen(
                 // custom source — null when no custom DB is active.
                 activeCustomCode = if (verseLangSource == LocalBibleProvider.SOURCE_CUSTOM) {
                     verseLang
+                } else null,
+                // Built-in rows are now real "use this language" actions
+                // (they used to look tappable but did nothing).
+                onUseBuiltin = { code ->
+                    val needsReload = verseLang != code ||
+                        verseLangSource != LocalBibleProvider.SOURCE_BUILTIN
+                    verseLang = code
+                    verseLangSource = LocalBibleProvider.SOURCE_BUILTIN
+                    lastBuiltinCode = code
+                    prefs.edit()
+                        .putString("verse_lang", code)
+                        .putString("verse_lang_source", LocalBibleProvider.SOURCE_BUILTIN)
+                        .putString("last_builtin_code", code)
+                        .apply()
+                    if (needsReload) {
+                        versePair = null
+                        scope.launch {
+                            versePair = LocalBibleProvider.getVerseForInterval(
+                                context, code, autoIntervalHours, LocalBibleProvider.SOURCE_BUILTIN
+                            )
+                        }
+                    }
+                },
+                activeBuiltinCode = if (verseLangSource == LocalBibleProvider.SOURCE_BUILTIN) {
+                    verseLang
                 } else null
             )
         }
@@ -2885,6 +2951,7 @@ fun MainScreen(
                 initialTextSizeMult = textSizeMult,
                 initialTextWidthMult = textWidthMult,
                 initialVerticalOffset = verticalOffset,
+                initialHorizontalOffset = horizontalOffset,
                 textColor = textColor,
                 textAlpha = textAlpha,
                 bgBlur = bgBlur,
@@ -2893,10 +2960,11 @@ fun MainScreen(
                 useShadow = useShadow,
                 fontFamilyStr = fontFamilyStr,
                 strings = strings,
-                onSave = { newSize, newWidth, newOffset ->
+                onSave = { newSize, newWidth, newOffset, newHorizontal ->
                     textSizeMult = newSize
                     textWidthMult = newWidth
                     verticalOffset = newOffset
+                    horizontalOffset = newHorizontal
                     saveSettings()
                     isEditing = false
                 },
@@ -3346,6 +3414,7 @@ fun FullScreenEditor(
     initialTextSizeMult: Float,
     initialTextWidthMult: Float,
     initialVerticalOffset: Float,
+    initialHorizontalOffset: Float,
     textColor: Int,
     textAlpha: Float,
     bgBlur: Float,
@@ -3354,7 +3423,8 @@ fun FullScreenEditor(
     useShadow: Boolean,
     fontFamilyStr: String,
     strings: AppStrings,
-    onSave: (Float, Float, Float) -> Unit,
+    // size, width, vertical offset, horizontal offset
+    onSave: (Float, Float, Float, Float) -> Unit,
     onDismiss: () -> Unit,
     performHaptic: (HapticFeedbackType) -> Unit
 ) {
@@ -3374,6 +3444,12 @@ fun FullScreenEditor(
     var localVerticalOffset by remember { mutableFloatStateOf(initialVerticalOffset) }
     var rawVerticalOffset by remember { mutableFloatStateOf(initialVerticalOffset) }
     var isPositionSnapped by remember { mutableStateOf(kotlin.math.abs(initialVerticalOffset) < 0.04f) }
+
+    var localHorizontalOffset by remember { mutableFloatStateOf(initialHorizontalOffset) }
+    var rawHorizontalOffset by remember { mutableFloatStateOf(initialHorizontalOffset) }
+    var isHorizontalSnapped by remember { mutableStateOf(kotlin.math.abs(initialHorizontalOffset) < 0.06f) }
+    // True while the verse itself is being dragged — shows the center guides.
+    var isDraggingVerse by remember { mutableStateOf(false) }
 
     // Konštanta pre rýchlosť vertikálneho posunu
     val moveFactor = 1f / (screenHeight.value * 0.35f)
@@ -3491,13 +3567,53 @@ fun FullScreenEditor(
             )
         }
 
+        // Center guides — fade in while dragging, brighten when the verse
+        // snaps to the horizontal / vertical center.
+        val guideAlpha by animateFloatAsState(
+            targetValue = if (isDraggingVerse) 1f else 0f,
+            animationSpec = tween(200),
+            label = "guideAlpha"
+        )
+        if (guideAlpha > 0f) {
+            Box(
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .fillMaxHeight()
+                    .width(if (isHorizontalSnapped) 2.dp else 1.dp)
+                    .graphicsLayer { alpha = guideAlpha }
+                    .background(
+                        if (isHorizontalSnapped) MaterialTheme.colorScheme.primary
+                        else Color.White.copy(alpha = 0.25f)
+                    )
+            )
+        }
+
         // 3. EDITOVATEĽNÝ TEXT BOX
         Box(
             modifier = Modifier
                 .fillMaxSize()
                 .pointerInput(Unit) {
-                    detectDragGestures { change, dragAmount ->
+                    detectDragGestures(
+                        onDragStart = { isDraggingVerse = true },
+                        onDragEnd = { isDraggingVerse = false },
+                        onDragCancel = { isDraggingVerse = false }
+                    ) { change, dragAmount ->
                         change.consume()
+
+                        // Horizontal: ±1 = box flush with the screen edge.
+                        val maxShiftPx = ((screenWidthPx - screenWidthPx * 0.80f * localWidthMult) / 2f)
+                            .coerceAtLeast(1f)
+                        rawHorizontalOffset =
+                            (rawHorizontalOffset + dragAmount.x / maxShiftPx).coerceIn(-1f, 1f)
+                        val newSnappedH = if (kotlin.math.abs(rawHorizontalOffset) < 0.06f) 0f else rawHorizontalOffset
+                        if (newSnappedH == 0f && !isHorizontalSnapped) {
+                            performHaptic(HapticFeedbackType.LongPress)
+                            isHorizontalSnapped = true
+                        } else if (newSnappedH != 0f && isHorizontalSnapped) {
+                            isHorizontalSnapped = false
+                        }
+                        localHorizontalOffset = newSnappedH
+
                         val panYDp = dragAmount.y / density.density
                         val panOffsetChange = panYDp * moveFactor
 
@@ -3524,18 +3640,22 @@ fun FullScreenEditor(
             contentAlignment = Alignment.Center
         ) {
             // Widget kontajner
+            val editorBoxWidth = maxWidth * 0.80f * localWidthMult
             Box(
                 modifier = Modifier
-                    .offset(y = totalOffset)
-                    .width(maxWidth * 0.80f * localWidthMult)
+                    .offset(
+                        x = horizontalShift(maxWidth, editorBoxWidth, localHorizontalOffset),
+                        y = totalOffset
+                    )
+                    .width(editorBoxWidth)
             ) {
                 // Vnútorne ohraničený box s textom a pozadím
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .border(
-                            width = if (isPositionSnapped) 3.dp else 2.dp, // Indikácia snapu stredovej pozície
-                            color = if (isPositionSnapped) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary,
+                            width = if (isPositionSnapped || isHorizontalSnapped) 3.dp else 2.dp, // Indikácia snapu stredovej pozície
+                            color = if (isPositionSnapped || isHorizontalSnapped) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary,
                             shape = RoundedCornerShape(16.dp)
                         )
                         .background(Color.Black.copy(alpha = 0.35f), RoundedCornerShape(16.dp))
@@ -3685,7 +3805,7 @@ fun FullScreenEditor(
                     Button(
                         onClick = {
                             performHaptic(HapticFeedbackType.LongPress)
-                            onSave(localSizeMult, localWidthMult, localVerticalOffset)
+                            onSave(localSizeMult, localWidthMult, localVerticalOffset, localHorizontalOffset)
                         },
                         modifier = Modifier.weight(1f).height(56.dp),
                         shape = RoundedCornerShape(18.dp),
@@ -3775,7 +3895,8 @@ fun Pixel6LockScreenPreview(
     onClick: () -> Unit,
     onEditClick: () -> Unit,
     isFavorite: Boolean = false,
-    onFavoriteToggle: () -> Unit = {}
+    onFavoriteToggle: () -> Unit = {},
+    horizontalOffset: Float = 0f
 ) {
     val density = LocalDensity.current
     val context = LocalContext.current
@@ -3908,10 +4029,14 @@ fun Pixel6LockScreenPreview(
                     contentAlignment = Alignment.Center
                 ) {
                     // Vonkajší Box definuje presné rozmery celého orámovaného bloku textu aj na výšku vďaka intrinsic Content
+                    val boxWidth = maxWidth * 0.80f * textWidthMult
                     Box(
                         modifier = Modifier
-                            .offset(y = totalOffset)
-                            .width(maxWidth * 0.80f * textWidthMult)
+                            .offset(
+                                x = horizontalShift(maxWidth, boxWidth, horizontalOffset),
+                                y = totalOffset
+                            )
+                            .width(boxWidth)
                             .clickable { onEditClick() }
                             .tutorialTarget("tutorial_verse_box")
                             .then(
@@ -4074,6 +4199,15 @@ fun Pixel6LockScreenPreview(
 }
 
 
+
+/**
+ * X offset of the verse box for a given horizontal position (-1..1). Kept in
+ * one place so the preview, the fullscreen editor and the rendered bitmap
+ * (WallpaperUtils.renderVerseOnBitmap) all agree: ±1 puts the box flush
+ * against the left/right edge.
+ */
+fun horizontalShift(containerWidth: androidx.compose.ui.unit.Dp, boxWidth: androidx.compose.ui.unit.Dp, fraction: Float): androidx.compose.ui.unit.Dp =
+    ((containerWidth - boxWidth) / 2).coerceAtLeast(0.dp) * fraction.coerceIn(-1f, 1f)
 
 @Composable
 fun FontPickerRow(selectedFont: String, strings: AppStrings, onFontSelected: (String) -> Unit) {
@@ -5257,4 +5391,4 @@ fun scheduleWallpaperCycling(context: Context) {
             scheduleExactWallpaperAlarm(context, "WallpaperCycling", System.currentTimeMillis() + initialDelayMs, "wallpaper")
         }
     }
-}
+}

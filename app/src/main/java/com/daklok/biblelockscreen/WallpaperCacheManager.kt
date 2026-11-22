@@ -68,6 +68,7 @@ object WallpaperCacheManager {
             val textSizeMult = prefs.getFloat("text_size_mult", 1.0f)
             val textWidthMult = prefs.getFloat("text_width_mult", 1.0f)
             val verticalOffset = prefs.getFloat("vertical_offset", 0.0f)
+            val horizontalOffset = prefs.getFloat("horizontal_offset", 0.0f)
             val textColor = prefs.getInt("text_color", Color.WHITE)
             val textAlpha = prefs.getFloat("text_alpha", 1.0f)
             val isBold = prefs.getBoolean("is_bold", true)
@@ -121,7 +122,8 @@ object WallpaperCacheManager {
                 useShadow = useShadow,
                 fontFamilyStr = fontFamilyStr,
                 bgBlurRadius = bgBlurRadius,
-                bgDarkness = bgDarkness
+                bgDarkness = bgDarkness,
+                horizontalOffset = horizontalOffset
             )
 
             // Save as PNG cache

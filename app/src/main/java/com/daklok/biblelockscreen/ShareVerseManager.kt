@@ -38,7 +38,8 @@ object ShareVerseManager {
         useShadow: Boolean,
         fontFamilyStr: String,
         bgBlur: Float,
-        bgDarkness: Float
+        bgDarkness: Float,
+        horizontalOffset: Float = 0f
     ): Bitmap? {
         return if (imageUri != null) {
             WallpaperUtils.createBitmapWithText(
@@ -55,7 +56,8 @@ object ShareVerseManager {
                 useShadow = useShadow,
                 fontFamilyStr = fontFamilyStr,
                 bgBlurRadius = bgBlur,
-                bgDarkness = bgDarkness
+                bgDarkness = bgDarkness,
+                horizontalOffset = horizontalOffset
             )
         } else {
             // Fallback: gradient background when no photo is set
@@ -71,7 +73,8 @@ object ShareVerseManager {
                 isBold = isBold,
                 useShadow = useShadow,
                 fontFamilyStr = fontFamilyStr,
-                bgDarkness = 0f  // gradient is already dark enough
+                bgDarkness = 0f,  // gradient is already dark enough
+                horizontalOffset = horizontalOffset
             )
         }
     }

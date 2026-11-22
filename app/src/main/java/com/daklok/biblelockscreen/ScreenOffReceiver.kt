@@ -77,30 +77,19 @@ class ScreenOffReceiver : BroadcastReceiver() {
         }.start()
     }
 
-    @Suppress("DEPRECATION")
     private fun applyBitmap(
         context: Context,
         prefs: android.content.SharedPreferences,
         bitmap: android.graphics.Bitmap
     ) {
-        val wallpaperManager = android.app.WallpaperManager.getInstance(context)
         val target = prefs.getInt("wallpaper_target", 0)
-        val flag = when (target) {
-            1    -> android.app.WallpaperManager.FLAG_SYSTEM
-            2    -> android.app.WallpaperManager.FLAG_LOCK or android.app.WallpaperManager.FLAG_SYSTEM
-            else -> android.app.WallpaperManager.FLAG_LOCK
-        }
         val targetLabel = when (target) {
             1 -> "Home screen"
             2 -> "Lock + Home screen"
             else -> "Lock screen"
         }
         try {
-            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
-                wallpaperManager.setBitmap(bitmap, null, true, flag)
-            } else {
-                wallpaperManager.setBitmap(bitmap)
-            }
+            WallpaperUtils.applyWallpaper(context, bitmap, target)
             AppLogger.i(context, "Wallpaper", "✓ Wallpaper set successfully ($targetLabel)")
         } catch (e: Exception) {
             AppLogger.e(context, "Wallpaper", "✗ Failed to set wallpaper: ${e.message}")
@@ -124,6 +113,7 @@ class ScreenOffReceiver : BroadcastReceiver() {
         val textSizeMult = prefs.getFloat("text_size_mult", 1.0f)
         val textWidthMult = prefs.getFloat("text_width_mult", 1.0f)
         val verticalOffset = prefs.getFloat("vertical_offset", 0.0f)
+        val horizontalOffset = prefs.getFloat("horizontal_offset", 0.0f)
         val textColor = prefs.getInt("text_color", android.graphics.Color.WHITE)
         val textAlpha = prefs.getFloat("text_alpha", 1.0f)
         val isBold = prefs.getBoolean("is_bold", true)
@@ -165,7 +155,8 @@ class ScreenOffReceiver : BroadcastReceiver() {
             useShadow = useShadow,
             fontFamilyStr = fontFamilyStr,
             bgBlurRadius = bgBlurRadius,
-            bgDarkness = bgDarkness
+            bgDarkness = bgDarkness,
+            horizontalOffset = horizontalOffset
         )
     }
 }
