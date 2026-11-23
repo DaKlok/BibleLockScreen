@@ -1,5 +1,50 @@
 # Changelog
 
+## [2.4](https://github.com/DaKlok/BibleLockScreen/releases/tag/2.4) — Release 2.4 (2026-11-23)
+
+Changelog:
+
+### ↔️ New: Horizontal verse positioning
+
+- The verse can now be moved **left and right**, not just up and down. Drag it anywhere in the fullscreen editor; snap guides help you center it again.
+- New **Horizontal Position** slider in the text customization card.
+- The horizontal position is used everywhere the verse is drawn: the preview, the automatic wallpaper changes, and shared verse images. What you see in the preview is what gets set.
+
+### 🖼️ Fix: "Ghost" wallpaper on some lock screens
+
+- On some phones (seen on HyperOS with Bedtime grayscale), the previous wallpaper showed through the new one like a "ghost" image. The wallpaper is now always applied as a fully opaque image, which should fix this.
+
+### 📚 Verse databases
+
+- **Built-in languages can now be picked straight from the Verse databases screen.** Tap a language to use it; custom databases are now clearly optional.
+- **Fix:** exporting a database to Downloads silently did nothing on Android 10+. Exports now work correctly without any storage permission.
+
+### 🧭 Clearer wording & explanations
+
+- The **"Generate"** button is now **"Set wallpaper"**.
+- "Automatic Wallpaper Change" is now **"Change verse automatically"**, with an info note explaining that only the verse changes, not the photo.
+- Wallpaper "Auto-cycling" is now **"Rotate wallpapers"**, with an info note explaining that photo rotation runs separately from verse changes.
+- Updated tutorial texts and editor hints to match.
+
+### 🧪 New: "Become a tester" invite
+
+- A one-time dialog after the tutorial invites you to join closed testing on Google Play (Google needs 12+ testers for 14 days before public release). It links to the GitHub page.
+- Can be reopened anytime from **App Settings → Support**.
+
+### 🌍 Localization
+
+- All new and reworded texts are translated into every supported language (SK, CZ, DE, ES, FR, HU, IT, PL).
+
+### 🔒 Permissions
+
+- The app no longer asks for access to your photos and files (`READ_MEDIA_IMAGES` and `READ_EXTERNAL_STORAGE` removed).
+
+### 📝 Other
+
+- Added a Privacy Policy.
+- New README with screenshots and a credits card for translators.
+
+
 ## [2.3](https://github.com/DaKlok/BibleLockScreen/releases/tag/2.3) — Release 2.3 (2026-10-04)
 
 # Changelog
