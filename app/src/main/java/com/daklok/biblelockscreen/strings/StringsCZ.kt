@@ -312,6 +312,11 @@ val czStrings = AppStrings().apply {
     tutorialDescDone = "To je celá prohlídka a teď se v aplikaci už vyznáš. Kdykoli si ji můžeš zopakovat v Nastavení aplikace."
     tutorialReplayTitle = "Zobrazit tutoriál znovu"
     tutorialReplayDesc = "Zopakuj si interaktivní prohlídku funkcí aplikace"
+    testerInviteTitle = "Staň se testerem"
+    testerInviteDesc = "Bible Lock Screen je v uzavřeném testování na Google Play. Aby mohla vyjít pro všechny, Google vyžaduje alespoň 12 testerů po dobu 14 dní. Pokud chceš pomoct, na GitHubu najdeš návod, jak se přidat."
+    testerInviteButton = "Otevřít GitHub"
+    testerInviteLater = "Možná později"
+    testerSettingsDesc = "Pomoz aplikaci vyjít na Google Play"
 
     autoVerseInfo = "Mění se jen verš — fotka na tapetě zůstává stejná. Pokud chceš střídat i fotky, přejeď doleva na Tapety."
     textHorizontal = "Vodorovná poloha"

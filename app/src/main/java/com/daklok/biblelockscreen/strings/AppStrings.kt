@@ -365,6 +365,13 @@ class AppStrings {
     // Note under the "Change verse automatically" switch.
     var autoVerseInfo: String = "Only the verse changes — your wallpaper photo stays the same. To rotate photos too, swipe left to Wallpapers."
     var textHorizontal: String = "Horizontal Position"
+
+    // One-time "become a tester" invite (also in App Settings → Support).
+    var testerInviteTitle: String = "Become a tester"
+    var testerInviteDesc: String = "Bible Lock Screen is in closed testing on Google Play. Before it can be published for everyone, Google requires at least 12 testers for 14 days. If you'd like to help, the GitHub page explains how to join."
+    var testerInviteButton: String = "Open GitHub"
+    var testerInviteLater: String = "Maybe later"
+    var testerSettingsDesc: String = "Help the app get published on Google Play"
 }
 
 // --- LANGUAGE DETECTION ---

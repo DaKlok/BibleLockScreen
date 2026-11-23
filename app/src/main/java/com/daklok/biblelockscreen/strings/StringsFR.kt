@@ -314,6 +314,11 @@ val frStrings = AppStrings().apply {
     tutorialDescDone = "C'était toute la visite, et vous connaissez maintenant l'appli. Vous pouvez la rejouer à tout moment depuis les réglages de l'appli."
     tutorialReplayTitle = "Revoir le tutoriel"
     tutorialReplayDesc = "Rejouer la visite interactive des fonctions de l'appli"
+    testerInviteTitle = "Devenez testeur"
+    testerInviteDesc = "Bible Lock Screen est en test fermé sur Google Play. Avant de pouvoir être publiée pour tous, Google exige au moins 12 testeurs pendant 14 jours. Si vous souhaitez aider, la page GitHub explique comment participer."
+    testerInviteButton = "Ouvrir GitHub"
+    testerInviteLater = "Plus tard"
+    testerSettingsDesc = "Aidez l'appli à sortir sur Google Play"
 }
 
 // Localized language names in French (top-level, see AppStrings.kt for why).

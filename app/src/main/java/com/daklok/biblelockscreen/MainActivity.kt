@@ -50,6 +50,7 @@ import androidx.compose.material.icons.outlined.Translate
 import androidx.compose.material.icons.outlined.OpenInNew
 import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.School
+import androidx.compose.material.icons.outlined.GroupAdd
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.getValue
@@ -314,6 +315,9 @@ fun MainScreen(
     // once per install until finished or skipped; replayable from
     // App Settings → Support.
     var showTutorial by remember { mutableStateOf(!prefs.getBoolean("has_seen_tutorial", false)) }
+    // One-time "become a tester" invite (Google Play needs 12 testers).
+    // Waits until the tutorial is closed; replayable from Settings → Support.
+    var showTesterInvite by remember { mutableStateOf(!prefs.getBoolean("has_seen_tester_invite", false)) }
     // Shared bus for the interactive walkthrough (TutorialScreen.kt): real
     // UI interactions call notifyAction(...) so the tour can advance when
     // the user actually performs the highlighted action.
@@ -2692,6 +2696,45 @@ fun MainScreen(
                             )
                         }
                         HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+                        // Tester invite row — reopens the one-time dialog.
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clip(RoundedCornerShape(14.dp))
+                                .clickable {
+                                    performHaptic(HapticFeedbackType.LongPress)
+                                    showTesterInvite = true
+                                }
+                                .padding(vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Icon(
+                                Icons.Outlined.GroupAdd,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(22.dp)
+                            )
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    strings.testerInviteTitle,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    strings.testerSettingsDesc,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Icon(
+                                Icons.Default.KeyboardArrowRight,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
                         Text(
                             strings.supportDesc,
                             style = MaterialTheme.typography.bodySmall,
@@ -3140,6 +3183,42 @@ fun MainScreen(
                             .putBoolean("has_seen_swipe_hint", true)
                             .apply()
                     }
+                }
+            )
+        }
+
+        // One-time tester invite. Never on top of the tutorial; closing it
+        // either way marks it as seen.
+        if (showTesterInvite && !showTutorial) {
+            val dismissInvite = {
+                showTesterInvite = false
+                prefs.edit().putBoolean("has_seen_tester_invite", true).apply()
+            }
+            AlertDialog(
+                onDismissRequest = dismissInvite,
+                icon = {
+                    Icon(
+                        Icons.Outlined.GroupAdd, null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                },
+                title = { Text(strings.testerInviteTitle) },
+                text = {
+                    Text(
+                        strings.testerInviteDesc,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
+                confirmButton = {
+                    Button(onClick = {
+                        dismissInvite()
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://github.com/DaKlok/BibleLockScreen"))
+                        context.startActivity(intent)
+                    }) { Text(strings.testerInviteButton) }
+                },
+                dismissButton = {
+                    TextButton(onClick = dismissInvite) { Text(strings.testerInviteLater) }
                 }
             )
         }

@@ -317,6 +317,11 @@ val huStrings = AppStrings().apply {
     tutorialDescDone = "Ez volt az egész bemutató, és most már kiismered magad az alkalmazásban. Bármikor újranézheted az Alkalmazásbeállításokban."
     tutorialReplayTitle = "Útmutató újra megjelenítése"
     tutorialReplayDesc = "Az alkalmazás funkcióinak interaktív bemutatójának ismétlése"
+    testerInviteTitle = "Légy tesztelő"
+    testerInviteDesc = "A Bible Lock Screen zárt tesztelésben van a Google Playen. Mielőtt mindenki számára megjelenhet, a Google legalább 12 tesztelőt kér 14 napon át. Ha szeretnél segíteni, a GitHub-oldalon leírjuk, hogyan csatlakozhatsz."
+    testerInviteButton = "GitHub megnyitása"
+    testerInviteLater = "Talán később"
+    testerSettingsDesc = "Segíts, hogy az app megjelenhessen a Google Playen"
 }
 
 // Localized language names in Hungarian (top-level, see AppStrings.kt for why).
